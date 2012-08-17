@@ -12,6 +12,7 @@ config.log
 config.status
 config.h*
 configure
+INSTALL
 install-sh
 intltool-*
 libtool
@@ -26,6 +27,9 @@ aclocal.m4
 gnome-doc-utils.make
 Makefile
 Makefile.in
+data/bijiben.desktop
+data/org.gnome.bijiben.gschema.valid
+data/org.gnome.bijiben.gschema.xml
 m4/intltool.m4
 m4/libtool.m4
 m4/ltoptions.m4
@@ -38,4 +42,6 @@ po/Makefile.in.in
 po/POTFILES
 po/*.gmo
 po/*.pot
+src/bijiben
+src/libbiji.a
 
