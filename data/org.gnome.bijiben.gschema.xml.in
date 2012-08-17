@@ -1,0 +1,19 @@
+<schemalist>
+  <schema path="/org/gnome/bijiben/" id="org.gnome.bijiben">
+    <key type="b" name="case-sensitive-search">
+      <default>false</default>
+      <summary>Case sensitive search</summary>
+      <description>If true, main view will suck you soul.</description>
+    </key>
+    <key type="s" name="font">
+      <default>'Serif 11'</default>
+      <summary>Custom Font Face</summary>
+      <description>If enable-custom-font is true, the font name set here will be used as the font when displaying notes.</description>
+    </key>
+    <key type="s" name="highlight-color">
+      <default>'Red'</default>
+      <summary>The color when text is highlighted.</summary>
+      <description>When you do highlight text, the color will come from that string. Please do enter valid string.</description>
+    </key>
+  </schema>
+</schemalist>

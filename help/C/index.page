@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<page xmlns="http://projectmallard.org/1.0/" xmlns:e="http://projectmallard.org/experimental/" type="guide" id="index" xml:lang="en_GB">
+
+  <info>
+    <license>
+	<p>GNU Free Documentation License (GFDL), Version 1.1</p>
+    </license>
+    <credit type="author">
+      <name>Pierre-Yves Luyten</name>
+      <years>2012</years>
+    </credit>
+  </info>
+
+  <title>Bijiben Help</title>
+
+    <section id="introduction">
+    <title>Introduction</title>
+    <media type="image" src="figures/bijiben-note.png" mime="image/png" style="right"/>
+    <p>Bijiben is first a design attempt, related to tracker tags but also other trials.</p>
+    <p>Bijiben tries to gather all file and text management into a distinct (static) lib.</p>
+    <p>Bijiben was first created to learn coding. But it's now an attempt to propose https://live.gnome.org/Design/Apps/Notes#Tentative_Design.</p>
+    </section>
+</page>

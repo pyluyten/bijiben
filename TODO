@@ -1,0 +1,21 @@
+   UI ENHANCEMENT
+ * show notes on main view (instead simple icons)
+ * show lines for note editor 
+ * replace bottom toolbar with proper right click menu on note editor
+ * show last update on note bottom
+
+   IMPORTANT BUGS
+ * opening note is more or less broken
+ * search takes either tags or notes, not both
+ * tags window is complety broken and  outside of scope.
+
+   MINOR BUGS
+ * gnome-activity-journal cannot open notes.
+ * only changing color won't make note saved.
+
+   ROADMAP
+ * gnome online account
+ * export to "memo" (vjournal). maybe work with eds-data-server
+
+   MINOR UPDATES
+ * GtkMenuButton
