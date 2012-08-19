@@ -10,6 +10,7 @@
 #include "bjb-main-view.h"
 #include "bjb-note-view.h"
 
+
 #define BJB_WIDTH 600
 #define BJB_HEIGHT 500
 
@@ -69,24 +70,64 @@ biji_main_window_constructor (GType                  gtype,
 static void
 biji_main_window_finalize (GObject *object)
 {
-	/*FIXME : should g list free full the notes*/
+	/* TODO */
+}
+
+static void
+bjb_main_window_get_property (GObject    *object,
+                              guint       property_id,
+                              GValue     *value,
+                              GParamSpec *pspec)
+{
+  BijiMainWindow *self = BIJI_MAIN_WINDOW (object);
+
+  switch (property_id)
+    {
+    case PROP_GTK_APP:
+      g_value_set_object (value, self->priv->app);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
+static void
+bjb_main_window_set_property (GObject    *object,
+                              guint       property_id,
+                              const GValue *value,
+                              GParamSpec *pspec)
+{
+  BijiMainWindow *self = BIJI_MAIN_WINDOW (object);
+
+  switch (property_id)
+    {
+    case PROP_GTK_APP:
+	  bjb_main_window_set_application(self,g_value_get_object(value));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
 }
 
 static void
 biji_main_window_class_init (BijiMainWindowClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+    
   gobject_class->constructor = biji_main_window_constructor;
+  gobject_class->get_property = bjb_main_window_get_property;
+  gobject_class->set_property = bjb_main_window_set_property;
   gobject_class->finalize = biji_main_window_finalize ;
 
-
-  /*
   g_object_class_install_property (gobject_class,PROP_GTK_APP,
-                                   g_param_spec_pointer ("bjb-app",
-							                		     "Bjb App",
-                                                         "Bjb App",
-							                              G_PARAM_READWRITE));
-														  */
+                                   g_param_spec_object ("gtk-application",
+							                		    "Gtk-Application",
+                                                        "Gtk Application",
+                                                        GTK_TYPE_APPLICATION,
+							                            G_PARAM_READWRITE));
+														  
 	
   g_type_class_add_private (klass, sizeof (BijiMainWindowPriv));
 }
@@ -129,7 +170,8 @@ main_window_get_note_pixbuf(GtkWidget *window)
   return win->priv->note_pixbuf ;
 }
 
-static GdkPixbuf *
+/* TODO move to utils/xxx.c */
+GdkPixbuf *
 get_note_pixbuf()
 {
   GdkPixbuf *note_pixbuf ;
@@ -330,4 +372,8 @@ biji_win_get_entry(GtkWidget *win)
   return bmw->priv->entry ;
 }
 
-
+void
+bjb_main_window_set_application ( BijiMainWindow *self, GtkApplication *app)
+{
+    self->priv->app = app ;
+}

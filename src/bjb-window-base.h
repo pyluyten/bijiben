@@ -4,6 +4,8 @@
 #include <gtk/gtk.h>
 #include <libbiji/libbiji.h>
 
+#include "bjb-settings.h"
+
 
 
 /* The main window has three possible states
@@ -47,16 +49,31 @@ GtkWindow * create_main_window_with_notes(GtkApplication *app) ;
 // Accessor 
 PangoFontDescription *window_base_get_font(GtkWidget *window);
 GdkPixbuf * main_window_get_note_pixbuf(GtkWidget *window);
+
+GdkPixbuf * get_note_pixbuf() ;
+
 void main_window_set_frame(gpointer win,GtkContainer *frame);
+
 GtkContainer * main_window_get_frame(gpointer win);
+
 gpointer main_window_get_app(GtkWidget *win);
+
+void bjb_main_window_set_application ( BijiMainWindow *self, GtkApplication *app);
+
 BjbSettings *main_window_get_settings(GtkWidget *win);
+
 BijiNoteBook * bijiben_window_get_book(GtkWidget * win);
+
 void biji_win_set_book(GtkWidget * win, BijiNoteBook *notes);
+
 GList * biji_win_get_tags(GtkWidget * win);
+
 void biji_win_set_tags(GtkWidget * win, GList * tags);
+
 void biji_win_set_entry(GtkWidget *win, gchar *search_entry) ;
+
 void biji_win_delete_entry(GtkWidget *win);
+
 gchar * biji_win_get_entry(GtkWidget *win) ;
 
 // DEBUG 
