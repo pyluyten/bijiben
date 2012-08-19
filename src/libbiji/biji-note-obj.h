@@ -64,6 +64,7 @@ gchar * _biji_note_obj_get_title(BijiNoteObj *obj);
 gchar* get_note_path (BijiNoteObj *n);
 BijiNoteID* note_get_id(BijiNoteObj *n);
 int set_note_last_change_date(BijiNoteObj* n,gchar* date) ;
+glong biji_note_obj_get_last_change_date_sec ( BijiNoteObj *n ) ;
 int set_note_last_metadata_change_date(BijiNoteObj* n,gchar* date) ;
 int set_note_create_date(BijiNoteObj* n,gchar* date);
 int get_note_status(BijiNoteObj* n);

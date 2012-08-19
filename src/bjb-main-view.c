@@ -4,10 +4,14 @@
 #include "utils/bjb-icons-colors.h"
 #include "widgets/bjb-menu-tool.h"
 #include "widgets/gd-main-toolbar.h"
-
+#include "widgets/gd-main-icon-view.h"
+#include "widgets/gd-main-view.h"
+#include "widgets/gd-main-view-generic.h"
+#include "widgets/bjb-view-mode-button.h"
 
 #include "bjb-app-menu.h"
 #include "bjb-bijiben.h"
+#include "bjb-controller.h"
 #include "bjb-tracker.h"
 #include "bjb-main-view.h"
 #include "bjb-note-view.h"
@@ -18,50 +22,43 @@
 
 /************************** Gobject ***************************/
 
-typedef enum {
-  ORDER_BY_LAST ,
-  ORDER_BY_TITLE
-} NoteViewSort ;
-
-// wheter users is selecting notes
-typedef enum {
-  BJB_SELECTION_NONE,
-  BJB_SELECTION_MULTIPLE
-} ViewMode ;
-
-
 struct _BjbMainViewPriv {
   GtkWidget      *window;
   GtkWidget      *icon_view ;
   GtkWidget      *vbox;
   GtkWidget      *standard_toolbar; 
 
-  /* Notes */
-  GtkTreeStore   *store ;
-  GList          *notes_to_show ;
-  NoteViewSort    sort_type ;
+  /* TODO Properties */ 
 
-  /* Selection */
-  ViewMode        mode ;
+  /* Selection TODO : use one clutter widget */
   GtkWidget      *select_toolbar;
   GtkWidget      *label;
   GtkToolItem    *finish_selection ;
   GtkWidget      *actions ;  // actions bar for selected notes.
 
-  /* Search Entry */
-  GtkWidget      *vbox_up ; // FIXME remove this one. 
+  /* Search Entry TODO : use clutter instead */
+  GtkWidget      *vbox_up ;  
   GtkWidget      *hbox_entry ;
   GtkWidget      *search_entry ;
   gboolean        has_entry ;
 
+  /* Private */ 
+  GdMainView     *view ; 
+  BjbController  *controller ;
+
   /* signals */
-  gulong notes_changed ;               // I don't remember this one.
-  gulong click_signal ;          // Icon view selection changed
+  gulong notes_changed ;         // 
+  
+  gulong click_signal ;          // Signal to delete (icon view)
+  
   gulong key_pressed ;           // a key pressed shows the entry.
+                                 // FIXME : delete when search bar done.
 };
 
 G_DEFINE_TYPE (BjbMainView, bjb_main_view, GTK_TYPE_BOX);
 
+/* TODO : make this initialization correct
+ * instead bjb_main_view_new */
 static void
 bjb_main_view_init (BjbMainView *object)
 {
@@ -70,21 +67,14 @@ bjb_main_view_init (BjbMainView *object)
 
   object->priv->window = NULL;
   object->priv->search_entry = NULL;
-  object->priv->sort_type = ORDER_BY_LAST ;
   object->priv->standard_toolbar = NULL ;
   object->priv->select_toolbar = NULL ;
-  object->priv->mode = BJB_SELECTION_NONE ;
 }
 
 static void
 bjb_main_view_finalize (GObject *object)
 {
   BjbMainView *view = BJB_MAIN_VIEW(object) ;
-  
-  if ( view->priv->notes_to_show != NULL )
-  {
-    g_list_free(view->priv->notes_to_show) ;
-  }
 
   g_signal_handler_disconnect(bijiben_window_get_book(view->priv->window),
                               view->priv->notes_changed);
@@ -93,13 +83,15 @@ bjb_main_view_finalize (GObject *object)
 }
 
 static void
-bjb_main_view_set_property (GObject      *object,
-			                guint         prop_id,
-			                const GValue *value,
-			                GParamSpec   *pspec)
+bjb_main_view_set_property (GObject       *object,
+			                guint          prop_id,
+			                const GValue  *value,
+			                GParamSpec    *pspec)
 {
+  /* TODO */
 }
 
+/* TODO static  void bjb_main_view_get_property */
 
 static GObject *
 biji_main_view_constructor (GType                  gtype,
@@ -126,132 +118,66 @@ bjb_main_view_class_init (BjbMainViewClass *klass)
 }
 
 
-
+/* TODO delete this */
 BijiNoteBook *
 bjb_main_view_get_book(BjbMainView *view)
 {
   return bijiben_window_get_book(view->priv->window);
 }
 
-/*********************** Notes View (icon grid)********************/
-enum
-{
-  COL_TITLE,
-  COL_PIXBUF,
-  COL_SELECT,
-  COL_PATH,
-  NUM_COLS
-};
-
 static void
-append_note_to_iter ( BijiNoteObj *n, BjbMainView *view)
+on_selection_mode_changed ( GtkWidget *button, BjbMainView *self)
 {
-  GtkTreeIter iter;
-  GtkTreeStore *store = view->priv->store ;
-  GdkPixbuf *pixbuf = main_window_get_note_pixbuf(view->priv->window);
+    GtkWidget *actions ;
     
-  if ( biji_note_obj_is_template(n) == FALSE )
-	{
-      gtk_tree_store_append(store,&iter,NULL);
-      gtk_tree_store_set(store,&iter,
-                         COL_TITLE,biji_note_get_title(n),
-                         COL_PIXBUF,pixbuf,
-                         COL_SELECT,pixbuf,
-                         COL_PATH,note_obj_get_path(n),
-                         -1);
-	}
-}
+    if ( gd_main_view_get_selection_mode(self->priv->view))
+    {
+        gd_main_view_set_selection_mode ( self->priv->view , FALSE ) ;
+        
+        gtk_widget_destroy (self->priv->actions);
 
-static void
-main_view_set_notes_to_show(BjbMainView *view, GList *notes)
-{
-  if ( view->priv->notes_to_show != NULL )
-  {
-    g_list_free(view->priv->notes_to_show);
-  }
+        gtk_widget_show_all(self->priv->standard_toolbar);
+        gtk_widget_hide(self->priv->select_toolbar);
+    }
 
-  view->priv->notes_to_show = notes ;
-}
+    else
+    {
+        gd_main_view_set_selection_mode ( self->priv->view , TRUE ) ;
+        actions = get_selection_panel (self) ;
+        self->priv->actions = actions;
+        gtk_widget_show_all ( actions ) ;
 
-glong
-most_recent_note_first ( BijiNoteObj *a, BijiNoteObj *b)
-{
-  glong result = biji_note_id_get_last_change_date_sec(note_get_id(b));
-  return result - biji_note_id_get_last_change_date_sec(note_get_id(a));
-}
-
-static void
-sort_notes (BjbMainView *view)
-{
-  if ( view->priv->sort_type == ORDER_BY_LAST )
-  {
-    view->priv->notes_to_show = g_list_sort(view->priv->notes_to_show,
-                                            (GCompareFunc)most_recent_note_first);
-  }
-  else 
-  {
-    g_message("MAIN VIEW ! Critcial ! cannot sort notes with %i sort type",
-              view->priv->sort_type );
-  }                                          
-}
-
-static void
-update_notes (BjbMainView *view)
-{
-  gtk_tree_store_clear (view->priv->store);
-  sort_notes(view);
-  g_list_foreach (view->priv->notes_to_show,(GFunc)append_note_to_iter,view);
-}
-
-static void
-on_selection_mode_changed ( GtkWidget *button, BjbMainView *view)
-{
-  /* Go to SELECTION MODE. Allow Clicking notes to select.
-   * Deactivate opening notes. */
-	
-  if ( view->priv->mode == BJB_SELECTION_NONE )
-  {
-    view->priv->mode = BJB_SELECTION_MULTIPLE ;
-    BIJI_DEBUG("switch to selection mode")
-
-    gtk_icon_view_set_selection_mode (GTK_ICON_VIEW (view->priv->icon_view),
-                                      GTK_SELECTION_MULTIPLE);
-
-    gtk_icon_view_set_pixbuf_column (GTK_ICON_VIEW(view->priv->icon_view),
-	                                 COL_SELECT);
-
-    GtkWidget * actions = get_selection_panel(view);
-    view->priv->actions = actions;
-    gtk_widget_show_all(actions);
-
-
-    hide_search_entry(view);
+        hide_search_entry(self);
       
-    gtk_box_pack_start(GTK_BOX(view->priv->vbox),actions,FALSE,FALSE,0);
-    gtk_widget_hide(view->priv->standard_toolbar);
-    gtk_widget_show_all(view->priv->select_toolbar);
-	
-  }
+        gtk_box_pack_start(GTK_BOX(self->priv->vbox),actions,FALSE,FALSE,0);
+        gtk_widget_hide(self->priv->standard_toolbar);
+        gtk_widget_show_all(self->priv->select_toolbar);
+        
+    }
 
-  /* Return to classic mode. No selection.  */
-	
-  else
-  { 
-    g_message("switch back to normal mode");
-    view->priv->mode = BJB_SELECTION_NONE ;
-	  
-    gtk_icon_view_unselect_all(GTK_ICON_VIEW(view->priv->icon_view));
+    return ;
 
-	  gtk_icon_view_set_selection_mode (GTK_ICON_VIEW (view->priv->icon_view),
-                              GTK_SELECTION_SINGLE);  //      GTK_SELECTION_NONE);
+}
 
-    gtk_widget_destroy (view->priv->actions);
-
-    gtk_widget_show_all(view->priv->standard_toolbar);
-    gtk_widget_hide(view->priv->select_toolbar);
-	
-  }
-
+static gboolean
+on_view_mode_changed ( GtkWidget *button, BjbMainView *self)
+{
+    BjbViewModeButton *bvmb = BJB_VIEW_MODE_BUTTON ( button ) ;
+    GdMainView *view = self->priv->view ;
+    
+    BjbViewModeType current = bjb_view_mode_button_get_selection_mode  ( bvmb ) ;
+    
+    switch ( current )
+    {
+        case BJB_VIEW_MODE_GRID :
+            gd_main_view_set_view_type ( view ,GD_MAIN_VIEW_LIST );
+            break ;
+        default : 
+            gd_main_view_set_view_type ( view ,GD_MAIN_VIEW_ICON );
+            break ;
+    }
+    
+    return FALSE ;
 }
 
 // Callbacks
@@ -262,6 +188,7 @@ switch_to_note_view(BjbMainView *view,BijiNoteObj *note)
   /* Sanitize */
   g_signal_handler_disconnect(view->priv->window,
                               view->priv->key_pressed) ;
+  view->priv->key_pressed = 0 ;
     
   GtkWidget *win = view->priv->window;
   main_window_set_frame((gpointer)win,
@@ -274,116 +201,20 @@ switch_to_note_view(BjbMainView *view,BijiNoteObj *note)
 
 static void
 clear_search_entry_callback(GtkEntry *entry,GtkEntryIconPosition icon_pos,
-                            GdkEvent *event,BjbMainView *view)
+                            GdkEvent *event,BjbMainView *self)
 {
-  gtk_entry_set_text(entry,"");
-  BijiNoteBook *book = bijiben_window_get_book(view->priv->window);
-  main_view_set_notes_to_show(view,biji_note_book_get_notes(book));
-  update_notes(view);
-}
 
-void
-update_notes_with_tag_search(BjbMainView *view, gchar *needle)
-{
-  GList *notes_to_show = NULL ;
-  gchar *tag  = g_strdup(needle);        // tag=toto
+    gtk_entry_set_text(entry,"");
+    bjb_controller_set_needle(self->priv->controller,"");
 
-  tag = g_utf8_strreverse(tag,-1);       // otot=gat
-  glong size = g_utf8_strlen (tag,-1) ;
-  g_utf8_strncpy(tag,tag,size-4);        // otot
-  tag = g_utf8_strreverse(tag,-1);       // toto
-
-  BijiNoteBook *book = bijiben_window_get_book(view->priv->window);
-  notes_to_show = biji_note_book_get_notes_with_tag_prefix(book,tag);
-  g_free(tag);
-    
-  // 2. update the view
-  main_view_set_notes_to_show(view,notes_to_show);
-  update_notes(view);
-}
-
-void
-update_notes_with_string_search(BjbMainView *view, gchar *needle)
-{
-  gint i ;
-  BijiNoteBook *book = bijiben_window_get_book(view->priv->window);
-  GList *cur_notes = biji_note_book_get_notes(book);
-  GList *notes_to_show = NULL ;
-
-  for ( i=0 ; i < g_list_length (cur_notes) ; i++ )
-  {
-    BijiNoteObj *cur = g_list_nth_data (cur_notes,i) ;
-    if (g_strrstr(
-                  g_utf8_casefold(biji_note_get_raw_text(cur),-1),
-                  g_utf8_casefold(needle,-1)))
-    {
-      notes_to_show = g_list_append(notes_to_show,cur);
-    }
-  }
-
-  // update the view
-  main_view_set_notes_to_show(view,notes_to_show);
-  update_notes(view);
 }
 
 static void
-show_all_notes(BjbMainView *view)
-{
-  BijiNoteBook *book = bijiben_window_get_book(view->priv->window);
-  main_view_set_notes_to_show(view,biji_note_book_get_notes(book));
-  update_notes(view);                                                       
-}
-
-/* Fix this to look for both notes and tags */
-static void
-update_notes_switch(BjbMainView *view, gchar *needle)
-{
-  // No needle.
-  if ( needle == NULL )
-  {
-    show_all_notes(view);
-    return ;
-  }
-
-  // No-tag Notes
-  if ( g_strcmp0 (needle,"!tag") == 0 )
-  {
-     BijiNoteBook *book = bjb_main_view_get_book(view);
-     GList *notes_to_show = biji_note_book_get_no_tag_notes(book);
-     main_view_set_notes_to_show(view,notes_to_show);
-     update_notes(view);
-     return ;
-  }
-
-  // Search notes with a tag
-  if ( g_str_has_prefix (needle,"tag=") == TRUE )
-  {
-    if ( g_utf8_strlen(needle, -1) > 5 )
-    {
-      update_notes_with_tag_search(view,needle);
-    }
-    return ;
-  }
-		
-  // Only search with 4+ char.
-  if (g_utf8_strlen(needle, -1) > 3 )
-  {
-    update_notes_with_string_search(view,needle);
-  	return ;
-  }
-  else
-  {
-    show_all_notes(view);
-    return ;
-  }
-}
-
-static void
-action_search_entry(GtkEntry *entry,BjbMainView *view)
+action_search_entry(GtkEntry *entry,BjbMainView *self)
 {
   gchar *search = g_strdup(gtk_entry_get_text(entry));
-  update_notes_switch(view,search);
-  //g_free(search);
+  bjb_controller_set_needle ( self->priv->controller, search ) ;
+    
 }
 
 static void
@@ -418,8 +249,7 @@ action_new_note_callback(GtkMenuItem *item,BjbMainView *view)
     return ;
   }
 
-  /* append note to collection
-   * FIXME this is suppose to sanitize title. */ 
+  /* append note to collection */
   book = bijiben_window_get_book(view->priv->window);
   gchar *folder = g_strdup_printf("%s/bijiben",g_get_user_data_dir());
   result = biji_note_get_new_from_string(title,folder);
@@ -429,67 +259,6 @@ action_new_note_callback(GtkMenuItem *item,BjbMainView *view)
   /* Go to that note */
   switch_to_note_view(view,result);
   note_obj_save_note_using_buffer((gpointer)result);
-}
-
-static gchar *
-get_selected_note_path(BjbMainView *view)
-{
-  // Get the tag.
-  GtkTreeIter iter;
-  GtkTreeModel *model ;
-  GtkTreePath *path = NULL  ;
-  GtkIconView *tree ;
-  GtkCellRenderer *column = NULL ;
-  gchar *note_path ;
-
-  tree = (GtkIconView*)view->priv->icon_view;
-  model = gtk_icon_view_get_model(tree);
-  gtk_icon_view_get_cursor(tree,&path,&column);
-
-  if ( path == NULL )
-  {
-    return NULL ;
-  }
-    
-  gtk_tree_model_get_iter (model,&iter, path);
-  gtk_tree_model_get (model, &iter,COL_PATH, &note_path,-1);
-  gtk_tree_path_free(path);
-
-  return note_path;
-}
-
-static BijiNoteObj *
-get_selected_note(BjbMainView *view)
-{
-  return note_book_get_note_at_path(bijiben_window_get_book(view->priv->window),
-                                    get_selected_note_path(view));
-}
-
-void
-action_new_window_callback(GtkAction *action, gpointer bjb_main_view)
-{
-  BjbMainView *view = BJB_MAIN_VIEW(bjb_main_view);
-  BijiNoteObj *note = get_selected_note(view) ;
-
-  if ( note == NULL )
-    return ;
-    
-  GtkWidget *window = bjb_main_view_get_window(view) ; 
-  gpointer app = main_window_get_app(window);
-  create_new_window_for_note(app , note) ;
-}
-
-
-static GtkTreeStore *
-notes_grid (void)
-{
-  GtkTreeStore *store;
-  store = gtk_tree_store_new (NUM_COLS,
-                              G_TYPE_STRING,
-                              GDK_TYPE_PIXBUF,
-                              GDK_TYPE_PIXBUF,
-                              G_TYPE_STRING);
-  return store;
 }
 
 static void
@@ -521,131 +290,28 @@ switch_to_note(BjbMainView *view, BijiNoteObj *to_open)
   switch_to_note_view(view,to_open);
 }
 
-/* Not used directly  */
 static void
-action_switch_to_note_callback(GtkIconView *icon,
-                               GtkTreePath *path,
-                               BjbMainView *view)
+update_selection_label(BjbMainView *bmv)
 {
-  g_return_if_fail(GTK_IS_ICON_VIEW(icon));
-  g_return_if_fail(BJB_IS_MAIN_VIEW(view));
+    gint selected = 0 ;
+    GdMainView *view = bmv->priv->view ;
 
-  /* GET THE NOTE INDEX FIXME this func is written elsewhre...*/
-  gchar *note_path;
-  GtkTreeIter iter;
-  GtkTreeModel *model = GTK_TREE_MODEL (view->priv->store);
-  gtk_tree_model_get_iter (model,&iter, path);
-  gtk_tree_model_get (model, &iter,COL_PATH, &note_path,-1);
+    if ( view )
+    {
+       selected = g_list_length (gd_main_view_get_selection(view)) ;
+       
+       if ( selected < 1 )
+       {
+            gtk_label_set_text(GTK_LABEL(bmv->priv->label),
+                               "Click on Notes to Select");
 
-  /* GET THAT NOTE AND JUMP TO IT. */ 
-  BijiNoteBook *book = bijiben_window_get_book(view->priv->window); 
-  BijiNoteObj *to_open = note_book_get_note_at_path(book,note_path) ;
+            return ;
+       }
+    }
 
-  switch_to_note(view,to_open);
-}
-
-
-/* shows number of selected notes or so */
-static void
-update_selection_label(BjbMainView *bmv,gint notes)
-{
-  g_message("update label, %i",notes);
-
-  if ( notes == 0 )
-  {
-    gtk_label_set_text(GTK_LABEL(bmv->priv->label),
-                       "Click on Notes to Select");
-  }
-
-  else 
-  {
-    gchar *text  = g_strdup_printf("%i Notes Selected",notes);
-    gtk_label_set_text(GTK_LABEL(bmv->priv->label),text);
-  }
-
-        
-}
-
-/* either correct this (because of scrollbar, x y does not indicate note 
- * or delete this one to keep below "on selection changed" */
-static gboolean
-on_button_press_event (GtkWidget *view,
-                       GdkEventButton *event,
-                       BjbMainView *bmv)
-{
-  GtkIconView *giv = GTK_ICON_VIEW(bmv->priv->icon_view);
-    
-  /* Get the note */
-  /* gtk_icon_view_get_dest_item_at_pos does NOT work because scrollbar */
-  GtkTreePath *note = NULL;
-  note = gtk_icon_view_get_path_at_pos(giv,(gint) event->x, (gint) event->y ) ;
-    
-  if ( !note )
-    return TRUE ; 
-  
-  /* NORMAL_MODE => Switch to this note */
-  if ( bmv->priv->mode == BJB_SELECTION_NONE )
-  {
-    action_switch_to_note_callback(giv,note,bmv);
-    return TRUE ;
-  }
-
-  /* SELECTION_MODE => Add or Remove note to selection */
-  if ( gtk_icon_view_path_is_selected(giv,note) )
-  {
-    gtk_icon_view_unselect_path(giv,note);
-  }
-  else
-  {
-    gtk_icon_view_select_path(giv,note);
-  }
-
-  gint number = g_list_length(gtk_icon_view_get_selected_items (giv));
-  update_selection_label(bmv,number);
-    
-  return TRUE ;
-}
-
-static GtkWidget *
-create_icon_view(BjbMainView *self)
-{
-  GtkWidget * sw;
-  gchar *needle = biji_win_get_entry(self->priv->window);
-    
-  sw = gtk_scrolled_window_new (NULL, NULL);
-  gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (sw),
-                                       GTK_SHADOW_ETCHED_IN);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
-                                  GTK_POLICY_AUTOMATIC,
-                                  GTK_POLICY_AUTOMATIC);
-  self->priv->store = notes_grid() ;
-
-  // Show the proper notes according to the string search
-  update_notes_switch(self, needle);
-    
-  self->priv->icon_view = gtk_icon_view_new_with_model(GTK_TREE_MODEL(self->priv->store));
-  gtk_icon_view_set_selection_mode (GTK_ICON_VIEW (self->priv->icon_view),
-                                     GTK_SELECTION_SINGLE);
-  g_object_unref (self->priv->store); // 
-
-  gtk_icon_view_set_text_column (GTK_ICON_VIEW (self->priv->icon_view), 
-                                 COL_TITLE);
-
-  gtk_icon_view_set_pixbuf_column (GTK_ICON_VIEW (self->priv->icon_view), 
-                                   COL_PIXBUF);
-
-  self->priv->click_signal = g_signal_connect(self->priv->icon_view,
-                                              "button-press-event",
-                                              G_CALLBACK(on_button_press_event),
-                                              self); 
-
-  /* self->priv->click_signal = g_signal_connect(self->priv->icon_view,
-                                              "selection_changed",
-                                              G_CALLBACK(on_selection_changed),
-                                              self); */
-
-  gtk_container_add (GTK_CONTAINER (sw), self->priv->icon_view);
-  return sw;
+    /* No note selected or no gd main view yet */
+    gchar *text  = g_strdup_printf("%i Notes Selected",selected);
+    gtk_label_set_text(GTK_LABEL(bmv->priv->label),text);    
 }
 
 /* Toolbar */
@@ -664,8 +330,6 @@ create_completion_model (void)
 
   return GTK_TREE_MODEL (store);
 }
-
-
 
 static GtkWidget *
 create_standard_toolbar(BjbMainView *parent)
@@ -694,20 +358,24 @@ create_standard_toolbar(BjbMainView *parent)
   GtkWidget *la = gtk_label_new("New and Recent");
   GtkToolItem *iter = gtk_tool_button_new(la,NULL);
   gtk_toolbar_insert(tool,iter,-1);
-
   
   space_r = gtk_separator_tool_item_new(); 
   gtk_separator_tool_item_set_draw(GTK_SEPARATOR_TOOL_ITEM(space_r),FALSE);
   gtk_tool_item_set_expand(space_r,TRUE);
   gtk_toolbar_insert(tool,space_r,-1); 
+
+  /* switch view button */
+  iter = GTK_TOOL_ITEM ( bjb_view_mode_button_new (BJB_VIEW_MODE_GRID) );
+  g_signal_connect ( iter, "clicked",
+                    G_CALLBACK(on_view_mode_changed),parent);
+  gtk_toolbar_insert(tool,iter,-1); 
 	
   /* select button */
   GtkWidget *check = get_icon("emblem-default-symbolic") ;
-  GtkToolItem *select ;
-  select = gtk_tool_button_new(check,NULL);
-  g_signal_connect(select,"clicked",
+  iter = gtk_tool_button_new(check,NULL);
+  g_signal_connect(iter,"clicked",
                    G_CALLBACK(on_selection_mode_changed),parent);
-  gtk_toolbar_insert (tool,select,-1); 
+  gtk_toolbar_insert (tool,iter,-1); 
 	
   return ret ;	
 }
@@ -730,7 +398,7 @@ create_selection_toolbar(BjbMainView *parent)
   gtk_toolbar_insert(tool,space_l,-1);
 
   parent->priv->label = gtk_label_new("");
-  update_selection_label(parent,0);
+  update_selection_label(parent);
   GtkToolItem *item = gtk_tool_button_new(parent->priv->label,NULL);
   gtk_toolbar_insert(tool,item,-1);
 
@@ -825,7 +493,7 @@ on_key_pressed(GtkWidget *widget,GdkEvent  *event,gpointer user_data)
   BjbMainView *view = BJB_MAIN_VIEW (user_data);
 
   /* Do not allow search when selecting items */
-  if ( view->priv->mode == BJB_SELECTION_MULTIPLE )
+  if ( gd_main_view_get_selection_mode(view->priv->view)==TRUE )
   {
     return TRUE ;
   }
@@ -866,34 +534,28 @@ on_key_pressed(GtkWidget *widget,GdkEvent  *event,gpointer user_data)
 
 
 static gboolean
-on_book_changed(BijiNoteBook *book, BjbMainView *view )
+on_book_changed(BijiNoteBook *book, BjbMainView *self )
 {
-  update_notes_switch(view,
-                      (gchar*) gtk_entry_get_text(
-                                           GTK_ENTRY(
-                                                 view->priv->search_entry)));
+  refresh_notes_model(self->priv->controller);
   return TRUE ;
 }
 
 static GList *
-get_selected_paths(BjbMainView *v)
+get_selected_paths(BjbMainView *self)
 {
-  return gtk_icon_view_get_selected_items (GTK_ICON_VIEW(v->priv->icon_view));
+    return gd_main_view_get_selection ( self->priv->view ) ; 
 }
 
 static gchar *
-get_note_url_from_tree_path(GtkTreePath *path, BjbMainView *view)
+get_note_url_from_tree_path(GtkTreePath *path, BjbMainView *self)
 {
   GtkTreeIter iter ;
   gchar *note_path ;
   GtkTreeModel *model ;
 
-  model = gtk_icon_view_get_model(GTK_ICON_VIEW(view->priv->icon_view));
-
-    
+  model = bjb_controller_get_model(self->priv->controller);  
   gtk_tree_model_get_iter (model,&iter, path);
-  gtk_tree_model_get (model, &iter,COL_PATH, &note_path,-1);
-  //gtk_tree_path_free(path);
+  gtk_tree_model_get (model, &iter,GD_MAIN_COLUMN_URI, &note_path,-1);
 
   return note_path ;
 }
@@ -903,7 +565,9 @@ void action_delete_selected_notes(GtkWidget *w,BjbMainView *view)
   GList *notes = NULL ;
   gint i ; 
 
+  /*  GtkTreePath */
   GList *paths = get_selected_paths(view);
+    
   for ( i=0 ;  i < g_list_length (paths) ; i++ )
   {
     gchar *url = get_note_url_from_tree_path(g_list_nth_data(paths,i),
@@ -924,61 +588,102 @@ void action_delete_selected_notes(GtkWidget *w,BjbMainView *view)
   }
 }
 
+static gboolean
+on_item_activated(GdMainView        * gd, 
+                  const gchar       * id,
+                  const GtkTreePath * path,
+                  BjbMainView       * view)
+{
+  BijiNoteBook * book ;
+  BijiNoteObj  * to_open ;
+  GtkTreeIter    iter ;
+  gchar        * note_path ;
+  GtkTreeModel * model ;
+
+  /* Get Note Path */
+  model = gd_main_view_get_model(gd);
+  gtk_tree_model_get_iter (model,&iter, (GtkTreePath*) path);
+  gtk_tree_model_get (model, &iter,COL_URI, &note_path,-1);
+
+  /* Switch to that note */
+  book = bijiben_window_get_book(view->priv->window); 
+  to_open = note_book_get_note_at_path(book,note_path) ;
+  switch_to_note(view,to_open); 
+
+  return FALSE ;
+}
+
 BjbMainView*
 bjb_main_view_new(GtkWidget *win,BijiNoteBook *book)
 {
-  BjbMainView *ret ;
-  GtkWidget *vbox, *icon_view; 
+  BjbMainView *self ;
+  BjbController * controller ;
+  GtkWidget *vbox; 
     
-  ret = g_object_new(BJB_TYPE_MAIN_VIEW,NULL);
-  ret->priv->window = win ;
+  self = g_object_new(BJB_TYPE_MAIN_VIEW,NULL);
+  self->priv->window = win ;
     
-  ret->priv->vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
-  ret->priv->vbox_up = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
+  self->priv->vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
+  self->priv->vbox_up = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
 
-  vbox = ret->priv->vbox;
-  gtk_box_pack_start(GTK_BOX(ret),GTK_WIDGET(vbox),TRUE,TRUE,0);
-  gtk_box_pack_start(GTK_BOX(vbox),ret->priv->vbox_up,FALSE,FALSE,0);
+  vbox = self->priv->vbox;
+  gtk_box_pack_start(GTK_BOX(self),GTK_WIDGET(vbox),TRUE,TRUE,0);
+  gtk_box_pack_start(GTK_BOX(vbox),self->priv->vbox_up,FALSE,FALSE,0);
 
-  /* Create both toolbars */
-  ret->priv->standard_toolbar = create_standard_toolbar(ret);
-  gtk_box_pack_start(GTK_BOX(ret->priv->vbox_up),ret->priv->standard_toolbar,
+  /* FIXME : clutter toolbar. */
+  self->priv->standard_toolbar = create_standard_toolbar(self);
+  gtk_box_pack_start(GTK_BOX(self->priv->vbox_up),self->priv->standard_toolbar,
                      FALSE,FALSE,0) ;
 
-  ret->priv->select_toolbar = create_selection_toolbar(ret);
-  gtk_box_pack_start(GTK_BOX(ret->priv->vbox_up),ret->priv->select_toolbar,
+  /* FIXME : clutter toolbar. */
+  self->priv->select_toolbar = create_selection_toolbar(self);
+  gtk_box_pack_start(GTK_BOX(self->priv->vbox_up),self->priv->select_toolbar,
                      FALSE,FALSE,0) ;
-
-  /* Test on clutter toolbar */
-
 
   // Search entry is inside vbox up for test
-  ret->priv->has_entry = FALSE ;
-  ret->priv->key_pressed = g_signal_connect(ret->priv->window,"key-press-event",
-                                            G_CALLBACK(on_key_pressed),ret); 
-  ret->priv->hbox_entry = gtk_box_new ( GTK_ORIENTATION_HORIZONTAL,0);
+  self->priv->has_entry = FALSE ;
+  self->priv->key_pressed = g_signal_connect(self->priv->window,"key-press-event",
+                                            G_CALLBACK(on_key_pressed),self); 
+  self->priv->hbox_entry = gtk_box_new ( GTK_ORIENTATION_HORIZONTAL,0);
     
-  gtk_box_pack_start (GTK_BOX(ret->priv->hbox_entry),
-                      get_search_entry(ret),
+  gtk_box_pack_start (GTK_BOX(self->priv->hbox_entry),
+                      get_search_entry(self),
                       TRUE,FALSE,0) ;
 
-  gtk_box_pack_start (GTK_BOX(ret->priv->vbox_up),
-                      ret->priv->hbox_entry,
+  gtk_box_pack_start (GTK_BOX(self->priv->vbox_up),
+                      self->priv->hbox_entry,
                       FALSE,FALSE,0) ;
 
-  // Icon view (TODO or list view...)
-  icon_view = create_icon_view(ret) ;
-  gtk_box_pack_start(GTK_BOX(vbox),icon_view,TRUE,TRUE,0);
- 
-  gtk_window_set_title (GTK_WINDOW (win), BIJIBEN_MAIN_WIN_TITLE);
 
-  ret->priv->notes_changed = g_signal_connect(book,"changed",
-                                        G_CALLBACK(on_book_changed),ret);
-  return ret;
+    /* Controller to display notes */
+    
+    controller = bjb_controller_new(book ,
+                                    biji_win_get_entry(self->priv->window)) ;
+    self->priv->controller = controller ;
+
+    self->priv->view = gd_main_view_new(GD_MAIN_VIEW_LIST);
+    gtk_box_pack_start(GTK_BOX(vbox),
+                       GTK_WIDGET(self->priv->view),
+                       TRUE,
+                       TRUE,
+                       0);
+
+    gd_main_view_set_selection_mode ( self->priv->view, FALSE);
+    gd_main_view_set_model(self->priv->view,
+                           bjb_controller_get_model(controller));
+
+    g_signal_connect(self->priv->view,"item-activated",
+                     G_CALLBACK(on_item_activated),self);
+ 
+    gtk_window_set_title (GTK_WINDOW (win), BIJIBEN_MAIN_WIN_TITLE);
+
+    self->priv->notes_changed = g_signal_connect(book,"changed",
+                                        G_CALLBACK(on_book_changed),self);
+    return self;
 }
 
 GtkWidget *
 bjb_main_view_get_window(BjbMainView *view)
 {
-  return view->priv->window ;
+    return view->priv->window ;
 }

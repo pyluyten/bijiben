@@ -237,6 +237,12 @@ set_note_last_change_date(BijiNoteObj* n,gchar* date)
   return 0 ;
 }
 
+glong 
+biji_note_obj_get_last_change_date_sec ( BijiNoteObj *n )
+{
+    return biji_note_id_get_last_change_date_sec(note_get_id(n)); 
+}
+
 int
 set_note_last_metadata_change_date(BijiNoteObj* n,gchar* date)
 {

@@ -23,6 +23,8 @@ bijiben_SOURCES = \
 	bjb-app-menu.h \
 	bjb-bijiben.h \
 	bjb-bijiben.c \
+    bjb-controller.c \
+    bjb-controller.h \
 	bjb-debug.h \
 	bjb-debug.c \
 	bjb-main.c \
@@ -40,8 +42,6 @@ bijiben_SOURCES = \
 	bjb-share.h \
 	bjb-tags-view.h \
 	bjb-tags-view.c \
-	bjb-toggle-pixbuf-renderer.c \
-	bjb-toggle-pixbuf-renderer.h \
 	bjb-tracker.c \
 	bjb-tracker.h \
 	bjb-window-base.c \
@@ -50,8 +50,22 @@ bijiben_SOURCES = \
 	bjb-zeitgeist-dataprovider.c \
 	widgets/bjb-menu-tool.c \
 	widgets/bjb-menu-tool.h \
+    widgets/bjb-view-mode-button.c \
+    widgets/bjb-view-mode-button.h \
+	widgets/gd-main-icon-view.c \
+	widgets/gd-main-icon-view.h \
 	widgets/gd-main-toolbar.c \
 	widgets/gd-main-toolbar.h \
+	widgets/gd-main-list-view.c \
+	widgets/gd-main-list-view.h \
+	widgets/gd-main-view.c \
+	widgets/gd-main-view.h \
+	widgets/gd-main-view-generic.c \
+	widgets/gd-main-view-generic.h \
+	widgets/gd-toggle-pixbuf-renderer.c \
+	widgets/gd-toggle-pixbuf-renderer.h \
+	widgets/gd-two-lines-renderer.c \
+	widgets/gd-two-lines-renderer.h \
 	utils/bjb-icons-colors.c \
 	utils/bjb-icons-colors.h 
 
