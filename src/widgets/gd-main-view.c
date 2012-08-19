@@ -40,7 +40,7 @@ struct _GdMainViewPrivate {
 
 enum {
   PROP_VIEW_TYPE = 1,
-  PROP_SELECTION_MODE,
+  PROP_SELECTION_MODE,    
   PROP_MODEL,
   NUM_PROPERTIES
 };
