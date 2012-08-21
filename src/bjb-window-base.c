@@ -46,7 +46,6 @@ struct _BijiMainWindowPriv
   gchar *entry ;
 
   // To avoid loiding several times
-  GdkPixbuf * note_pixbuf;
   PangoFontDescription *font ;
 };
 
@@ -162,47 +161,6 @@ biji_main_window_init (BijiMainWindow *self)
 	//g_signal_connect(G_OBJECT(self),"note-removed",G_CALLBACK(update_main_window_notes),self);
 }
 
-GdkPixbuf *
-main_window_get_note_pixbuf(GtkWidget *window)
-{
-  BijiMainWindow *win = BIJI_MAIN_WINDOW(window);
-    
-  return win->priv->note_pixbuf ;
-}
-
-/* TODO move to utils/xxx.c */
-GdkPixbuf *
-get_note_pixbuf()
-{
-  GdkPixbuf *note_pixbuf ;
-  GError *error = NULL ;
-
-  const gchar * icons_path = bijiben_get_bijiben_dir (); 
-  gchar * full_path = g_strdup_printf ("%s/bijiben/icons/hicolor/scalable/actions/note.svg",
-                                       icons_path);
-
-  note_pixbuf = gdk_pixbuf_new_from_file_at_size(full_path,
-                                                 48,
-                                                 48,
-                                                 &error);
-  g_free(full_path);
-    
-  if (error)
-  {
-    g_message("Error is %s",error->message);
-    g_error_free (error);
-    return NULL ;
-  }
-
-  if (!note_pixbuf)
-  {
-    g_message("Notes pixbuf error.");
-    return NULL ;
-  }
-  
-  return note_pixbuf ;  
-}
-
 GtkWindow *
 create_main_window_with_notes(GtkApplication *app)
 {    
@@ -232,7 +190,6 @@ create_main_window_with_notes(GtkApplication *app)
   ret = g_object_new(BIJI_TYPE_MAIN_WINDOW,"gtk-application",app,NULL);
   GtkWindow *win = GTK_WINDOW(ret);
   ret->priv->app = app ;
-  ret->priv->note_pixbuf = get_note_pixbuf();
   gtk_window_set_application (win, GTK_APPLICATION (app));
   gtk_window_set_title (win, "Notes");
   gtk_window_set_hide_titlebar_when_maximized(win,TRUE);

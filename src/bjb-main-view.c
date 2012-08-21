@@ -20,6 +20,9 @@
 #include "bjb-selection-panel.h"
 #include "bjb-rename-note.h"
 
+
+#define DEFAULT_VIEW GD_MAIN_VIEW_ICON
+
 /************************** Gobject ***************************/
 
 struct _BjbMainViewPriv {
@@ -365,7 +368,7 @@ create_standard_toolbar(BjbMainView *parent)
   gtk_toolbar_insert(tool,space_r,-1); 
 
   /* switch view button */
-  iter = GTK_TOOL_ITEM ( bjb_view_mode_button_new (BJB_VIEW_MODE_GRID) );
+  iter = GTK_TOOL_ITEM ( bjb_view_mode_button_new (BJB_VIEW_MODE_LIST) );
   g_signal_connect ( iter, "clicked",
                     G_CALLBACK(on_view_mode_changed),parent);
   gtk_toolbar_insert(tool,iter,-1); 
@@ -661,7 +664,7 @@ bjb_main_view_new(GtkWidget *win,BijiNoteBook *book)
                                     biji_win_get_entry(self->priv->window)) ;
     self->priv->controller = controller ;
 
-    self->priv->view = gd_main_view_new(GD_MAIN_VIEW_LIST);
+    self->priv->view = gd_main_view_new(DEFAULT_VIEW);
     gtk_box_pack_start(GTK_BOX(vbox),
                        GTK_WIDGET(self->priv->view),
                        TRUE,

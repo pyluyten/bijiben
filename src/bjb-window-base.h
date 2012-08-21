@@ -48,9 +48,6 @@ GtkWindow * create_main_window_with_notes(GtkApplication *app) ;
 
 // Accessor 
 PangoFontDescription *window_base_get_font(GtkWidget *window);
-GdkPixbuf * main_window_get_note_pixbuf(GtkWidget *window);
-
-GdkPixbuf * get_note_pixbuf() ;
 
 void main_window_set_frame(gpointer win,GtkContainer *frame);
 

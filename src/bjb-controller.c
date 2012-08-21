@@ -22,6 +22,15 @@ bijiben is free software: you can redistribute it and/or modify it
 #include "bjb-window-base.h"
 #include "widgets/gd-main-view.h"
 
+/* Pango rendering for Notes pixbuf */
+#define ICON_WIDTH 200
+#define ICON_HEIGHT 260
+#define PANGO_WIDTH 180000
+#define ICON_FONT "Purusa Bold 12"
+
+
+/* Gobject */
+
 struct _BjbControllerPrivate
 {
 	BijiNoteBook  * book ;
@@ -33,7 +42,7 @@ struct _BjbControllerPrivate
 	GList         * notes_to_show ;
 };
 
-/* GObject properties */
+
 
 enum {
     PROP_0,
@@ -136,7 +145,7 @@ static void
 bjb_controller_class_init (BjbControllerClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
+	/*GObjectClass* parent_class = G_OBJECT_CLASS (klass);*/
 
 	g_type_class_add_private (klass, sizeof (BjbControllerPrivate));
 
@@ -188,28 +197,75 @@ bjb_controller_class_init (BjbControllerClass *klass)
 
 /* Implement model */
 
+GdkPixbuf *
+get_pixbuf_for_note ( BijiNoteObj *note )
+{
+	GdkPixbuf *ret = NULL ;
+	cairo_surface_t *surface = NULL ;
+	cairo_t *c;
+	PangoLayout *layout;
+	PangoFontDescription *desc;
+
+	gchar *text = biji_note_get_raw_text(note) ;
+
+	/* Create & Draw surface */ 
+	surface = cairo_image_surface_create ( CAIRO_FORMAT_ARGB32 , 
+	                                       ICON_WIDTH,
+	                                       ICON_HEIGHT) ;
+	c=cairo_create(surface);
+
+	/* Background */
+    /* TODO : get the note color */
+	cairo_rectangle(c, 0.0, 0.0, ICON_WIDTH, ICON_HEIGHT);
+	cairo_set_source_rgb(c, 0.89, 0.92, 0.75);
+	cairo_fill(c);
+
+	/* Pango draws */
+	cairo_translate(c, 10, 10);
+	layout = pango_cairo_create_layout(c);
+
+	pango_layout_set_width(layout, 180000 );
+    pango_layout_set_wrap(layout,PANGO_WRAP_WORD_CHAR);
+    pango_layout_set_height ( layout, 180000 ) ;
+	
+	pango_layout_set_text(layout,text, -1);
+	desc = pango_font_description_from_string(ICON_FONT);
+	pango_layout_set_font_description(layout, desc);
+	pango_font_description_free(desc);
+
+	cairo_set_source_rgb(c, 0.0, 0.0, 0.0);
+	pango_cairo_update_layout(c, layout);
+	pango_cairo_show_layout(c, layout);
+
+	g_object_unref(layout);
+
+	ret = gdk_pixbuf_get_from_surface (surface,
+                                       0,0,
+                                       ICON_WIDTH,ICON_HEIGHT);
+
+	return ret ;
+} 
+
 static void
 bjb_controller_add_note ( BijiNoteObj *note, BjbController *self )
 {
     GtkListStore *store ;
 	GtkTreeIter  iter ;
-	GdkPixbuf    *pixbuf ;
 
 	store = GTK_LIST_STORE(self->priv->model) ;
 
-	pixbuf = get_note_pixbuf();
 	
     if ( biji_note_obj_is_template(note) == FALSE )
     {
         gtk_list_store_append(store,&iter);
         gtk_list_store_set(store, 
                            &iter,
-                           COL_URN, note_obj_get_path(note),
-                           COL_URI, note_obj_get_path(note),
-                           COL_NAME, biji_note_get_title(note),
-                           COL_AUTHOR, NULL,
-                           COL_IMAGE, pixbuf,
-                           COL_MTIME, biji_note_obj_get_last_change_date_sec(note),
+                           COL_URN,      note_obj_get_path(note),
+                           COL_URI,      note_obj_get_path(note),
+                           COL_NAME,     biji_note_get_title(note),
+                           COL_AUTHOR,   NULL,
+                           COL_IMAGE,    get_pixbuf_for_note(note),
+                           COL_MTIME,    biji_note_obj_get_last_change_date_sec(note),
                            COL_SELECTED, FALSE,
                            -1);
     }
