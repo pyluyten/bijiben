@@ -216,7 +216,7 @@ get_pixbuf_for_note ( BijiNoteObj *note )
 	c=cairo_create(surface);
 
 	/* Background */
-	cairo_rectangle(c, 0.0, 0.0, ICON_WIDTH, ICON_HEIGHT);
+	cairo_rectangle(c, 0.5, 0.5, ICON_WIDTH, ICON_HEIGHT);
 
 	note_color = biji_note_obj_get_rgba(note) ;
 
@@ -224,7 +224,11 @@ get_pixbuf_for_note ( BijiNoteObj *note )
 	if ( note_color )
 	    gdk_cairo_set_source_rgba (c,note_color);
 		
-	cairo_fill(c);
+	cairo_fill_preserve(c);
+    cairo_set_line_width (c,0.8);
+	cairo_set_source_rgb(c, 0.5, 0.5, 0.5);
+	cairo_stroke(c);
+
 
 	/* Pango draws */
 	cairo_translate(c, 10, 10);
