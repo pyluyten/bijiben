@@ -37,7 +37,7 @@ AM_PROG_LIBTOOL
 
 dnl tracker-sparql might be 0.12
 
-PKG_CHECK_MODULES(BIJIBEN, tracker-sparql-0.14
+PKG_CHECK_MODULES(BIJIBEN, tracker-sparql-0.14 clutter-gtk-1.0 
 [gtk+-3.0 >= 2.90.3 libxml-2.0 glib-2.0 zeitgeist-1.0 glib-2.0])
 
 GLIB_GSETTINGS
