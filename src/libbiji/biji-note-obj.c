@@ -281,7 +281,20 @@ note_obj_get_content(BijiNoteObj* n)
 void
 biji_note_obj_set_rgba(BijiNoteObj *n,GdkRGBA *rgba)
 {
-  n->priv->color = rgba ;
+    
+  if ( !n->priv->color  )
+  {    
+    n->priv->color = rgba ;
+    _biji_note_obj_propose_saving ( n) ;
+    return ;
+  }
+
+  if ( !gdk_rgba_equal(n->priv->color,rgba) )
+  {
+    g_free(n->priv->color);
+    n->priv->color = rgba ;
+    _biji_note_obj_propose_saving ( n) ;
+  }  
 }
 
 GdkRGBA *
