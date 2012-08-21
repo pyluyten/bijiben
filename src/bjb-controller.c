@@ -205,6 +205,7 @@ get_pixbuf_for_note ( BijiNoteObj *note )
 	cairo_t *c;
 	PangoLayout *layout;
 	PangoFontDescription *desc;
+	GdkRGBA *note_color;
 
 	gchar *text = biji_note_get_raw_text(note) ;
 
@@ -215,9 +216,14 @@ get_pixbuf_for_note ( BijiNoteObj *note )
 	c=cairo_create(surface);
 
 	/* Background */
-    /* TODO : get the note color */
 	cairo_rectangle(c, 0.0, 0.0, ICON_WIDTH, ICON_HEIGHT);
-	cairo_set_source_rgb(c, 0.89, 0.92, 0.75);
+
+	note_color = biji_note_obj_get_rgba(note) ;
+
+	// libbiji makes sure there IS a color
+	if ( note_color )
+	    gdk_cairo_set_source_rgba (c,note_color);
+		
 	cairo_fill(c);
 
 	/* Pango draws */

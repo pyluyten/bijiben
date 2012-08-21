@@ -43,7 +43,7 @@ struct _BjbNoteViewPrivate {
   GtkTreeModel *model; // tag model
 
   // Convenience
-  GdkRGBA color ;
+  GdkRGBA *color ;
 	
   // hack when widget is destroyed.Probably obsolete.
   gboolean to_be_saved ;
@@ -550,15 +550,14 @@ on_color_choosed(  GtkDialog *dialog,
                    gint       response_id,
                    BjbNoteView *view    )
 {
-  g_message("on color choosed");
-	
-  GdkRGBA color ;
-  gtk_color_chooser_get_rgba (GTK_COLOR_CHOOSER (dialog), &color);
+  GdkRGBA *color = g_new(GdkRGBA,1) ;
+
+  gtk_color_chooser_get_rgba (GTK_COLOR_CHOOSER (dialog), color);
 	
   if (response_id == GTK_RESPONSE_OK)
   {
-    set_editor_color(view,&color);
-	note_obj_set_rgba(view->priv->current_note,gdk_rgba_to_string(&color)) ;
+    set_editor_color(view,color);
+	biji_note_obj_set_rgba(view->priv->current_note,color) ;
   }
 
   gtk_widget_destroy (GTK_WIDGET (dialog));
@@ -566,10 +565,9 @@ on_color_choosed(  GtkDialog *dialog,
 
 static void
 on_color_clicked(GtkWidget *but,BjbNoteView *view)
-{
-  g_message("on color clicked");
-	
-  GtkWidget *dialog;		
+{	
+  GtkWidget *dialog;
+    
   dialog = gtk_color_chooser_dialog_new ("Choose note background",
                                          GTK_WINDOW(view->priv->window));  
 
@@ -590,19 +588,14 @@ on_color_draw(GtkWidget *widget, cairo_t *cr, BijiNoteObj *note)
     
    cairo_rectangle  (cr,1,1,100,100);  
 
-   gchar *color = note_obj_get_rgba(note) ;
-    
-   if ( color )
-   {     
-     g_message("on color draw : %s",note_obj_get_rgba(note));     
-   }
+   GdkRGBA *color = biji_note_obj_get_rgba(note) ;
 
-   else
+   if ( !color )
    {
-     color = DEFAULT_NOTE_COLOR ; 
+     gdk_rgba_parse( color, DEFAULT_NOTE_COLOR ) ;
    }
 
-   gdk_cairo_set_source_rgba (cr, get_color(note_obj_get_rgba(note)));
+   gdk_cairo_set_source_rgba (cr, biji_note_obj_get_rgba(note));
    cairo_fill (cr);
    return FALSE ;
 }
@@ -929,19 +922,17 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
                          pango_font_description_from_string(font));
     
   /* User defined color */
-  gchar *color = note_obj_get_rgba(ret->priv->current_note) ;
-  if ( color )
+  GdkRGBA *color = NULL ;
+  color = biji_note_obj_get_rgba(ret->priv->current_note) ;
+    
+  if ( !color )
   {
-	  gdk_rgba_parse(&(ret->priv->color),color);
-	  set_editor_color(ret,&(ret->priv->color));
+	gdk_rgba_parse(color, DEFAULT_NOTE_COLOR);
+    biji_note_obj_set_rgba(ret->priv->current_note,color);
   }
 
-  else 
-  {
-    gchar *color = DEFAULT_NOTE_COLOR ; 
-    set_editor_color(ret,get_color(color));
-    note_obj_set_rgba(ret->priv->current_note,color);
-  }
+  ret->priv->color = color ;
+  set_editor_color(ret,ret->priv->color);
 
   /* Padding */
   gtk_text_view_set_pixels_above_lines (GTK_TEXT_VIEW(ret->priv->view),

@@ -649,7 +649,14 @@ processNode(xmlTextReaderPtr r, BijiNoteObj * n)
 
   if ( g_strcmp0((gchar*)name,"color") == 0 )  
   {
-    note_obj_set_rgba (n,(gchar*) xmlTextReaderReadString(r));
+    GdkRGBA * color = g_new(GdkRGBA, 1) ;
+      
+    if ( gdk_rgba_parse( color,(gchar*) xmlTextReaderReadString(r)))
+    {
+        g_message("serialize : %s",gdk_rgba_to_string (color));
+        biji_note_obj_set_rgba ( n, color) ;
+    }
+
   }
 
   if ( g_strcmp0((gchar*)name,"tag") == 0 )  

@@ -12,6 +12,9 @@
 #define NO_NOTE_TITLE
 #endif
 
+/* Default color (X11 rgb.txt)  */ 
+#define DEFAULT_NOTE_COLOR "LightGoldenrodYellow"
+
 struct _BijiNoteObjPrivate
 {
   BijiNoteBook *book ; // the book the note belongs to, may be NULL.
@@ -30,7 +33,7 @@ struct _BijiNoteObjPrivate
 
   // Settings? TODO Generaly BijiNoteBook settings are used ?
   gint left_margin ;
-  gchar *color ;     /* GdkRGBA. NOT TOMBOY COMPLIANT, but opening these notes with tomboy should work */
+  GdkRGBA *color ;     /* Not tomboy compliant */
 
   /* Signals */
   gulong note_renamed;
@@ -43,21 +46,27 @@ G_DEFINE_TYPE (BijiNoteObj, biji_note_obj, G_TYPE_OBJECT);
 static void
 biji_note_obj_init (BijiNoteObj *self)
 {
-  self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BIJI_TYPE_NOTE_OBJ,
+  BijiNoteObjPrivate *priv ;
+    
+  priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BIJI_TYPE_NOTE_OBJ,
 	                                          BijiNoteObjPrivate);
 
-  BijiNoteID* id = g_object_new(biji_note_id_get_type(),NULL);
-  self->priv->id = id ;
+  self->priv = priv ;
 
-  self->priv->changes_to_save = 0 ;
-  self->priv->book = NULL ;
-  self->priv->content = NULL ;
-  self->priv->buffer = NULL;
-  self->priv->tags = NULL ;
-  self->priv->is_template = FALSE ;
-  self->priv->is_opened = 0;
-  self->priv->left_margin = 6 ; // defautl left margin.
-  self->priv->color = NULL ;
+  BijiNoteID* id = g_object_new(biji_note_id_get_type(),NULL);
+  priv->id = id ;
+
+  priv->changes_to_save = 0 ;
+  priv->book = NULL ;
+  priv->content = NULL ;
+  priv->buffer = NULL;
+  priv->tags = NULL ;
+  priv->is_template = FALSE ;
+  priv->is_opened = 0;
+  priv->left_margin = 6 ; // defautl left margin.
+
+  priv->color = g_new(GdkRGBA,1) ;
+  gdk_rgba_parse ( priv->color , DEFAULT_NOTE_COLOR ) ; 
 }
 
 static void
@@ -270,13 +279,13 @@ note_obj_get_content(BijiNoteObj* n)
 }
 
 void
-note_obj_set_rgba(BijiNoteObj *n,gchar *rgba)
+biji_note_obj_set_rgba(BijiNoteObj *n,GdkRGBA *rgba)
 {
   n->priv->color = rgba ;
 }
 
-gchar *
-note_obj_get_rgba(BijiNoteObj *n)
+GdkRGBA *
+biji_note_obj_get_rgba(BijiNoteObj *n)
 {
   return n->priv->color;
 }
