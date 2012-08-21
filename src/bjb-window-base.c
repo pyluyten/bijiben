@@ -11,8 +11,9 @@
 #include "bjb-note-view.h"
 
 
-#define BJB_WIDTH 600
-#define BJB_HEIGHT 500
+#define BJB_WIDTH 880
+#define BJB_HEIGHT 780
+#define BJB_DEFAULT_FONT "Serif 10"
 
 
 /* Window available views..
@@ -140,63 +141,60 @@ biji_main_window_destroy (gpointer a, BijiMainWindow * self)
 static void 
 biji_main_window_init (BijiMainWindow *self) 
 {
-  self->priv = 
-  G_TYPE_INSTANCE_GET_PRIVATE(self,BIJI_TYPE_MAIN_WINDOW,BijiMainWindowPriv);
-
-  self->priv->tags = NULL ;
-
-  // We probably want to offer a no entry window at first (startup)
-  self->priv->entry = NULL ;
-
-  /* title is set by frame. icon is app wide. */
-  gtk_widget_set_size_request (GTK_WIDGET (self), 300, 150 );
-  gtk_window_set_default_size (GTK_WINDOW(self),  BJB_WIDTH, BJB_HEIGHT );
-  gtk_window_set_position(GTK_WINDOW(self),GTK_WIN_POS_CENTER);
+    const gchar *icons_path;
+    gchar *full_path;
+    GList *icons = NULL;
+    GdkPixbuf *bjb ;
+    GError *error = NULL ;
     
-  // connectors
-  // TODO
-  g_signal_connect(GTK_WIDGET(self),"destroy",
-                   G_CALLBACK(biji_main_window_destroy),self);
-	//g_signal_connect(G_OBJECT(self),"note-added",G_CALLBACK(update_main_window_notes),self);
-	//g_signal_connect(G_OBJECT(self),"note-removed",G_CALLBACK(update_main_window_notes),self);
+    self->priv = G_TYPE_INSTANCE_GET_PRIVATE(self,
+                                             BIJI_TYPE_MAIN_WINDOW,
+                                             BijiMainWindowPriv);
+    
+    /* Title is set by frame. icon is app wide. */
+    gtk_widget_set_size_request (GTK_WIDGET (self), 300, 150 );
+    gtk_window_set_default_size (GTK_WINDOW(self),  BJB_WIDTH, BJB_HEIGHT );
+    gtk_window_set_position(GTK_WINDOW(self),GTK_WIN_POS_CENTER);
+
+    /* Icon for window. TODO - Should be BjbApp */
+    icons_path = bijiben_get_bijiben_dir ();
+    full_path = g_strdup_printf ("%s/icons/hicolor/48x48/apps/bijiben.png", icons_path);
+    bjb = gdk_pixbuf_new_from_file (full_path, &error);
+    g_free (full_path);
+    
+    if ( error )
+    {
+        g_message("%s", error->message);
+        g_error_free(error);
+    }
+    
+    icons = g_list_prepend(icons,bjb);
+    gtk_window_set_default_icon_list(icons);
+    g_list_foreach (icons, (GFunc) g_object_unref, NULL);
+    g_list_free (icons);
+
+    /*  We probably want to offer a no entry window at first (startup) */
+    self->priv->entry = NULL ;
+
+    self->priv->tags = get_all_tracker_tags();
+    self->priv->font = pango_font_description_from_string (BJB_DEFAULT_FONT);
+    
+    /* Signals */
+    g_signal_connect(GTK_WIDGET(self),"destroy",
+                     G_CALLBACK(biji_main_window_destroy),self);
 }
 
 GtkWindow *
-create_main_window_with_notes(GtkApplication *app)
+biji_window_base_new(GtkApplication *app)
 {    
   BijiMainWindow *ret ;
-  const gchar *icons_path;
-  gchar *full_path;
-  GList *icons = NULL;
-  GdkPixbuf *test ;
-  GError *error = NULL ;
-
-  // FIXME
-  icons_path = bijiben_get_bijiben_dir ();
-  full_path = g_strdup_printf ("%s/icons/hicolor/48x48/apps/bijiben.png", icons_path);
-  test = gdk_pixbuf_new_from_file (full_path, &error);
-  g_free (full_path);
-  if ( error )
-  {
-    g_message("Error loading bijiben icon: %s",error->message);
-    g_error_free(error);
-  }
-  icons = g_list_prepend(icons,test);
-  gtk_window_set_default_icon_list(icons);
-  g_list_foreach (icons, (GFunc) g_object_unref, NULL);
-  g_list_free (icons);
 	
-  g_message("FIXME : create_main_window_with_notes (gtk-application warning)");
   ret = g_object_new(BIJI_TYPE_MAIN_WINDOW,"gtk-application",app,NULL);
   GtkWindow *win = GTK_WINDOW(ret);
   ret->priv->app = app ;
   gtk_window_set_application (win, GTK_APPLICATION (app));
   gtk_window_set_title (win, "Notes");
   gtk_window_set_hide_titlebar_when_maximized(win,TRUE);
-                   
-
-  ret->priv->tags = get_all_tracker_tags();
-  ret->priv->font = pango_font_description_from_string ("Serif 10");
 
   ret->priv->frame=GTK_CONTAINER(bjb_main_view_new(GTK_WIDGET(ret),
                                                    bijiben_get_book(app)));

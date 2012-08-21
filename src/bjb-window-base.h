@@ -44,7 +44,7 @@ struct _BijiMainWindow
 
 GType biji_main_window_get_type (void);
 
-GtkWindow * create_main_window_with_notes(GtkApplication *app) ;
+GtkWindow * biji_window_base_new(GtkApplication *app) ;
 
 // Accessor 
 PangoFontDescription *window_base_get_font(GtkWidget *window);

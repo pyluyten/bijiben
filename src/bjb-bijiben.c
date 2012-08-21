@@ -63,17 +63,16 @@ bijiben_new_window (GApplication *app,GFile *file)
   // No file : show main window
   if (file == NULL)
   {
-    create_main_window_with_notes((gpointer)app) ;
+	  biji_window_base_new( GTK_APPLICATION(app));
   }
 
   // show main window, then switch to note. maybe FIXME if external note.
   else
   {
     BijiNoteObj* cur= biji_note_get_new_from_file(g_file_get_path(file));
-	GtkWindow *win = create_main_window_with_notes((gpointer)app);
+	GtkWindow *win = biji_window_base_new(GTK_APPLICATION(app));
 
 	main_window_set_frame((gpointer)win,
-    //                      GTK_FRAME(bjb_note_view_new(GTK_WIDGET(win),cur,TRUE)));
 	                GTK_CONTAINER(bjb_note_view_new(GTK_WIDGET(win),cur,TRUE)));
   
     gtk_window_set_title(GTK_WINDOW(win),biji_note_get_title (cur));
@@ -205,7 +204,7 @@ create_new_window_for_note(gpointer app , BijiNoteObj *note)
 {
   g_return_if_fail(G_IS_APPLICATION(app));
 	
-  GtkWindow *win = create_main_window_with_notes((gpointer)app);	
+  GtkWindow *win = biji_window_base_new(app);
   //main_window_set_frame((gpointer)win,
   //                  GTK_CONTAINER(bjb_note_view_new(GTK_WIDGET(win),note,FALSE)));
   //gtk_window_set_title(GTK_WINDOW(win),biji_note_get_title (note));
@@ -217,7 +216,7 @@ create_new_window_for_note(gpointer app , BijiNoteObj *note)
 gpointer
 create_new_main_window(gpointer app)
 {
-  return create_main_window_with_notes((gpointer)app);
+  return biji_window_base_new(app);
 }
 
 void
