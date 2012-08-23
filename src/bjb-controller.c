@@ -26,7 +26,7 @@ bijiben is free software: you can redistribute it and/or modify it
 #define ICON_WIDTH 200
 #define ICON_HEIGHT 260
 #define PANGO_WIDTH 180000
-#define ICON_FONT "Purusa Bold 12"
+#define ICON_FONT "Purusa 10"
 
 
 /* Gobject */
