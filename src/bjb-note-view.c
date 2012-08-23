@@ -125,7 +125,7 @@ create_tags_model (BjbNoteView *view)
   // then display tags active for files
   // then display tags not active at all
   gint i ;
-  all_tags = biji_win_get_tags(view->priv->window);
+  all_tags = bjb_window_base_get_tags(view->priv->window);
   for ( i=0 ; i<g_list_length (all_tags) ; i++ )
   {
     gchar *tag = g_list_nth_data(all_tags,i);
@@ -239,7 +239,7 @@ add_new_tag(GtkButton *new, BjbNoteView *view)
 {
   /* Push the tag to tracker */
   push_tag_to_tracker((gchar*)gtk_entry_get_text(GTK_ENTRY(view->priv->entry)));
-  biji_win_set_tags(view->priv->window,get_all_tracker_tags());
+  bjb_window_base_set_tags(view->priv->window,get_all_tracker_tags());
 
   /* Update the view */
   gtk_widget_destroy (view->priv->tags_dialog);
@@ -342,9 +342,9 @@ just_switch_to_main_view(BjbNoteView *view)
   GtkContainer *to_be;
     
   window = GTK_WINDOW(view->priv->window);
-  notes = bijiben_window_get_book (view->priv->window);
+  notes = bjb_window_base_get_book (view->priv->window);
   to_be = GTK_CONTAINER(bjb_main_view_new((gpointer)window,notes));
-  main_window_set_frame((gpointer)view->priv->window,GTK_CONTAINER(to_be));
+  bjb_window_base_set_frame((gpointer)view->priv->window,GTK_CONTAINER(to_be));
   gtk_container_add(GTK_CONTAINER(view->priv->window),
                     GTK_WIDGET(to_be));
   prepare_view_for_usage((BjbMainView*)to_be); // FIXME hack
@@ -416,7 +416,7 @@ link_callback(GtkButton *item,BjbNoteView *view)
  
   // else, create it
   BijiNoteObj *result ;
-  BijiNoteBook *book = bijiben_window_get_book(view->priv->window);
+  BijiNoteBook *book = bjb_window_base_get_book(view->priv->window);
   gchar *folder = g_strdup_printf("%s/bijiben",g_get_user_data_dir());
   result = biji_note_get_new_from_string(link,folder);
   g_free(folder);
@@ -424,7 +424,7 @@ link_callback(GtkButton *item,BjbNoteView *view)
   // allocate it's own strings for notes title...
     
   note_book_append_new_note(book,result);
-  create_new_window_for_note(main_window_get_app(view->priv->window) , result) ;
+  create_new_window_for_note(bjb_window_base_get_app(view->priv->window) , result) ;
   
 }
 
@@ -443,7 +443,7 @@ delete_item_callback(GtkMenuItem *item,BjbNoteView *view)
   biji_note_delete_from_tracker(view->priv->current_note);
 
   // Delete the note from collection
-  biji_note_book_remove_note(bijiben_window_get_book(view->priv->window),
+  biji_note_book_remove_note(bjb_window_base_get_book(view->priv->window),
 	                         view->priv->current_note);
 
   // The deleted note will emit a signal.
@@ -527,7 +527,7 @@ action_view_note_in_another_win_callback(GtkAction *action, BjbNoteView *view)
   // Switch current window to notes list ?or not ?
   save_then_switch_to_notes_view(view);
   // Pop up a new window 
-  create_new_window_for_note(main_window_get_app(window) ,note ) ; // */
+  create_new_window_for_note(bjb_window_base_get_app(window) ,note ) ; // */
 
 }
 
@@ -900,7 +900,7 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
   ret->priv->view = biji_text_view_new_from_note(note);
   ret->priv->buffer = gtk_text_view_get_buffer(ret->priv->view);
 
-  settings = main_window_get_settings(ret->priv->window);
+  settings = bjb_window_base_get_settings(ret->priv->window);
     
   BijiNoteEditor *editor = BIJI_NOTE_EDITOR(ret->priv->view);
 

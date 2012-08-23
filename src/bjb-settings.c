@@ -177,7 +177,7 @@ void
 show_bijiben_settings_window(GtkMenuItem* item, GtkWidget *parent_window)
 {
   GtkWidget *dialog,*area,*notebook,*page,*frame,*picker;
-  BjbSettings *settings = main_window_get_settings(parent_window);
+  BjbSettings *settings = bjb_window_base_get_settings(parent_window);
 
   // create dialog
   dialog = gtk_dialog_new_with_buttons("Notes tag",

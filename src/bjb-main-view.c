@@ -79,7 +79,7 @@ bjb_main_view_finalize (GObject *object)
 {
   BjbMainView *view = BJB_MAIN_VIEW(object) ;
 
-  g_signal_handler_disconnect(bijiben_window_get_book(view->priv->window),
+  g_signal_handler_disconnect(bjb_window_base_get_book(view->priv->window),
                               view->priv->notes_changed);
 
   G_OBJECT_CLASS (bjb_main_view_parent_class)->finalize (object);
@@ -125,7 +125,7 @@ bjb_main_view_class_init (BjbMainViewClass *klass)
 BijiNoteBook *
 bjb_main_view_get_book(BjbMainView *view)
 {
-  return bijiben_window_get_book(view->priv->window);
+  return bjb_window_base_get_book(view->priv->window);
 }
 
 static void
@@ -194,7 +194,7 @@ switch_to_note_view(BjbMainView *view,BijiNoteObj *note)
   view->priv->key_pressed = 0 ;
     
   GtkWidget *win = view->priv->window;
-  main_window_set_frame((gpointer)win,
+  bjb_window_base_set_frame((gpointer)win,
                              GTK_CONTAINER(bjb_note_view_new(win,note,TRUE)));
   
   gtk_window_set_title(GTK_WINDOW(win),biji_note_get_title (note));
@@ -253,7 +253,7 @@ action_new_note_callback(GtkMenuItem *item,BjbMainView *view)
   }
 
   /* append note to collection */
-  book = bijiben_window_get_book(view->priv->window);
+  book = bjb_window_base_get_book(view->priv->window);
   gchar *folder = g_strdup_printf("%s/bijiben",g_get_user_data_dir());
   result = biji_note_get_new_from_string(title,folder);
   g_free(folder);
@@ -284,7 +284,7 @@ switch_to_note(BjbMainView *view, BijiNoteObj *to_open)
 
     notes = gtk_application_get_windows 
                     (GTK_APPLICATION
-                              (main_window_get_app(view->priv->window)));
+                              (bjb_window_base_get_app(view->priv->window)));
     g_list_foreach (notes,(GFunc)show_window_if_title_same,to_open);
     return ;
   }
@@ -433,7 +433,7 @@ get_search_entry(BjbMainView *parent)
   parent->priv->search_entry = gtk_entry_new ();
   GtkEntry *entry = GTK_ENTRY(parent->priv->search_entry);
 	
-  gchar *needle = biji_win_get_entry(parent->priv->window);
+  gchar *needle = bjb_window_base_get_entry(parent->priv->window);
   if ( needle != NULL )
   {
     gtk_entry_set_text(entry,needle);
@@ -578,7 +578,7 @@ void action_delete_selected_notes(GtkWidget *w,BjbMainView *view)
       
     notes = g_list_append(notes,
                           note_book_get_note_at_path
-                          (bijiben_window_get_book(view->priv->window),url));
+                          (bjb_window_base_get_book(view->priv->window),url));
     
   } 
 
@@ -587,7 +587,7 @@ void action_delete_selected_notes(GtkWidget *w,BjbMainView *view)
     BijiNoteObj *note = g_list_nth_data(notes,i) ;
       
     biji_note_delete_from_tracker(note);
-    biji_note_book_remove_note(bijiben_window_get_book(view->priv->window),note);
+    biji_note_book_remove_note(bjb_window_base_get_book(view->priv->window),note);
   }
 }
 
@@ -609,7 +609,7 @@ on_item_activated(GdMainView        * gd,
   gtk_tree_model_get (model, &iter,COL_URI, &note_path,-1);
 
   /* Switch to that note */
-  book = bijiben_window_get_book(view->priv->window); 
+  book = bjb_window_base_get_book(view->priv->window); 
   to_open = note_book_get_note_at_path(book,note_path) ;
   switch_to_note(view,to_open); 
 
@@ -661,7 +661,7 @@ bjb_main_view_new(GtkWidget *win,BijiNoteBook *book)
     /* Controller to display notes */
     
     controller = bjb_controller_new(book ,
-                                    biji_win_get_entry(self->priv->window)) ;
+                                    bjb_window_base_get_entry(self->priv->window)) ;
     self->priv->controller = controller ;
 
     self->priv->view = gd_main_view_new(DEFAULT_VIEW);

@@ -33,7 +33,7 @@ enum
 };
 
 /* As the main window remains, it owns the data */
-struct _BijiMainWindowPriv
+struct _BjbWindowBasePriv
 {
   // To register new windows and access the data.
   GtkApplication *app ;
@@ -51,35 +51,35 @@ struct _BijiMainWindowPriv
 };
 
 /* Gobject */
-G_DEFINE_TYPE (BijiMainWindow, biji_main_window, GTK_TYPE_APPLICATION_WINDOW);
+G_DEFINE_TYPE (BjbWindowBase, bjb_window_base, GTK_TYPE_APPLICATION_WINDOW);
 
 
 static GObject *
-biji_main_window_constructor (GType                  gtype,
+bjb_window_base_constructor (GType                  gtype,
                        guint                  n_properties,
                        GObjectConstructParam *properties)
 {
   GObject *obj;
   {
-    obj = G_OBJECT_CLASS (biji_main_window_parent_class)->constructor (gtype, n_properties, properties);
+    obj = G_OBJECT_CLASS (bjb_window_base_parent_class)->constructor (gtype, n_properties, properties);
   }
   return obj;
 }
 
 
 static void
-biji_main_window_finalize (GObject *object)
+bjb_window_base_finalize (GObject *object)
 {
 	/* TODO */
 }
 
 static void
-bjb_main_window_get_property (GObject    *object,
+bjb_window_base_get_property (GObject    *object,
                               guint       property_id,
                               GValue     *value,
                               GParamSpec *pspec)
 {
-  BijiMainWindow *self = BIJI_MAIN_WINDOW (object);
+  BjbWindowBase *self = BJB_WINDOW_BASE (object);
 
   switch (property_id)
     {
@@ -93,17 +93,17 @@ bjb_main_window_get_property (GObject    *object,
 }
 
 static void
-bjb_main_window_set_property (GObject    *object,
+bjb_window_base_set_property (GObject    *object,
                               guint       property_id,
                               const GValue *value,
                               GParamSpec *pspec)
 {
-  BijiMainWindow *self = BIJI_MAIN_WINDOW (object);
+  BjbWindowBase *self = BJB_WINDOW_BASE (object);
 
   switch (property_id)
     {
     case PROP_GTK_APP:
-	  bjb_main_window_set_application(self,g_value_get_object(value));
+	  bjb_window_base_set_application(self,g_value_get_object(value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -112,14 +112,14 @@ bjb_main_window_set_property (GObject    *object,
 }
 
 static void
-biji_main_window_class_init (BijiMainWindowClass *klass)
+bjb_window_base_class_init (BjbWindowBaseClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
     
-  gobject_class->constructor = biji_main_window_constructor;
-  gobject_class->get_property = bjb_main_window_get_property;
-  gobject_class->set_property = bjb_main_window_set_property;
-  gobject_class->finalize = biji_main_window_finalize ;
+  gobject_class->constructor = bjb_window_base_constructor;
+  gobject_class->get_property = bjb_window_base_get_property;
+  gobject_class->set_property = bjb_window_base_set_property;
+  gobject_class->finalize = bjb_window_base_finalize ;
 
   g_object_class_install_property (gobject_class,PROP_GTK_APP,
                                    g_param_spec_object ("gtk-application",
@@ -129,17 +129,17 @@ biji_main_window_class_init (BijiMainWindowClass *klass)
 							                            G_PARAM_READWRITE));
 														  
 	
-  g_type_class_add_private (klass, sizeof (BijiMainWindowPriv));
+  g_type_class_add_private (klass, sizeof (BjbWindowBasePriv));
 }
 
 static void
-biji_main_window_destroy (gpointer a, BijiMainWindow * self)
+bjb_window_base_destroy (gpointer a, BjbWindowBase * self)
 {
 }
 
 /* Gobj */
 static void 
-biji_main_window_init (BijiMainWindow *self) 
+bjb_window_base_init (BjbWindowBase *self) 
 {
     const gchar *icons_path;
     gchar *full_path;
@@ -148,8 +148,8 @@ biji_main_window_init (BijiMainWindow *self)
     GError *error = NULL ;
     
     self->priv = G_TYPE_INSTANCE_GET_PRIVATE(self,
-                                             BIJI_TYPE_MAIN_WINDOW,
-                                             BijiMainWindowPriv);
+                                             BJB_TYPE_WINDOW_BASE,
+                                             BjbWindowBasePriv);
     
     /* Title is set by frame. icon is app wide. */
     gtk_widget_set_size_request (GTK_WIDGET (self), 300, 150 );
@@ -181,15 +181,15 @@ biji_main_window_init (BijiMainWindow *self)
     
     /* Signals */
     g_signal_connect(GTK_WIDGET(self),"destroy",
-                     G_CALLBACK(biji_main_window_destroy),self);
+                     G_CALLBACK(bjb_window_base_destroy),self);
 }
 
 GtkWindow *
-biji_window_base_new(GtkApplication *app)
+bjb_window_base_new(GtkApplication *app)
 {    
-  BijiMainWindow *ret ;
+  BjbWindowBase *ret ;
 	
-  ret = g_object_new(BIJI_TYPE_MAIN_WINDOW,"gtk-application",app,NULL);
+  ret = g_object_new(BJB_TYPE_WINDOW_BASE,"gtk-application",app,NULL);
   GtkWindow *win = GTK_WINDOW(ret);
   ret->priv->app = app ;
   gtk_window_set_application (win, GTK_APPLICATION (app));
@@ -210,14 +210,14 @@ biji_window_base_new(GtkApplication *app)
 PangoFontDescription *
 window_base_get_font(GtkWidget *window)
 {
-  BijiMainWindow *b = BIJI_MAIN_WINDOW(window);
+  BjbWindowBase *b = BJB_WINDOW_BASE(window);
   return b->priv->font ;
 }
 
 void
-main_window_set_frame(gpointer win,GtkContainer *frame)
+bjb_window_base_set_frame(gpointer win,GtkContainer *frame)
 {
-  BijiMainWindow *b = BIJI_MAIN_WINDOW(win);
+  BjbWindowBase *b = BJB_WINDOW_BASE(win);
   if ( b->priv->frame )
   {
     if ( GTK_IS_CONTAINER(b->priv->frame))
@@ -233,29 +233,29 @@ main_window_set_frame(gpointer win,GtkContainer *frame)
 }
 
 GtkContainer *
-main_window_get_frame(gpointer win)
+bjb_window_base_get_frame(gpointer win)
 {
-  if (BIJI_IS_MAIN_WINDOW(win))
-    return BIJI_MAIN_WINDOW(win)->priv->frame ;
+  if (BJB_IS_WINDOW_BASE(win))
+    return BJB_WINDOW_BASE(win)->priv->frame ;
 
   else
     return NULL ;
 }
 
-gpointer main_window_get_app(GtkWidget *win)
+gpointer bjb_window_base_get_app(GtkWidget *win)
 {
-  return BIJI_MAIN_WINDOW(win)->priv->app ;
+  return BJB_WINDOW_BASE(win)->priv->app ;
 }
 
-BjbSettings *main_window_get_settings(GtkWidget *win)
+BjbSettings * bjb_window_base_get_settings(GtkWidget *win)
 {
-  return bjb_app_get_settings(BIJI_MAIN_WINDOW(win)->priv->app);
+  return bjb_app_get_settings(BJB_WINDOW_BASE(win)->priv->app);
 }
 
 BijiNoteBook *
-bijiben_window_get_book(GtkWidget * win)
+bjb_window_base_get_book(GtkWidget * win)
 {
-   BijiMainWindow *b = BIJI_MAIN_WINDOW(win);
+   BjbWindowBase *b = BJB_WINDOW_BASE(win);
    if ( b->priv )
    {
       return bijiben_get_book(b->priv->app) ;
@@ -268,9 +268,9 @@ bijiben_window_get_book(GtkWidget * win)
 }
 
 void
-biji_win_set_book(GtkWidget *win, BijiNoteBook *notes)
+bjb_window_base_set_book(GtkWidget *win, BijiNoteBook *notes)
 {
-  BijiMainWindow *b = BIJI_MAIN_WINDOW(win);
+  BjbWindowBase *b = BJB_WINDOW_BASE(win);
   if (b->priv)
   {
     bijiben_set_book(b->priv->app,notes) ;
@@ -282,9 +282,9 @@ biji_win_set_book(GtkWidget *win, BijiNoteBook *notes)
 }
 
 GList *
-biji_win_get_tags(GtkWidget * win)
+bjb_window_base_get_tags(GtkWidget * win)
 {
-    BijiMainWindow *b = BIJI_MAIN_WINDOW(win);
+    BjbWindowBase *b = BJB_WINDOW_BASE(win);
     if ( b->priv )
     {
        return b->priv->tags ;
@@ -296,9 +296,9 @@ biji_win_get_tags(GtkWidget * win)
 }
 
 void 
-biji_win_set_tags(GtkWidget * win, GList * tags)
+bjb_window_base_set_tags(GtkWidget * win, GList * tags)
 {
-    BijiMainWindow *b = BIJI_MAIN_WINDOW(win);
+    BjbWindowBase *b = BJB_WINDOW_BASE(win);
     if ( b->priv->tags != NULL )
     {
        g_list_free_full (b->priv->tags,
@@ -309,26 +309,26 @@ biji_win_set_tags(GtkWidget * win, GList * tags)
 
 
 void
-biji_win_set_entry(GtkWidget *win, gchar *search_entry)
+bjb_window_base_set_entry(GtkWidget *win, gchar *search_entry)
 {
-  BijiMainWindow *bmw = BIJI_MAIN_WINDOW(win);
+  BjbWindowBase *bmw = BJB_WINDOW_BASE(win);
   bmw->priv->entry = search_entry ; 
 }
 
-void biji_win_delete_entry(GtkWidget *win)
+void bjb_window_base_delete_entry(GtkWidget *win)
 {
-  BIJI_MAIN_WINDOW(win)->priv->entry = NULL ;
+  BJB_WINDOW_BASE(win)->priv->entry = NULL ;
 }
 
 gchar *
-biji_win_get_entry(GtkWidget *win)
+bjb_window_base_get_entry(GtkWidget *win)
 {
-  BijiMainWindow *bmw = BIJI_MAIN_WINDOW(win);
+  BjbWindowBase *bmw = BJB_WINDOW_BASE(win);
   return bmw->priv->entry ;
 }
 
 void
-bjb_main_window_set_application ( BijiMainWindow *self, GtkApplication *app)
+bjb_window_base_set_application ( BjbWindowBase *self, GtkApplication *app)
 {
     self->priv->app = app ;
 }

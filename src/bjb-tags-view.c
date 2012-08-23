@@ -66,10 +66,10 @@ static void
 switch_to_notes_view_callback(GtkButton *button,BjbTagsView *view)
 {
   GtkContainer *ret;
-  biji_win_delete_entry(view->priv->window);
+  bjb_window_base_delete_entry(view->priv->window);
   ret = GTK_CONTAINER(bjb_main_view_new(view->priv->window,
-                                    bijiben_window_get_book(view->priv->window))                                    );
-  main_window_set_frame((gpointer)view->priv->window,ret);
+                                    bjb_window_base_get_book(view->priv->window))                                    );
+  bjb_window_base_set_frame((gpointer)view->priv->window,ret);
 }
 
 
@@ -78,10 +78,10 @@ static void
 switch_to_untag_notes_view_callback(GtkButton *button,BjbTagsView *view)
 {
   GtkContainer *ret;
-  biji_win_set_entry(view->priv->window,"!tag");
+  bjb_window_base_set_entry(view->priv->window,"!tag");
   ret = GTK_CONTAINER(bjb_main_view_new(view->priv->window,
-	                                bijiben_window_get_book(view->priv->window)));
-  main_window_set_frame((gpointer)view->priv->window,ret);
+	                                bjb_window_base_get_book(view->priv->window)));
+  bjb_window_base_set_frame((gpointer)view->priv->window,ret);
 }
 
 // double click on a tag from 3 columns list
@@ -97,12 +97,12 @@ switch_to_notes_with_tag(GtkTreeView *tree_view, GtkTreePath *path,
   gtk_tree_model_get_iter (model,&iter, path);
   gtk_tree_model_get (model, &iter,COL_TAG, &tag,-1);
   tag = g_strdup_printf("tag=%s",tag);
-  biji_win_set_entry(view->priv->window,tag);
+  bjb_window_base_set_entry(view->priv->window,tag);
 
   GtkContainer *ret;
   ret = GTK_CONTAINER(bjb_main_view_new(view->priv->window,
-	                              bijiben_window_get_book(view->priv->window)));
-  main_window_set_frame((gpointer)view->priv->window,ret);
+	                              bjb_window_base_get_book(view->priv->window)));
+  bjb_window_base_set_frame((gpointer)view->priv->window,ret);
   //g_free(tag); // ouch
 }
 
@@ -163,7 +163,7 @@ append_tag_to_store(gchar *tag, BjbTagsView *view)
   GtkTreeStore *store = view->priv->store ;
 
   // Get data
-  BijiNoteBook *book = bijiben_window_get_book(view->priv->window);
+  BijiNoteBook *book = bjb_window_base_get_book(view->priv->window);
   GList *notes = biji_note_book_get_notes_with_tag(book,tag);
   gint files = tracker_tag_get_number_of_files(tag);
 
@@ -179,7 +179,7 @@ append_tag_to_store(gchar *tag, BjbTagsView *view)
 static void
 update_tags (BjbTagsView *view)
 {
-  GList *tags_list = biji_win_get_tags(view->priv->window);
+  GList *tags_list = bjb_window_base_get_tags(view->priv->window);
     
   gtk_tree_store_clear (view->priv->store);
   g_list_foreach(tags_list,(GFunc)append_tag_to_store,view);
@@ -221,10 +221,10 @@ delete_tag_callback(GtkButton *button,BjbTagsView *view)
 
   // Remove it from both tracker and noteBook
   remove_tag_from_tracker(tag);
-  biji_note_book_remove_tag(bijiben_window_get_book(view->priv->window),tag);
+  biji_note_book_remove_tag(bjb_window_base_get_book(view->priv->window),tag);
 
   // Update window
-  biji_win_set_tags(view->priv->window,get_all_tracker_tags());
+  bjb_window_base_set_tags(view->priv->window,get_all_tracker_tags());
   update_tags(view);
 }
 
@@ -320,7 +320,7 @@ action_new_tag_callback(GtkButton * but, BjbTagsView *view)
     push_tag_to_tracker((gchar*)gtk_entry_get_text(GTK_ENTRY(entry)));
 
     // Update window
-    biji_win_set_tags(view->priv->window,get_all_tracker_tags());
+    bjb_window_base_set_tags(view->priv->window,get_all_tracker_tags());
     update_tags(view);
   }
     
@@ -332,7 +332,7 @@ static void
 on_new_tag_note(GtkWidget *button,BjbTagsView *view)
 {
   GtkWidget *win = view->priv->window;
-  BijiNoteBook *book =  bijiben_window_get_book(win);
+  BijiNoteBook *book =  bjb_window_base_get_book(win);
 
   // Get the tag
   gchar *tag = tags_view_get_selected_tag(view);
@@ -364,7 +364,7 @@ create_template (BjbTagsView *view, gchar *tag)
   // First, append the note to book
   // So when we add the tag , the note knows.
   note_obj_set_is_template(ret,TRUE);
-  note_book_append_new_note(bijiben_window_get_book(view->priv->window),ret) ;  
+  note_book_append_new_note(bjb_window_base_get_book(view->priv->window),ret) ;  
   biji_note_obj_add_tag(ret,tag);
   return ret ;  
 }
@@ -376,7 +376,7 @@ get_or_create_template(BjbTagsView *view, gchar *tag)
     
   /* Get template if exists */
   result = biji_note_book_get_tag_template(
-                                   bijiben_window_get_book(view->priv->window),
+                                   bjb_window_base_get_book(view->priv->window),
                                    tag);
 
   /* Other wise create */
@@ -398,7 +398,7 @@ on_edit_template(GtkWidget *button,BjbTagsView *view)
   BijiNoteObj *result =  get_or_create_template(view,
                                                 tags_view_get_selected_tag(view));
         
-  create_new_window_for_note(main_window_get_app(view->priv->window),
+  create_new_window_for_note(bjb_window_base_get_app(view->priv->window),
                              result);
 }
 
@@ -406,12 +406,12 @@ static void
 open_tag (GtkAction *action, BjbTagsView *view)
 {
   GtkContainer *ret;
-  biji_win_set_entry(view->priv->window,
+  bjb_window_base_set_entry(view->priv->window,
                      g_strdup_printf("tag=%s",
                                      tags_view_get_selected_tag(view)));
   ret = GTK_CONTAINER(bjb_main_view_new(view->priv->window,
-	                                bijiben_window_get_book(view->priv->window)));
-  main_window_set_frame((gpointer)view->priv->window,ret);
+	                                bjb_window_base_get_book(view->priv->window)));
+  bjb_window_base_set_frame((gpointer)view->priv->window,ret);
 }
 
 static void
@@ -595,8 +595,8 @@ get_tags_frame(GtkWidget *biji_main_window)
   GList *tags ;
   GtkWidget *view ;
   GtkWindow *win = GTK_WINDOW(biji_main_window);
-  tags = biji_win_get_tags(biji_main_window);
-  view = create_tags_view(ret,tags,bijiben_window_get_book(biji_main_window));
+  tags = bjb_window_base_get_tags(biji_main_window);
+  view = create_tags_view(ret,tags,bjb_window_base_get_book(biji_main_window));
   gtk_box_pack_start(GTK_BOX(vbox),view,TRUE,TRUE,0);
 
   g_signal_connect(ret->priv->tags_view,"popup-menu",

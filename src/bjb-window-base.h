@@ -1,5 +1,5 @@
-#ifndef _BIJI_MAIN_WINDOW_H
-#define _BIJI_MAIN_WINDOW_H
+#ifndef _BJB_WINDOW_BASE_H
+#define _BJB_WINDOW_BASE_H
 
 #include <gtk/gtk.h>
 #include <libbiji/libbiji.h>
@@ -16,66 +16,66 @@ enum {
   EDIT_NOTE_WINDOW
 };
 
-#define BIJI_TYPE_MAIN_WINDOW                  (biji_main_window_get_type ())
-#define BIJI_MAIN_WINDOW(obj)                  (G_TYPE_CHECK_INSTANCE_CAST ((obj), BIJI_TYPE_MAIN_WINDOW, BijiMainWindow))
-#define BIJI_IS_MAIN_WINDOW(obj)               (G_TYPE_CHECK_INSTANCE_TYPE ((obj), BIJI_TYPE_MAIN_WINDOW))
-#define BIJI_MAIN_WINDOW_CLASS(klass)          (G_TYPE_CHECK_CLASS_CAST ((klass), BIJI_TYPE_MAIN_WINDOW, BijiMainWindowClass))
-#define BIJI_IS_MAIN_WINDOW_CLASS(klass)       (G_TYPE_CHECK_CLASS_TYPE ((klass), BIJI_TYPE_MAIN_WINDOW))
-#define BIJI_MAIN_WINDOW_GET_CLASS(obj)        (G_TYPE_INSTANCE_GET_CLASS ((obj), BIJI_TYPE_MAIN_WINDOW, BijiMainWindowClass))
+#define BJB_TYPE_WINDOW_BASE                  (bjb_window_base_get_type ())
+#define BJB_WINDOW_BASE(obj)                  (G_TYPE_CHECK_INSTANCE_CAST ((obj), BJB_TYPE_WINDOW_BASE, BjbWindowBase))
+#define BJB_IS_WINDOW_BASE(obj)               (G_TYPE_CHECK_INSTANCE_TYPE ((obj), BJB_TYPE_WINDOW_BASE))
+#define BJB_WINDOW_BASE_CLASS(klass)          (G_TYPE_CHECK_CLASS_CAST ((klass), BJB_TYPE_WINDOW_BASE, BjbWindowBaseClass))
+#define BJB_IS_WINDOW_BASE_CLASS(klass)       (G_TYPE_CHECK_CLASS_TYPE ((klass), BJB_TYPE_WINDOW_BASE))
+#define BJB_WINDOW_BASE_GET_CLASS(obj)        (G_TYPE_INSTANCE_GET_CLASS ((obj), BJB_TYPE_WINDOW_BASE, BjbWindowBaseClass))
 
-typedef struct _BijiMainWindow        BijiMainWindow;
-typedef struct _BijiMainWindowClass   BijiMainWindowClass;
+typedef struct _BjbWindowBase        BjbWindowBase;
+typedef struct _BjbWindowBaseClass   BjbWindowBaseClass;
 
-typedef struct _BijiMainWindowPriv BijiMainWindowPriv;
+typedef struct _BjbWindowBasePriv BjbWindowBasePriv;
 
-struct _BijiMainWindowClass
+struct _BjbWindowBaseClass
 {
   GtkApplicationWindowClass parent_class;
 };
 
 
-struct _BijiMainWindow
+struct _BjbWindowBase
 {
   GtkApplicationWindow parent_instance ;
-  BijiMainWindowPriv *priv;
+  BjbWindowBasePriv *priv;
 };
 
 
 
-GType biji_main_window_get_type (void);
+GType bjb_window_base_get_type (void);
 
-GtkWindow * biji_window_base_new(GtkApplication *app) ;
+GtkWindow * bjb_window_base_new(GtkApplication *app) ;
 
 // Accessor 
-PangoFontDescription *window_base_get_font(GtkWidget *window);
+PangoFontDescription *bjb_window_base_get_font(GtkWidget *window);
 
-void main_window_set_frame(gpointer win,GtkContainer *frame);
+void bjb_window_base_set_frame(gpointer win,GtkContainer *frame);
 
-GtkContainer * main_window_get_frame(gpointer win);
+GtkContainer * bjb_window_base_get_frame(gpointer win);
 
-gpointer main_window_get_app(GtkWidget *win);
+gpointer bjb_window_base_get_app(GtkWidget *win);
 
-void bjb_main_window_set_application ( BijiMainWindow *self, GtkApplication *app);
+void bjb_window_base_set_application ( BjbWindowBase *self, GtkApplication *app);
 
-BjbSettings *main_window_get_settings(GtkWidget *win);
+BjbSettings *bjb_window_base_get_settings(GtkWidget *win);
 
-BijiNoteBook * bijiben_window_get_book(GtkWidget * win);
+BijiNoteBook * bjb_window_base_get_book(GtkWidget * win);
 
-void biji_win_set_book(GtkWidget * win, BijiNoteBook *notes);
+void bjb_window_base_set_book(GtkWidget * win, BijiNoteBook *notes);
 
-GList * biji_win_get_tags(GtkWidget * win);
+GList * bjb_window_base_get_tags(GtkWidget * win);
 
-void biji_win_set_tags(GtkWidget * win, GList * tags);
+void bjb_window_base_set_tags(GtkWidget * win, GList * tags);
 
-void biji_win_set_entry(GtkWidget *win, gchar *search_entry) ;
+void bjb_window_base_set_entry(GtkWidget *win, gchar *search_entry) ;
 
-void biji_win_delete_entry(GtkWidget *win);
+void bjb_window_base_delete_entry(GtkWidget *win);
 
-gchar * biji_win_get_entry(GtkWidget *win) ;
+gchar * bjb_window_base_get_entry(GtkWidget *win) ;
 
 // DEBUG 
 void biji_application_print_note_id(GtkWindow* win);
 
 gboolean switch_window_fullscreen();
 
-#endif /* _BIJI_MAIN_WINDOW_H */
+#endif /* _BJB_WINDOW_BASE_H */
