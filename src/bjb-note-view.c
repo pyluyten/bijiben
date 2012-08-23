@@ -339,17 +339,17 @@ just_switch_to_main_view(BjbNoteView *view)
 {
   GtkWindow *window;
   BijiNoteBook *notes;
+  BjbController *controller;
   GtkContainer *to_be;
     
-  window = GTK_WINDOW(view->priv->window);
-  notes = bjb_window_base_get_book (view->priv->window);
+  window = view->priv->window;
+  notes = bjb_window_base_get_book (window);
+  controller = bjb_window_base_get_controller(window);
   to_be = GTK_CONTAINER(bjb_main_view_new((gpointer)window,
                                            notes,
-                                           bjb_window_base_get_controller(window)));
+                                           controller));
   bjb_window_base_set_frame((gpointer)view->priv->window,GTK_CONTAINER(to_be));
-  gtk_container_add(GTK_CONTAINER(view->priv->window),
-                    GTK_WIDGET(to_be));
-  prepare_view_for_usage((BjbMainView*)to_be); // FIXME hack
+  prepare_view_for_usage((BjbMainView*)to_be);
 }
 
 static void
