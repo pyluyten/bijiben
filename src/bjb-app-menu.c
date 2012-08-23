@@ -36,7 +36,7 @@ new_activated (GSimpleAction *action,
 {
   GApplication *app = user_data;
 
-  create_new_main_window(app);  
+  create_new_main_window(app);
 }
 
 static void
@@ -74,7 +74,6 @@ quit_activated (GSimpleAction *action,
                 gpointer       user_data)
 {
   GApplication *app = user_data;
-  g_message("toto la praline");
 
   g_application_quit (app);
 }
@@ -94,9 +93,9 @@ void bjb_app_menu_set(GApplication *application)
 {
   GtkBuilder *builder;
 
-  g_action_map_add_action_entries (G_ACTION_MAP (application), 
-                                   app_entries, 
-                                   G_N_ELEMENTS (app_entries), 
+  g_action_map_add_action_entries (G_ACTION_MAP (application),
+                                   app_entries,
+                                   G_N_ELEMENTS (app_entries),
                                    application);
     
   builder = gtk_builder_new ();
