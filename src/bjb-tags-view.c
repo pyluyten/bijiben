@@ -65,11 +65,7 @@ tags_list (void)
 static void
 switch_to_notes_view_callback(GtkButton *button,BjbTagsView *view)
 {
-  GtkContainer *ret;
-  bjb_window_base_delete_entry(view->priv->window);
-  ret = GTK_CONTAINER(bjb_main_view_new(view->priv->window,
-                                    bjb_window_base_get_book(view->priv->window))                                    );
-  bjb_window_base_set_frame((gpointer)view->priv->window,ret);
+  /* TODO  */
 }
 
 
@@ -77,11 +73,7 @@ switch_to_notes_view_callback(GtkButton *button,BjbTagsView *view)
 static void 
 switch_to_untag_notes_view_callback(GtkButton *button,BjbTagsView *view)
 {
-  GtkContainer *ret;
-  bjb_window_base_set_entry(view->priv->window,"!tag");
-  ret = GTK_CONTAINER(bjb_main_view_new(view->priv->window,
-	                                bjb_window_base_get_book(view->priv->window)));
-  bjb_window_base_set_frame((gpointer)view->priv->window,ret);
+  /* TODO */
 }
 
 // double click on a tag from 3 columns list
@@ -89,21 +81,7 @@ static void
 switch_to_notes_with_tag(GtkTreeView *tree_view, GtkTreePath *path,
                          GtkTreeViewColumn *column, BjbTagsView *view)
 {
-  GtkTreeIter iter;
-  GtkTreeModel *model ;
-  gchar *tag ;
-
-  model = gtk_tree_view_get_model(tree_view);
-  gtk_tree_model_get_iter (model,&iter, path);
-  gtk_tree_model_get (model, &iter,COL_TAG, &tag,-1);
-  tag = g_strdup_printf("tag=%s",tag);
-  bjb_window_base_set_entry(view->priv->window,tag);
-
-  GtkContainer *ret;
-  ret = GTK_CONTAINER(bjb_main_view_new(view->priv->window,
-	                              bjb_window_base_get_book(view->priv->window)));
-  bjb_window_base_set_frame((gpointer)view->priv->window,ret);
-  //g_free(tag); // ouch
+  /* TODO */
 }
 
 // show files
@@ -405,13 +383,7 @@ on_edit_template(GtkWidget *button,BjbTagsView *view)
 static void
 open_tag (GtkAction *action, BjbTagsView *view)
 {
-  GtkContainer *ret;
-  bjb_window_base_set_entry(view->priv->window,
-                     g_strdup_printf("tag=%s",
-                                     tags_view_get_selected_tag(view)));
-  ret = GTK_CONTAINER(bjb_main_view_new(view->priv->window,
-	                                bjb_window_base_get_book(view->priv->window)));
-  bjb_window_base_set_frame((gpointer)view->priv->window,ret);
+  /* TODO */
 }
 
 static void

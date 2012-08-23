@@ -37,6 +37,7 @@ struct _BjbWindowBasePriv
 {
   // To register new windows and access the data.
   GtkApplication *app ;
+  BjbController  *controller;
     
   // The real data
   GList *tags ;
@@ -188,6 +189,7 @@ GtkWindow *
 bjb_window_base_new(GtkApplication *app)
 {    
   BjbWindowBase *ret ;
+  BjbController *controller ;
 	
   ret = g_object_new(BJB_TYPE_WINDOW_BASE,"gtk-application",app,NULL);
   GtkWindow *win = GTK_WINDOW(ret);
@@ -196,8 +198,12 @@ bjb_window_base_new(GtkApplication *app)
   gtk_window_set_title (win, "Notes");
   gtk_window_set_hide_titlebar_when_maximized(win,TRUE);
 
+  controller = bjb_controller_new(bijiben_get_book(app) , ret->priv->entry );
+  ret->priv->controller = controller ;
+
   ret->priv->frame=GTK_CONTAINER(bjb_main_view_new(GTK_WIDGET(ret),
-                                                   bijiben_get_book(app)));
+                                                   bijiben_get_book(app),
+                                                   controller));
 
   gtk_container_add(GTK_CONTAINER(ret),GTK_WIDGET(ret->priv->frame));
   gtk_widget_show_all(GTK_WIDGET(ret));
@@ -205,6 +211,12 @@ bjb_window_base_new(GtkApplication *app)
   prepare_view_for_usage((BjbMainView*)ret->priv->frame);
 
   return win ;
+}
+
+BjbController *
+bjb_window_base_get_controller ( BjbWindowBase *window )
+{
+  return window->priv->controller ;
 }
 
 PangoFontDescription *

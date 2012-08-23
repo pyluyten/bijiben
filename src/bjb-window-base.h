@@ -5,6 +5,7 @@
 #include <libbiji/libbiji.h>
 
 #include "bjb-settings.h"
+#include "bjb-controller.h"
 
 
 
@@ -47,6 +48,9 @@ GType bjb_window_base_get_type (void);
 GtkWindow * bjb_window_base_new(GtkApplication *app) ;
 
 // Accessor 
+
+BjbController * bjb_window_base_get_controller ( BjbWindowBase *window ) ;
+
 PangoFontDescription *bjb_window_base_get_font(GtkWidget *window);
 
 void bjb_window_base_set_frame(gpointer win,GtkContainer *frame);

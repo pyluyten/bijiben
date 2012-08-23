@@ -23,6 +23,15 @@
 
 #define DEFAULT_VIEW GD_MAIN_VIEW_ICON
 
+enum
+{
+  PROP_0,
+  PROP_BJB_CONTROLLER,
+  NUM_PROPERTIES
+};
+
+static GParamSpec *properties[NUM_PROPERTIES] = { NULL, };
+
 /************************** Gobject ***************************/
 
 struct _BjbMainViewPriv {
@@ -86,12 +95,47 @@ bjb_main_view_finalize (GObject *object)
 }
 
 static void
-bjb_main_view_set_property (GObject       *object,
-			                guint          prop_id,
-			                const GValue  *value,
-			                GParamSpec    *pspec)
+bjb_main_view_set_controller ( BjbMainView *self, BjbController *controller)
 {
-  /* TODO */
+  self->priv->controller = controller ;
+}
+
+static void
+bjb_main_view_get_property ( GObject      *object,
+                             guint        prop_id,
+                             GValue       *value,
+                             GParamSpec   *pspec)
+{
+  BjbMainView *self = BJB_MAIN_VIEW (object);
+
+  switch (prop_id)
+    {
+    case PROP_BJB_CONTROLLER:
+      g_value_set_object (value, self->priv->controller);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+static void
+bjb_main_view_set_property ( GObject        *object,
+			                 guint          prop_id,
+			                 const GValue   *value,
+			                 GParamSpec     *pspec)
+{
+  BjbMainView *self = BJB_MAIN_VIEW (object);
+
+  switch (prop_id)
+    {
+    case PROP_BJB_CONTROLLER:
+	  bjb_main_view_set_controller(self,g_value_get_object(value));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
 }
 
 /* TODO static  void bjb_main_view_get_property */
@@ -114,10 +158,21 @@ bjb_main_view_class_init (BjbMainViewClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = bjb_main_view_finalize;
+  object_class->get_property = bjb_main_view_get_property;
   object_class->set_property = bjb_main_view_set_property;
   object_class->constructor = biji_main_view_constructor;
     
   g_type_class_add_private (klass, sizeof (BjbMainViewPriv));
+
+  properties[PROP_BJB_CONTROLLER] = g_param_spec_object ("controller",
+                                                         "Controller",
+                                                         "BjbController",
+                                                         BJB_TYPE_CONTROLLER,
+                                                         G_PARAM_READWRITE |
+                                                         G_PARAM_CONSTRUCT |
+                                                         G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_property (object_class,PROP_BJB_CONTROLLER,properties[PROP_BJB_CONTROLLER]);
 }
 
 
@@ -617,13 +672,17 @@ on_item_activated(GdMainView        * gd,
 }
 
 BjbMainView*
-bjb_main_view_new(GtkWidget *win,BijiNoteBook *book)
+bjb_main_view_new(GtkWidget *win,
+                  BijiNoteBook *book,
+                  BjbController *controller)
 {
   BjbMainView *self ;
-  BjbController * controller ;
   GtkWidget *vbox; 
     
-  self = g_object_new(BJB_TYPE_MAIN_VIEW,NULL);
+  self = g_object_new( BJB_TYPE_MAIN_VIEW,
+                       "controller",controller,
+                       NULL);
+
   self->priv->window = win ;
     
   self->priv->vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
@@ -658,11 +717,11 @@ bjb_main_view_new(GtkWidget *win,BijiNoteBook *book)
                       FALSE,FALSE,0) ;
 
 
-    /* Controller to display notes */
+    /* Controller to display notes 
     
     controller = bjb_controller_new(book ,
                                     bjb_window_base_get_entry(self->priv->window)) ;
-    self->priv->controller = controller ;
+    self->priv->controller = controller ;*/
 
     self->priv->view = gd_main_view_new(DEFAULT_VIEW);
     gtk_box_pack_start(GTK_BOX(vbox),

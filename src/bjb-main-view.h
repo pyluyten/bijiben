@@ -5,6 +5,8 @@
 #include "gtk/gtk.h"
 #include <libbiji/libbiji.h>
 
+#include "bjb-controller.h"
+
 G_BEGIN_DECLS
 
 #define BJB_TYPE_MAIN_VIEW             (bjb_main_view_get_type ())
@@ -34,7 +36,7 @@ struct _BjbMainView
 
 GType bjb_main_view_get_type (void) G_GNUC_CONST;
 
-BjbMainView* bjb_main_view_new(GtkWidget *win,BijiNoteBook *book);
+BjbMainView* bjb_main_view_new(GtkWidget *win, BijiNoteBook *book, BjbController *controller);
 GtkWidget *bjb_main_view_get_window(BjbMainView *view);
 
 void action_new_note_callback(GtkMenuItem *item,BjbMainView *view);
