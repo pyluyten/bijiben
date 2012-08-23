@@ -93,6 +93,7 @@ biji_note_obj_finalize (GObject *object)
 enum {
   NOTE_RENAMED,
   NOTE_DELETED,
+  NOTE_CHANGED,
   BIJI_OBJ_SIGNALS
 };
 
@@ -106,24 +107,34 @@ biji_note_obj_class_init (BijiNoteObjClass *klass)
   object_class->finalize = biji_note_obj_finalize;
 
   biji_obj_signals[NOTE_RENAMED] = g_signal_new ( "renamed" ,
-	                                              G_OBJECT_CLASS_TYPE (klass),
-	    	  	    	  	    	  	    	  G_SIGNAL_RUN_LAST,
-	     		                                  0, 
-	                                              NULL, 
-	                                              NULL,
-	                                              g_cclosure_marshal_VOID__VOID,
-	                                              G_TYPE_NONE,
-	                                              0);
+                                                  G_OBJECT_CLASS_TYPE (klass),
+                                                  G_SIGNAL_RUN_LAST,
+                                                  0, 
+                                                  NULL, 
+                                                  NULL,
+                                                  g_cclosure_marshal_VOID__VOID,
+                                                  G_TYPE_NONE,
+                                                  0);
+
+  biji_obj_signals[NOTE_CHANGED] = g_signal_new ( "changed" ,
+                                                  G_OBJECT_CLASS_TYPE (klass),
+                                                  G_SIGNAL_RUN_LAST,
+                                                  0, 
+                                                  NULL, 
+                                                  NULL,
+                                                  g_cclosure_marshal_VOID__VOID,
+                                                  G_TYPE_NONE,
+                                                  0);
 
   biji_obj_signals[NOTE_DELETED] = g_signal_new ( "deleted" ,
-	                                              G_OBJECT_CLASS_TYPE (klass),
-	    	  	    	  	    	  	    	  G_SIGNAL_RUN_LAST,
-	     		                                  0, 
-	                                              NULL, 
-	                                              NULL,
-	                                              g_cclosure_marshal_VOID__VOID,
-	                                              G_TYPE_NONE,
-	                                              0);
+                                                  G_OBJECT_CLASS_TYPE (klass),
+                                                  G_SIGNAL_RUN_LAST,
+                                                  0, 
+                                                  NULL, 
+                                                  NULL,
+                                                  g_cclosure_marshal_VOID__VOID,
+                                                  G_TYPE_NONE,
+                                                  0);
 
   g_type_class_add_private (klass, sizeof (BijiNoteObjPrivate));
 }
@@ -286,6 +297,7 @@ biji_note_obj_set_rgba(BijiNoteObj *n,GdkRGBA *rgba)
   {    
     n->priv->color = rgba ;
     _biji_note_obj_propose_saving ( n) ;
+    g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
     return ;
   }
 
@@ -294,6 +306,7 @@ biji_note_obj_set_rgba(BijiNoteObj *n,GdkRGBA *rgba)
     g_free(n->priv->color);
     n->priv->color = rgba ;
     _biji_note_obj_propose_saving ( n) ;
+    g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
   }  
 }
 
