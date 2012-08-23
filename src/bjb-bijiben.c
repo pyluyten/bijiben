@@ -19,6 +19,7 @@
 
 #include <glib/gi18n.h>
 #include <stdlib.h>
+#include <clutter-gtk/clutter-gtk.h>
 
 #include <libbiji/libbiji.h>
 
@@ -223,6 +224,12 @@ void
 bijiben_startup (GApplication *application)
 {
   G_APPLICATION_CLASS (bijiben_parent_class)->startup (application);
+
+  if (gtk_clutter_init (NULL, NULL) != CLUTTER_INIT_SUCCESS)
+    {
+      g_warning ("Unable to initialize Clutter");
+      return;
+    }
 
   bjb_app_menu_set(application) ; 
 }
