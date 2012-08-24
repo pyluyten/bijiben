@@ -333,8 +333,13 @@ on_book_changed ( BijiNoteBook *book, BjbController *self )
 static void
 bjb_controller_constructed (BjbController *self)
 {
+	GObject *obj;
+	
 	g_signal_connect ( self->priv->book, "changed", 
                        G_CALLBACK(on_book_changed), self);
+                 
+    obj = G_OBJECT(self);      
+    G_OBJECT_CLASS(bjb_controller_parent_class)->constructed(obj) ;
 
 }
 
