@@ -216,8 +216,6 @@ _biji_note_book_sanitize_title(BijiNoteBook *book,BijiNoteObj *note)
 static gboolean
 notify_changed(BijiNoteObj *note, BijiNoteBook *book)
 {
-  g_message("note renamed");
-  //_biji_note_book_sanitize_title(book,note); // infinite lookp.
   g_signal_emit ( G_OBJECT (book), biji_book_signals[BOOK_AMENDED],0);
   return FALSE ;
 }
@@ -261,6 +259,7 @@ _biji_note_book_add_one_note(BijiNoteBook *book,BijiNoteObj *note)
   //g_signal_connect(note,"renamed",G_CALLBACK(notify_changed),book);
   book->priv->note_renamed = g_signal_connect(note,"renamed",
                                               G_CALLBACK(notify_changed),book);
+  g_signal_connect (note,"changed", G_CALLBACK(notify_changed),book);
     
   //TODO g_signal_connect(note,"deleted"...) ;
   g_signal_emit ( G_OBJECT (book), biji_book_signals[BOOK_AMENDED],0);

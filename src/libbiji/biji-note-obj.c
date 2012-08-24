@@ -296,6 +296,7 @@ biji_note_obj_set_rgba(BijiNoteObj *n,GdkRGBA *rgba)
   if ( !n->priv->color  )
   {    
     n->priv->color = rgba ;
+    _biji_note_id_set_metadata_change_now(n->priv->id);
     _biji_note_obj_propose_saving ( n) ;
     g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
     return ;
@@ -305,6 +306,7 @@ biji_note_obj_set_rgba(BijiNoteObj *n,GdkRGBA *rgba)
   {
     g_free(n->priv->color);
     n->priv->color = rgba ;
+    _biji_note_id_set_metadata_change_now(n->priv->id);
     _biji_note_obj_propose_saving ( n) ;
     g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
   }  
