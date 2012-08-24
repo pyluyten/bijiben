@@ -13,7 +13,7 @@
 #endif
 
 /* Default color (X11 rgb.txt)  */ 
-#define DEFAULT_NOTE_COLOR "LightGoldenrodYellow"
+#define DEFAULT_NOTE_COLOR "rgb(233,235,191)"
 
 struct _BijiNoteObjPrivate
 {
