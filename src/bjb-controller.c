@@ -33,23 +33,23 @@ bijiben is free software: you can redistribute it and/or modify it
 
 struct _BjbControllerPrivate
 {
-	BijiNoteBook  * book ;
-	gchar         * needle ;
-    GtkTreeModel  * model ;
+  BijiNoteBook  * book ;
+  gchar     * needle ;
+  GtkTreeModel  * model ;
 	
-	/*  Private  */
+  /*  Private  */
 	
-	GList         * notes_to_show ;
+  GList     * notes_to_show ;
 };
 
 
 
 enum {
-    PROP_0,
-    PROP_BOOK ,
-	PROP_NEEDLE ,
-    PROP_MODEL ,
-    NUM_PROPERTIES
+  PROP_0,
+  PROP_BOOK ,
+  PROP_NEEDLE ,
+  PROP_MODEL ,
+  NUM_PROPERTIES
 };
 
 static GParamSpec *properties[NUM_PROPERTIES] = { NULL, };
@@ -64,25 +64,25 @@ G_DEFINE_TYPE (BjbController, bjb_controller, G_TYPE_OBJECT);
 static void
 bjb_controller_init (BjbController *self)
 {
-	BjbControllerPrivate *priv  ;
-	GtkListStore         *store ;
+  BjbControllerPrivate *priv  ;
+  GtkListStore     *store ;
 
-	self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, 
-	                                          BJB_TYPE_CONTROLLER, 
-	                                          BjbControllerPrivate);
-	priv = self->priv ;
+  self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, 
+	                                        BJB_TYPE_CONTROLLER, 
+	                                        BjbControllerPrivate);
+  priv = self->priv ;
 
-	/* Create the columns */
-    store = gtk_list_store_new (NUMBER_COLUMNS,
-                                G_TYPE_STRING,     // urn
-                                G_TYPE_STRING,     // uri
-                                G_TYPE_STRING,     // name
-                                G_TYPE_STRING,     // author
-                                GDK_TYPE_PIXBUF,   // icon then note
-                                G_TYPE_INT64,      // mtime
-                                G_TYPE_BOOLEAN);   // state
+  /* Create the columns */
+  store = gtk_list_store_new (NUMBER_COLUMNS,
+                              G_TYPE_STRING,   // urn
+                              G_TYPE_STRING,   // uri
+                              G_TYPE_STRING,   // name
+                              G_TYPE_STRING,   // author
+                              GDK_TYPE_PIXBUF,   // icon then note
+                              G_TYPE_INT64,    // mtime
+                              G_TYPE_BOOLEAN);   // state
 
-	priv->model = GTK_TREE_MODEL(store) ;
+  priv->model = GTK_TREE_MODEL(store) ;
 	
 }
 
@@ -91,54 +91,54 @@ bjb_controller_finalize (GObject *object)
 {
 	/* TODO: Add deinitalization code here */
 
-    G_OBJECT_CLASS (bjb_controller_parent_class)->finalize (object);
+  G_OBJECT_CLASS (bjb_controller_parent_class)->finalize (object);
 }
 
 static void
-bjb_controller_get_property (GObject    *object,
-                             guint       property_id,
-                             GValue     *value,
-                             GParamSpec *pspec)
+bjb_controller_get_property (GObject  *object,
+               guint     property_id,
+               GValue   *value,
+               GParamSpec *pspec)
 {
   BjbController *self = BJB_CONTROLLER (object);
 
   switch (property_id)
-    {
-    case PROP_BOOK:
-      g_value_set_object (value, self->priv->book);
-      break;
+  {
+  case PROP_BOOK:
+    g_value_set_object (value, self->priv->book);
+    break;
 	case PROP_NEEDLE:
 	  g_value_set_string(value, self->priv->needle);
 	  break;
 	case PROP_MODEL:
 	  g_value_set_object(value, self->priv->model);
 	  break;
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-      break;
-    }
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+    break;
+  }
 }
 
 static void
-bjb_controller_set_property (GObject    *object,
-                             guint       property_id,
-                             const GValue *value,
-                             GParamSpec *pspec)
+bjb_controller_set_property (GObject  *object,
+               guint     property_id,
+               const GValue *value,
+               GParamSpec *pspec)
 {
   BjbController *self = BJB_CONTROLLER (object);
 
   switch (property_id)
-    {
-    case PROP_BOOK:
+  {
+  case PROP_BOOK:
 	  bjb_controller_set_book(self,g_value_get_object(value));
-      break;
-    case PROP_NEEDLE:
+    break;
+  case PROP_NEEDLE:
 	  bjb_controller_set_needle(self,g_value_get_string(value));
-      break;
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-      break;
-    }
+    break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+    break;
+  }
 }
 
 /* Implement model */
@@ -146,266 +146,262 @@ bjb_controller_set_property (GObject    *object,
 GdkPixbuf *
 get_pixbuf_for_note ( BijiNoteObj *note )
 {
-	GdkPixbuf *ret = NULL ;
-	cairo_surface_t *surface = NULL ;
-	cairo_t *c;
-	PangoLayout *layout;
-	PangoFontDescription *desc;
-	GdkRGBA *note_color;
+  GdkPixbuf *ret = NULL ;
+  cairo_surface_t *surface = NULL ;
+  cairo_t *c;
+  PangoLayout *layout;
+  PangoFontDescription *desc;
+  GdkRGBA *note_color;
 
-	gchar *text = biji_note_get_raw_text(note) ;
+  gchar *text = biji_note_get_raw_text(note) ;
 
-	/* Create & Draw surface */ 
-	surface = cairo_image_surface_create ( CAIRO_FORMAT_ARGB32 , 
-	                                       ICON_WIDTH,
-	                                       ICON_HEIGHT) ;
-	c=cairo_create(surface);
+  /* Create & Draw surface */ 
+  surface = cairo_image_surface_create ( CAIRO_FORMAT_ARGB32 , 
+	                                     ICON_WIDTH,
+	                                     ICON_HEIGHT) ;
+  c=cairo_create(surface);
 
-	/* Background */
-	cairo_rectangle(c, 0.5, 0.5, ICON_WIDTH, ICON_HEIGHT);
+  /* Background */
+  cairo_rectangle(c, 0.5, 0.5, ICON_WIDTH, ICON_HEIGHT);
 
-	note_color = biji_note_obj_get_rgba(note) ;
+  note_color = biji_note_obj_get_rgba(note) ;
 
-	// libbiji makes sure there IS a color
-	if ( note_color )
-	    gdk_cairo_set_source_rgba (c,note_color);
+  /* however libbiji makes sure there IS a color */
+  if ( note_color )
+    gdk_cairo_set_source_rgba (c,note_color);
 		
-	cairo_fill_preserve(c);
-    cairo_set_line_width (c,0.8);
-	cairo_set_source_rgb(c, 0.5, 0.5, 0.5);
-	cairo_stroke(c);
+  cairo_fill_preserve(c);
+  cairo_set_line_width (c,0.8);
+  cairo_set_source_rgb(c, 0.5, 0.5, 0.5);
+  cairo_stroke(c);
 
 
-	/* Pango draws */
-	cairo_translate(c, 10, 10);
-	layout = pango_cairo_create_layout(c);
+  /* Pango draws */
+  cairo_translate(c, 10, 10);
+  layout = pango_cairo_create_layout(c);
 
-	pango_layout_set_width(layout, 180000 );
-    pango_layout_set_wrap(layout,PANGO_WRAP_WORD_CHAR);
-    pango_layout_set_height ( layout, 180000 ) ;
+  pango_layout_set_width(layout, 180000 );
+  pango_layout_set_wrap(layout,PANGO_WRAP_WORD_CHAR);
+  pango_layout_set_height ( layout, 180000 ) ;
 	
-	pango_layout_set_text(layout,text, -1);
-	desc = pango_font_description_from_string(ICON_FONT);
-	pango_layout_set_font_description(layout, desc);
-	pango_font_description_free(desc);
+  pango_layout_set_text(layout,text, -1);
+  desc = pango_font_description_from_string(ICON_FONT);
+  pango_layout_set_font_description(layout, desc);
+  pango_font_description_free(desc);
 
-	cairo_set_source_rgb(c, 0.0, 0.0, 0.0);
-	pango_cairo_update_layout(c, layout);
-	pango_cairo_show_layout(c, layout);
+  cairo_set_source_rgb(c, 0.0, 0.0, 0.0);
+  pango_cairo_update_layout(c, layout);
+  pango_cairo_show_layout(c, layout);
 
-	g_object_unref(layout);
+  g_object_unref(layout);
 
-	ret = gdk_pixbuf_get_from_surface (surface,
-                                       0,0,
-                                       ICON_WIDTH,ICON_HEIGHT);
+  ret = gdk_pixbuf_get_from_surface (surface,
+                     0,0,
+                     ICON_WIDTH,ICON_HEIGHT);
 
-	return ret ;
+  return ret ;
 } 
 
 static void
 bjb_controller_add_note ( BijiNoteObj *note, BjbController *self )
 {
-    GtkListStore *store ;
-	GtkTreeIter  iter ;
+  GtkListStore *store ;
+  GtkTreeIter  iter ;
 
-	store = GTK_LIST_STORE(self->priv->model) ;
+  store = GTK_LIST_STORE(self->priv->model) ;
 
 	
-    if ( biji_note_obj_is_template(note) == FALSE )
-    {
-        gtk_list_store_append(store,&iter);
-        gtk_list_store_set(store, 
-                           &iter,
-                           COL_URN,      note_obj_get_path(note),
-                           COL_URI,      note_obj_get_path(note),
-                           COL_NAME,     biji_note_get_title(note),
-                           COL_AUTHOR,   NULL,
-                           COL_IMAGE,    get_pixbuf_for_note(note),
-                           COL_MTIME,    biji_note_obj_get_last_change_date_sec(note),
-                           COL_SELECTED, FALSE,
-                           -1);
-    }
+  if ( biji_note_obj_is_template(note) == FALSE )
+  {
+    gtk_list_store_append(store,&iter);
+    gtk_list_store_set(store, 
+                       &iter,
+                       COL_URN,    note_obj_get_path(note),
+                       COL_URI,    note_obj_get_path(note),
+                       COL_NAME,   biji_note_get_title(note),
+                       COL_AUTHOR,   NULL,
+                       COL_IMAGE,  get_pixbuf_for_note(note),
+                       COL_MTIME,  biji_note_obj_get_last_change_date_sec(note),
+                       COL_SELECTED, FALSE,
+                       -1);
+  }
 }
 
 
 static void
 update_view (BjbController *self)
 {
-    GList *notes ;
+  GList *notes ;
 
-	notes = self->priv->notes_to_show ;
+  notes = self->priv->notes_to_show ;
 	
-    gtk_list_store_clear (GTK_LIST_STORE(self->priv->model));
-	g_list_foreach (notes,(GFunc)bjb_controller_add_note,self) ;	
+  gtk_list_store_clear (GTK_LIST_STORE(self->priv->model));
+  g_list_foreach (notes,(GFunc)bjb_controller_add_note,self) ;	
 }
 
 static glong
 most_recent_note_first ( BijiNoteObj *a, BijiNoteObj *b)
 {
-    glong result = biji_note_id_get_last_change_date_sec(note_get_id(b));
-    return result - biji_note_id_get_last_change_date_sec(note_get_id(a));
+  glong result = biji_note_id_get_last_change_date_sec(note_get_id(b));
+  return result - biji_note_id_get_last_change_date_sec(note_get_id(a));
 }
 
 static void
 sort_notes( BjbController *self)
 {
-    GList *notes ;
+  GList *notes ;
 
-	notes = self->priv->notes_to_show ;
-	notes = g_list_sort(notes,(GCompareFunc)most_recent_note_first);
-	self->priv->notes_to_show = notes ;
+  notes = self->priv->notes_to_show ;
+  notes = g_list_sort(notes,(GCompareFunc)most_recent_note_first);
+  self->priv->notes_to_show = notes ;
 }
 
 static void
 add_note_if_searched ( BijiNoteObj *obj , BjbController *self )
 {
-	gboolean add_note = FALSE ;
-	BjbControllerPrivate *priv = self->priv ;
+  gboolean add_note ;
+  
+  BjbControllerPrivate *priv = self->priv ;
+  add_note = FALSE ;
 
-	/* Title match ? */
-	if (g_strrstr(g_utf8_casefold(biji_note_get_title(obj),-1),
-                  g_utf8_casefold(priv->needle,-1)))
-		add_note = TRUE ;
+  /* Title match ? */
+  if (g_strrstr(g_utf8_casefold(biji_note_get_title(obj),-1),
+                            g_utf8_casefold(priv->needle,-1)))
+    add_note = TRUE ;
 
-	/* Tag match ? */
-	if ( _biji_note_obj_has_tag_prefix(obj,priv->needle))
-	    add_note = TRUE ;
+  /* Tag match ? */
+  if ( _biji_note_obj_has_tag_prefix(obj,priv->needle))
+    add_note = TRUE ;
 
-	/* Content match? */
-	if (g_strrstr(g_utf8_casefold(biji_note_get_raw_text(obj),-1),
-                  g_utf8_casefold(priv->needle,-1)))
-		add_note = TRUE ;
+  /* Content match? */
+  if (g_strrstr(g_utf8_casefold(biji_note_get_raw_text(obj),-1),
+                              g_utf8_casefold(priv->needle,-1)))
+    add_note = TRUE ;
 
 
-	if ( add_note )
-	{
-		priv->notes_to_show = g_list_append ( priv->notes_to_show, obj ) ;
-	}	
+  if ( add_note )
+    priv->notes_to_show = g_list_append ( priv->notes_to_show, obj ) ;
 }
 
 static void
 bjb_controller_apply_needle ( BjbController *self )
 {
-	gchar *needle = self->priv->needle ;
+  gchar *needle ;
 	
-	g_list_free(self->priv->notes_to_show);
-	self->priv->notes_to_show = NULL ;
+  g_list_free(self->priv->notes_to_show);
+  self->priv->notes_to_show = NULL ;
+  
+  needle = self->priv->needle ;
 
-	/* Show all notes */
-	if ( needle == NULL || g_strcmp0 (needle,"") == 0)
-	{
-		self->priv->notes_to_show = biji_note_book_get_notes(self->priv->book);
-	} 
+  /* Show all notes */
+  if ( needle == NULL || g_strcmp0 (needle,"") == 0)
+  {
+    self->priv->notes_to_show = biji_note_book_get_notes(self->priv->book);
+  } 
 
-	/* Test which note to show */
-	else
-	{
-		GList *all_notes ;
+  /* Test which note to show */
+  else
+  {
+    GList *all_notes ;
 		
-		all_notes = biji_note_book_get_notes(self->priv->book) ;
+    all_notes = biji_note_book_get_notes(self->priv->book) ;
 
-        g_list_foreach (all_notes,
-                        (GFunc) add_note_if_searched,
-                        self) ;
+    g_list_foreach (all_notes,
+                   (GFunc) add_note_if_searched,
+                    self) ;
 
-		g_list_free(all_notes);
+    g_list_free(all_notes);
 
-	}
+  }
 
-	sort_notes (self) ;
-	update_view(self);
+  sort_notes (self) ;
+  update_view(self);
 }
 
 static void
 on_needle_changed ( BjbController *self )
 {
-	/*refresh_notes_model (self);*/
-	bjb_controller_apply_needle (self);
+  bjb_controller_apply_needle (self);
 }
 
 static void
 on_book_changed ( BijiNoteBook *book, BjbController *self )
 {
-	/* refresh_notes_model (self); */
-	bjb_controller_apply_needle (self);
+  bjb_controller_apply_needle (self);
 }
 
 static void
 bjb_controller_constructed (BjbController *self)
 {
-	GObject *obj;
+  GObject *obj;
 	
-	g_signal_connect ( self->priv->book, "changed", 
-                       G_CALLBACK(on_book_changed), self);
-                 
-    obj = G_OBJECT(self);      
-    G_OBJECT_CLASS(bjb_controller_parent_class)->constructed(obj) ;
+  g_signal_connect ( self->priv->book, "changed", 
+                     G_CALLBACK(on_book_changed), self);
+         
+  obj = G_OBJECT(self);    
+  G_OBJECT_CLASS(bjb_controller_parent_class)->constructed(obj) ;
 
 }
 
 static void
 bjb_controller_class_init (BjbControllerClass *klass)
 {
-	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-	/*GObjectClass* parent_class = G_OBJECT_CLASS (klass);*/
+  GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
-	g_type_class_add_private (klass, sizeof (BjbControllerPrivate));
+  g_type_class_add_private (klass, sizeof (BjbControllerPrivate));
 
-	object_class->get_property = bjb_controller_get_property;
-    object_class->set_property = bjb_controller_set_property;
-	object_class->finalize = bjb_controller_finalize;
-	object_class->constructed = bjb_controller_constructed;
+  object_class->get_property = bjb_controller_get_property;
+  object_class->set_property = bjb_controller_set_property;
+  object_class->finalize = bjb_controller_finalize;
+  object_class->constructed = bjb_controller_constructed;
 
-	properties[PROP_BOOK] =
-    g_param_spec_object ("book",
-                         "Book",
-                         "The BijiNoteBook",
-                         BIJI_TYPE_NOTE_BOOK,
-                         G_PARAM_READWRITE |
-                         G_PARAM_CONSTRUCT |
-                         G_PARAM_STATIC_STRINGS);
+  properties[PROP_BOOK] = g_param_spec_object ("book",
+                                               "Book",
+                                               "The BijiNoteBook",
+                                               BIJI_TYPE_NOTE_BOOK,
+                                               G_PARAM_READWRITE |
+                                               G_PARAM_CONSTRUCT |
+                                               G_PARAM_STATIC_STRINGS);
 
-	g_object_class_install_property (object_class, 
-	                                 PROP_BOOK, 
-	                                 properties[PROP_BOOK]); 
+  g_object_class_install_property (object_class, 
+	                               PROP_BOOK, 
+	                               properties[PROP_BOOK]); 
 
 
-	properties[PROP_NEEDLE] =
-    g_param_spec_string ("needle",
-                         "Needle",
-                         "String to search notes",
-                         NULL,
-                         G_PARAM_READWRITE |
-                         G_PARAM_CONSTRUCT |
-                         G_PARAM_STATIC_STRINGS);
+  properties[PROP_NEEDLE] = g_param_spec_string ("needle",
+                                                 "Needle",
+                                                 "String to search notes",
+                                                 NULL,
+                                                 G_PARAM_READWRITE |
+                                                 G_PARAM_CONSTRUCT |
+                                                 G_PARAM_STATIC_STRINGS);
 
-	g_object_class_install_property (object_class, 
-	                                 PROP_NEEDLE, 
-	                                 properties[PROP_NEEDLE]);
+  g_object_class_install_property (object_class, 
+	                               PROP_NEEDLE, 
+	                               properties[PROP_NEEDLE]);
 
 
-	properties[PROP_MODEL] =
-    g_param_spec_object ("model",
-                         "Model",
-                         "The GtkTreeModel",
-                         GTK_TYPE_TREE_MODEL,
-                         G_PARAM_READABLE  |
-                         G_PARAM_STATIC_STRINGS);
+  properties[PROP_MODEL] = g_param_spec_object ("model",
+                                                "Model",
+                                                "The GtkTreeModel",
+                                                GTK_TYPE_TREE_MODEL,
+                                                G_PARAM_READABLE  |
+                                                G_PARAM_STATIC_STRINGS);
 
-	g_object_class_install_property (object_class, 
-	                                 PROP_MODEL, 
-	                                 properties[PROP_MODEL]); 
+  g_object_class_install_property (object_class,
+                                   PROP_MODEL, 
+	                               properties[PROP_MODEL]); 
 
 }
 
 BjbController *
 bjb_controller_new ( BijiNoteBook *book , 
-                     gchar *needle        )
+           gchar *needle    )
 {	
-    return g_object_new ( BJB_TYPE_CONTROLLER,
-                          "book", book,
-                          "needle", needle,
-                          NULL); 
+  return g_object_new ( BJB_TYPE_CONTROLLER,
+              "book", book,
+              "needle", needle,
+              NULL); 
 }
 
 void
@@ -414,25 +410,21 @@ refresh_notes_model (BjbController *self)
 	bjb_controller_apply_needle(self);
 }
 
-
 void
 bjb_controller_set_book (BjbController *self, BijiNoteBook  *book )
 {
-    self->priv->book = book ;
+  self->priv->book = book ;
 }
 
 void
 bjb_controller_set_needle (BjbController *self, const gchar *needle )
 {
-	self->priv->needle = needle ;
-
-	g_message("bjb controller set needle, %s",needle);
-
-	on_needle_changed(self);
+  self->priv->needle = needle ;
+  on_needle_changed(self);
 }
 
 GtkTreeModel *
 bjb_controller_get_model  (BjbController *self)
 {
-    return self->priv->model ;
+  return self->priv->model ;
 }
