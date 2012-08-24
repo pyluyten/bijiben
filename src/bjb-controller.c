@@ -141,60 +141,6 @@ bjb_controller_set_property (GObject    *object,
     }
 }
 
-static void
-bjb_controller_class_init (BjbControllerClass *klass)
-{
-	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-	/*GObjectClass* parent_class = G_OBJECT_CLASS (klass);*/
-
-	g_type_class_add_private (klass, sizeof (BjbControllerPrivate));
-
-	object_class->get_property = bjb_controller_get_property;
-    object_class->set_property = bjb_controller_set_property;
-	object_class->finalize = bjb_controller_finalize;
-
-	properties[PROP_BOOK] =
-    g_param_spec_object ("book",
-                         "Book",
-                         "The BijiNoteBook",
-                         BIJI_TYPE_NOTE_BOOK,
-                         G_PARAM_READWRITE |
-                         G_PARAM_CONSTRUCT |
-                         G_PARAM_STATIC_STRINGS);
-
-	g_object_class_install_property (object_class, 
-	                                 PROP_BOOK, 
-	                                 properties[PROP_BOOK]); 
-
-
-	properties[PROP_NEEDLE] =
-    g_param_spec_string ("needle",
-                         "Needle",
-                         "String to search notes",
-                         NULL,
-                         G_PARAM_READWRITE |
-                         G_PARAM_CONSTRUCT |
-                         G_PARAM_STATIC_STRINGS);
-
-	g_object_class_install_property (object_class, 
-	                                 PROP_NEEDLE, 
-	                                 properties[PROP_NEEDLE]);
-
-
-	properties[PROP_MODEL] =
-    g_param_spec_object ("model",
-                         "Model",
-                         "The GtkTreeModel",
-                         GTK_TYPE_TREE_MODEL,
-                         G_PARAM_READABLE  |
-                         G_PARAM_STATIC_STRINGS);
-
-	g_object_class_install_property (object_class, 
-	                                 PROP_MODEL, 
-	                                 properties[PROP_MODEL]); 
-
-}
-
 /* Implement model */
 
 GdkPixbuf *
@@ -371,23 +317,86 @@ bjb_controller_apply_needle ( BjbController *self )
 }
 
 static void
-on_book_changed ( BjbController *self )
-{
-	/* refresh_notes_model (self); */
-	bjb_controller_apply_needle (self);
-}
-
-static void
 on_needle_changed ( BjbController *self )
 {
 	/*refresh_notes_model (self);*/
 	bjb_controller_apply_needle (self);
 }
 
+static void
+on_book_changed ( BijiNoteBook *book, BjbController *self )
+{
+	/* refresh_notes_model (self); */
+	bjb_controller_apply_needle (self);
+}
+
+static void
+bjb_controller_constructed (BjbController *self)
+{
+	g_signal_connect ( self->priv->book, "changed", 
+                       G_CALLBACK(on_book_changed), self);
+
+}
+
+static void
+bjb_controller_class_init (BjbControllerClass *klass)
+{
+	GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	/*GObjectClass* parent_class = G_OBJECT_CLASS (klass);*/
+
+	g_type_class_add_private (klass, sizeof (BjbControllerPrivate));
+
+	object_class->get_property = bjb_controller_get_property;
+    object_class->set_property = bjb_controller_set_property;
+	object_class->finalize = bjb_controller_finalize;
+	object_class->constructed = bjb_controller_constructed;
+
+	properties[PROP_BOOK] =
+    g_param_spec_object ("book",
+                         "Book",
+                         "The BijiNoteBook",
+                         BIJI_TYPE_NOTE_BOOK,
+                         G_PARAM_READWRITE |
+                         G_PARAM_CONSTRUCT |
+                         G_PARAM_STATIC_STRINGS);
+
+	g_object_class_install_property (object_class, 
+	                                 PROP_BOOK, 
+	                                 properties[PROP_BOOK]); 
+
+
+	properties[PROP_NEEDLE] =
+    g_param_spec_string ("needle",
+                         "Needle",
+                         "String to search notes",
+                         NULL,
+                         G_PARAM_READWRITE |
+                         G_PARAM_CONSTRUCT |
+                         G_PARAM_STATIC_STRINGS);
+
+	g_object_class_install_property (object_class, 
+	                                 PROP_NEEDLE, 
+	                                 properties[PROP_NEEDLE]);
+
+
+	properties[PROP_MODEL] =
+    g_param_spec_object ("model",
+                         "Model",
+                         "The GtkTreeModel",
+                         GTK_TYPE_TREE_MODEL,
+                         G_PARAM_READABLE  |
+                         G_PARAM_STATIC_STRINGS);
+
+	g_object_class_install_property (object_class, 
+	                                 PROP_MODEL, 
+	                                 properties[PROP_MODEL]); 
+
+}
+
 BjbController *
 bjb_controller_new ( BijiNoteBook *book , 
                      gchar *needle        )
-{
+{	
     return g_object_new ( BJB_TYPE_CONTROLLER,
                           "book", book,
                           "needle", needle,
