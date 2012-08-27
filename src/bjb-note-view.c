@@ -348,6 +348,7 @@ just_switch_to_main_view(BjbNoteView *view)
   to_be = GTK_CONTAINER(bjb_main_view_new((gpointer)window,
                                            notes,
                                            controller));
+            
   bjb_window_base_set_frame((gpointer)view->priv->window,GTK_CONTAINER(to_be));
   prepare_view_for_usage((BjbMainView*)to_be);
 }
@@ -1001,6 +1002,8 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
 
   // Zeitgeist.
   insert_zeitgeist(note,ZEITGEIST_ZG_ACCESS_EVENT) ;
+  
+
     
   return ret ;
 }

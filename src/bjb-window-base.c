@@ -200,13 +200,11 @@ bjb_window_base_new(GtkApplication *app)
 
   controller = bjb_controller_new(bijiben_get_book(app) , ret->priv->entry );
   ret->priv->controller = controller ;
-
-  ret->priv->frame=GTK_CONTAINER(bjb_main_view_new(GTK_WIDGET(ret),
-                                                   bijiben_get_book(app),
-                                                   controller));
-
-  gtk_container_add(GTK_CONTAINER(ret),GTK_WIDGET(ret->priv->frame));
-  gtk_widget_show_all(GTK_WIDGET(ret));
+  
+  bjb_window_base_set_frame(win,
+                            bjb_main_view_new(ret,
+                                              bijiben_get_book(app),
+                                              controller));
 
   prepare_view_for_usage((BjbMainView*)ret->priv->frame);
 
@@ -229,19 +227,22 @@ window_base_get_font(GtkWidget *window)
 void
 bjb_window_base_set_frame(gpointer win,GtkContainer *frame)
 {
-  BjbWindowBase *b = BJB_WINDOW_BASE(win);
-  if ( b->priv->frame )
+  BjbWindowBase *b ;
+  
+  b = BJB_WINDOW_BASE(win);
+  
+  if ( b->priv->frame && GTK_IS_CONTAINER(b->priv->frame)
   {
-    if ( GTK_IS_CONTAINER(b->priv->frame))
-    {
-      gtk_widget_destroy(GTK_WIDGET(b->priv->frame));
-      b->priv->frame= frame ;
-      gtk_container_add(GTK_CONTAINER(win),GTK_WIDGET(b->priv->frame));
-      gtk_widget_show_all(GTK_WIDGET(frame));
-      return ;
-    }
+    gtk_widget_destroy(GTK_WIDGET(b->priv->frame));
+    b->priv->frame= frame ;
   }
-  b->priv->frame = frame ;
+  
+  else
+  {
+    b->priv->frame = frame ;
+  }
+  
+  gtk_container_add(GTK_CONTAINER(win),GTK_WIDGET(b->priv->frame));
 }
 
 GtkContainer *

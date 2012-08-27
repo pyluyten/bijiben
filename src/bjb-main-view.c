@@ -253,6 +253,7 @@ switch_to_note_view(BjbMainView *view,BijiNoteObj *note)
                              GTK_CONTAINER(bjb_note_view_new(win,note,TRUE)));
   
   gtk_window_set_title(GTK_WINDOW(win),biji_note_get_title (note));
+  gtk_widget_show_all(win);
 }
 
 
@@ -483,39 +484,55 @@ create_selection_toolbar(BjbMainView *parent)
 }
 
 GtkWidget *
-get_search_entry(BjbMainView *parent)
+get_search_entry(BjbMainView *self)
 {
-  parent->priv->search_entry = gtk_entry_new ();
-  GtkEntry *entry = GTK_ENTRY(parent->priv->search_entry);
-	
-  gchar *needle = bjb_window_base_get_entry(parent->priv->window);
+  BjbMainViewPriv *priv ;
+  BjbController *controller ;
+  gchar *needle ;
+  GtkEntry *entry ;
+  GtkEntryCompletion *completion ;
+  GtkTreeModel *completion_model ;
+  GtkEntryBuffer *  entry_buf ;
+  
+  priv = self->priv ;
+  controller = bjb_window_base_get_controller(BJB_WINDOW_BASE(priv->window));
+
+  needle = bjb_controller_get_needle(controller);
+  	
+  priv->search_entry = gtk_entry_new ();  
+  entry = GTK_ENTRY(priv->search_entry);
+  
+  g_message("1. NEEDLE IS :%s",needle);
+  
   if ( needle != NULL )
-  {
+  { 
+    g_message("2. NEEDLE IS :%s",needle);
+    priv->has_entry = TRUE ;
     gtk_entry_set_text(entry,needle);
-  }
+  } 
 
   gtk_entry_set_icon_from_stock (entry,
                                  GTK_ENTRY_ICON_SECONDARY,
                                  GTK_STOCK_CLEAR);
 
-  GtkEntryCompletion *completion = gtk_entry_completion_new ();
+  completion = gtk_entry_completion_new ();
   gtk_entry_set_completion (entry, completion);
   g_object_unref (completion);
-  GtkTreeModel *completion_model = create_completion_model ();
+  completion_model = create_completion_model ();
   gtk_entry_completion_set_model (completion, completion_model);
   g_object_unref (completion_model);
   gtk_entry_completion_set_text_column (completion, 0);
 		
-  g_signal_connect (parent->priv->search_entry, "icon-press",
-	                  G_CALLBACK (clear_search_entry_callback),parent);
+  g_signal_connect (priv->search_entry, "icon-press",
+	                  G_CALLBACK (clear_search_entry_callback),self);
 
-  GtkEntryBuffer *  entry_buf = gtk_entry_get_buffer(entry);
+  entry_buf = gtk_entry_get_buffer(entry);
   g_signal_connect(entry_buf,"inserted-text",
-	               G_CALLBACK(action_entry_insert_callback),parent);
+	               G_CALLBACK(action_entry_insert_callback),self);
   g_signal_connect(entry_buf,"deleted-text",
-	               G_CALLBACK(action_entry_delete_callback),parent);	
+	               G_CALLBACK(action_entry_delete_callback),self);	
 		
-  return parent->priv->search_entry ;
+  return priv->search_entry ;
 }
 
 static void
@@ -537,17 +554,34 @@ hide_search_entry(BjbMainView *view)
   gtk_widget_grab_focus(GTK_WIDGET(view->priv->search_entry));
 }
 
-void prepare_view_for_usage(BjbMainView *view)
+void prepare_view_for_usage(BjbMainView *self)
 {
-  gtk_widget_show_all(view->priv->window);
-  hide_search_entry(view);
-  gtk_widget_hide(view->priv->select_toolbar);
+  BjbMainViewPriv *priv ;
+  
+  priv = self->priv ;
+	
+  /* First show all, then exceptions */
+  gtk_widget_show_all(priv->window);
+  
+  /* TODO : test if selection mode  */
+  gtk_widget_hide(priv->select_toolbar);
+  
+  /* Handle the search entry showing */
+  if ( !self->priv->has_entry )
+  {
+    gtk_widget_hide( self->priv->search_entry);
+  }
+  
+  else 
+  {
+    gtk_widget_grab_focus(GTK_WIDGET(self->priv->search_entry));
+    gtk_editable_set_position (GTK_EDITABLE(self->priv->search_entry),-1);
+  }
 }
 
 static gboolean
 on_key_pressed(GtkWidget *widget,GdkEvent  *event,gpointer user_data)
 {
-  g_message("on key pressed");
   BjbMainView *view = BJB_MAIN_VIEW (user_data);
 
   /* Do not allow search when selecting items */
@@ -704,18 +738,19 @@ bjb_main_view_new(GtkWidget *win,
 
   // Search entry is inside vbox up for test
   self->priv->has_entry = FALSE ;
+  get_search_entry(self);
   self->priv->key_pressed = g_signal_connect(self->priv->window,"key-press-event",
                                             G_CALLBACK(on_key_pressed),self); 
-  self->priv->hbox_entry = gtk_box_new ( GTK_ORIENTATION_HORIZONTAL,0);
+  self->priv->hbox_entry = gtk_box_new ( GTK_ORIENTATION_HORIZONTAL,0);  
     
-  gtk_box_pack_start (GTK_BOX(self->priv->hbox_entry),
-                      get_search_entry(self),
-                      TRUE,FALSE,0) ;
 
+  gtk_box_pack_start (GTK_BOX(self->priv->hbox_entry),
+                      self->priv->search_entry,
+                      TRUE,FALSE,0) ;
+                      
   gtk_box_pack_start (GTK_BOX(self->priv->vbox_up),
                       self->priv->hbox_entry,
                       FALSE,FALSE,0) ;
-
 
     /* Controller to display notes 
     
@@ -741,6 +776,7 @@ bjb_main_view_new(GtkWidget *win,
 
     self->priv->notes_changed = g_signal_connect(book,"changed",
                                         G_CALLBACK(on_book_changed),self);
+                                                                          
     return self;
 }
 

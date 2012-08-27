@@ -423,6 +423,12 @@ bjb_controller_set_needle (BjbController *self, const gchar *needle )
   on_needle_changed(self);
 }
 
+gchar *
+bjb_controller_get_needle (BjbController *self)
+{
+  return self->priv->needle ;
+}
+
 GtkTreeModel *
 bjb_controller_get_model  (BjbController *self)
 {

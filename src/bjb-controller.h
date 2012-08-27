@@ -78,6 +78,8 @@ void bjb_controller_set_book (BjbController * self, BijiNoteBook * book ) ;
 
 void bjb_controller_set_needle (BjbController *self, const gchar *needle ) ; 
 
+gchar * bjb_controller_get_needle (BjbController *self ) ;
+
 GtkTreeModel * bjb_controller_get_model  (BjbController *self) ;
 
 G_END_DECLS
