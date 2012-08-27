@@ -502,11 +502,9 @@ get_search_entry(BjbMainView *self)
   priv->search_entry = gtk_entry_new ();  
   entry = GTK_ENTRY(priv->search_entry);
   
-  g_message("1. NEEDLE IS :%s",needle);
   
   if ( needle != NULL )
   { 
-    g_message("2. NEEDLE IS :%s",needle);
     priv->has_entry = TRUE ;
     gtk_entry_set_text(entry,needle);
   } 
