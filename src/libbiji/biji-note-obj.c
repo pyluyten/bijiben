@@ -522,6 +522,10 @@ note_obj_save_note_using_buffer(gpointer note_obj)
   buf = note_obj_serialize(note_obj,3);
   result = g_file_set_contents (biji_note_id_get_path(id),
 	                            (gchar*)buf->content,-1,NULL);
+	                            
+  g_signal_emit ( G_OBJECT (note_obj), 
+                  biji_obj_signals[NOTE_CHANGED],
+                  0);
 
   xmlBufferFree(buf);
   return result ;

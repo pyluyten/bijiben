@@ -334,8 +334,36 @@ on_needle_changed ( BjbController *self )
 }
 
 static void
+add_note_to_completion(BijiNoteObj *note , BjbController *self)
+{
+  GtkListStore *store;
+  GtkTreeIter iter;
+
+  store = self->priv->completion ;
+
+  // Search Tag.
+  gtk_list_store_append (store, &iter);
+  gtk_list_store_set (store, 
+                      &iter, 
+                      0, 
+                      biji_note_get_title(note),
+                      -1);
+}
+
+static void
+refresh_completion(BjbController *self)
+{
+  gtk_list_store_clear(self->priv->completion);
+  
+  g_list_foreach(biji_note_book_get_notes(self->priv->book),
+                 (GFunc)add_note_to_completion,
+                 self);
+}
+
+static void
 on_book_changed ( BijiNoteBook *book, BjbController *self )
 {
+  refresh_completion(self);
   bjb_controller_apply_needle (self);
 }
 
@@ -419,22 +447,7 @@ refresh_notes_model (BjbController *self)
 	bjb_controller_apply_needle(self);
 }
 
-static void
-add_note_to_completion(BijiNoteObj *note , BjbController *self)
-{
-  GtkListStore *store;
-  GtkTreeIter iter;
 
-  store = self->priv->completion ;
-
-  // Search Tag.
-  gtk_list_store_append (store, &iter);
-  gtk_list_store_set (store, 
-                      &iter, 
-                      0, 
-                      biji_note_get_title(note),
-                      -1);
-}
 
 void
 bjb_controller_set_book (BjbController *self, BijiNoteBook  *book )
@@ -443,11 +456,7 @@ bjb_controller_set_book (BjbController *self, BijiNoteBook  *book )
   
   /* Only update completion.
    * Notes model is updated when needle changes */
-  gtk_list_store_clear(self->priv->completion);
-  
-  g_list_foreach(biji_note_book_get_notes(book),
-                 (GFunc)add_note_to_completion,
-                 self);
+  refresh_completion(self);
 }
 
 void

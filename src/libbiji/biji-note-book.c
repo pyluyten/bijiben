@@ -75,6 +75,8 @@ biji_note_book_class_init (BijiNoteBookClass *klass)
 	                                              g_cclosure_marshal_VOID__VOID,
 	                                              G_TYPE_NONE,
 	                                              0);
+	                                              
+  g_message("notebook changed");
 }
 
 /* tag books are a trial. not really necessary, but make life easier*/
