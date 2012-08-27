@@ -34,8 +34,9 @@ bijiben is free software: you can redistribute it and/or modify it
 struct _BjbControllerPrivate
 {
   BijiNoteBook  * book ;
-  gchar     * needle ;
+  gchar         * needle ;
   GtkTreeModel  * model ;
+  GtkTreeModel  * completion;
 	
   /*  Private  */
 	
@@ -66,6 +67,7 @@ bjb_controller_init (BjbController *self)
 {
   BjbControllerPrivate *priv  ;
   GtkListStore     *store ;
+  GtkListStore     *completion ;
 
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, 
 	                                        BJB_TYPE_CONTROLLER, 
@@ -83,13 +85,20 @@ bjb_controller_init (BjbController *self)
                               G_TYPE_BOOLEAN);   // state
 
   priv->model = GTK_TREE_MODEL(store) ;
+  
+  completion  = gtk_list_store_new (1, G_TYPE_STRING);
+  
+  priv->completion = GTK_TREE_MODEL(completion);
 	
 }
 
 static void
 bjb_controller_finalize (GObject *object)
 {
-	/* TODO: Add deinitalization code here */
+  BjbController *self = BJB_CONTROLLER(object);
+  BjbControllerPrivate *priv = self->priv ;
+  
+  g_object_unref (priv->completion);
 
   G_OBJECT_CLASS (bjb_controller_parent_class)->finalize (object);
 }
@@ -410,10 +419,35 @@ refresh_notes_model (BjbController *self)
 	bjb_controller_apply_needle(self);
 }
 
+static void
+add_note_to_completion(BijiNoteObj *note , BjbController *self)
+{
+  GtkListStore *store;
+  GtkTreeIter iter;
+
+  store = self->priv->completion ;
+
+  // Search Tag.
+  gtk_list_store_append (store, &iter);
+  gtk_list_store_set (store, 
+                      &iter, 
+                      0, 
+                      biji_note_get_title(note),
+                      -1);
+}
+
 void
 bjb_controller_set_book (BjbController *self, BijiNoteBook  *book )
 {
   self->priv->book = book ;
+  
+  /* Only update completion.
+   * Notes model is updated when needle changes */
+  gtk_list_store_clear(self->priv->completion);
+  
+  g_list_foreach(biji_note_book_get_notes(book),
+                 (GFunc)add_note_to_completion,
+                 self);
 }
 
 void
@@ -436,16 +470,7 @@ bjb_controller_get_model  (BjbController *self)
 }
 
 GtkTreeModel *
-create_completion_model (BjbController *self)
+bjb_controller_get_completion(BjbController *self)
 {
-  GtkListStore *store;
-  GtkTreeIter iter;
-
-  store = gtk_list_store_new (1, G_TYPE_STRING);
-
-  // Search Tag.
-  gtk_list_store_append (store, &iter);
-  gtk_list_store_set (store, &iter, 0, "tag=", -1);
-
-  return GTK_TREE_MODEL (store);
+  return self->priv->completion ;
 }

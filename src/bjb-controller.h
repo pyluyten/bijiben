@@ -82,7 +82,7 @@ gchar * bjb_controller_get_needle (BjbController *self ) ;
 
 GtkTreeModel * bjb_controller_get_model  (BjbController *self) ;
 
-GtkTreeModel * create_completion_model (BjbController *self);
+GtkTreeModel * bjb_controller_get_completion(BjbController *self);
 
 G_END_DECLS
 

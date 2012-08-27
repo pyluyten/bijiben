@@ -501,9 +501,9 @@ get_search_entry(BjbMainView *self)
   completion = gtk_entry_completion_new ();
   gtk_entry_set_completion (entry, completion);
   g_object_unref (completion);
-  completion_model = create_completion_model (priv->controller);
+  completion_model = bjb_controller_get_completion(priv->controller);
   gtk_entry_completion_set_model (completion, completion_model);
-  g_object_unref (completion_model);
+  
   gtk_entry_completion_set_text_column (completion, 0);
 		
   g_signal_connect (priv->search_entry, "icon-press",
