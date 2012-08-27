@@ -752,12 +752,6 @@ bjb_main_view_new(GtkWidget *win,
                       self->priv->hbox_entry,
                       FALSE,FALSE,0) ;
 
-    /* Controller to display notes 
-    
-    controller = bjb_controller_new(book ,
-                                    bjb_window_base_get_entry(self->priv->window)) ;
-    self->priv->controller = controller ;*/
-
     self->priv->view = gd_main_view_new(DEFAULT_VIEW);
     gtk_box_pack_start(GTK_BOX(vbox),
                        GTK_WIDGET(self->priv->view),
