@@ -93,11 +93,23 @@ bjb_controller_init (BjbController *self)
 }
 
 static void
+free_notes_store(BjbController *self)
+{
+  GtkListStore *store ;
+
+  store = GTK_LIST_STORE(self->priv->model) ;
+    
+  gtk_list_store_clear(store);
+  
+}
+
+static void
 bjb_controller_finalize (GObject *object)
 {
   BjbController *self = BJB_CONTROLLER(object);
   BjbControllerPrivate *priv = self->priv ;
   
+  free_notes_store(self);
   g_object_unref (priv->completion);
 
   G_OBJECT_CLASS (bjb_controller_parent_class)->finalize (object);
@@ -216,12 +228,15 @@ bjb_controller_add_note ( BijiNoteObj *note, BjbController *self )
 {
   GtkListStore *store ;
   GtkTreeIter  iter ;
+  GdkPixbuf    *pix;
 
   store = GTK_LIST_STORE(self->priv->model) ;
 
 	
   if ( biji_note_obj_is_template(note) == FALSE )
   {
+	pix = get_pixbuf_for_note(note);
+	  
     gtk_list_store_append(store,&iter);
     gtk_list_store_set(store, 
                        &iter,
@@ -229,10 +244,12 @@ bjb_controller_add_note ( BijiNoteObj *note, BjbController *self )
                        COL_URI,    note_obj_get_path(note),
                        COL_NAME,   biji_note_get_title(note),
                        COL_AUTHOR,   NULL,
-                       COL_IMAGE,  get_pixbuf_for_note(note),
+                       COL_IMAGE,  pix,
                        COL_MTIME,  biji_note_obj_get_last_change_date_sec(note),
                        COL_SELECTED, FALSE,
                        -1);
+                       
+    g_object_unref(pix);
   }
 }
 
@@ -244,7 +261,7 @@ update_view (BjbController *self)
 
   notes = self->priv->notes_to_show ;
 	
-  gtk_list_store_clear (GTK_LIST_STORE(self->priv->model));
+  free_notes_store(self);
   g_list_foreach (notes,(GFunc)bjb_controller_add_note,self) ;	
 }
 
