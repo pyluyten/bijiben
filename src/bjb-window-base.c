@@ -231,7 +231,7 @@ bjb_window_base_set_frame(gpointer win,GtkContainer *frame)
   
   b = BJB_WINDOW_BASE(win);
   
-  if ( b->priv->frame && GTK_IS_CONTAINER(b->priv->frame)
+  if ( b->priv->frame && GTK_IS_CONTAINER(b->priv->frame))
   {
     gtk_widget_destroy(GTK_WIDGET(b->priv->frame));
     b->priv->frame= frame ;

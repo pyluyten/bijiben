@@ -434,3 +434,18 @@ bjb_controller_get_model  (BjbController *self)
 {
   return self->priv->model ;
 }
+
+GtkTreeModel *
+create_completion_model (BjbController *self)
+{
+  GtkListStore *store;
+  GtkTreeIter iter;
+
+  store = gtk_list_store_new (1, G_TYPE_STRING);
+
+  // Search Tag.
+  gtk_list_store_append (store, &iter);
+  gtk_list_store_set (store, &iter, 0, "tag=", -1);
+
+  return GTK_TREE_MODEL (store);
+}

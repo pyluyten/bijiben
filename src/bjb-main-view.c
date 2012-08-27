@@ -375,21 +375,6 @@ update_selection_label(BjbMainView *bmv)
 
 /* Toolbar */
 
-GtkTreeModel *
-create_completion_model (void)
-{
-  GtkListStore *store;
-  GtkTreeIter iter;
-
-  store = gtk_list_store_new (1, G_TYPE_STRING);
-
-  // Search Tag.
-  gtk_list_store_append (store, &iter);
-  gtk_list_store_set (store, &iter, 0, "tag=", -1);
-
-  return GTK_TREE_MODEL (store);
-}
-
 static GtkWidget *
 create_standard_toolbar(BjbMainView *parent)
 {
@@ -516,7 +501,7 @@ get_search_entry(BjbMainView *self)
   completion = gtk_entry_completion_new ();
   gtk_entry_set_completion (entry, completion);
   g_object_unref (completion);
-  completion_model = create_completion_model ();
+  completion_model = create_completion_model (priv->controller);
   gtk_entry_completion_set_model (completion, completion_model);
   g_object_unref (completion_model);
   gtk_entry_completion_set_text_column (completion, 0);
