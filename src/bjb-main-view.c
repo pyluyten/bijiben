@@ -350,10 +350,9 @@ switch_to_note(BjbMainView *view, BijiNoteObj *to_open)
 }
 
 static void
-update_selection_label(BjbMainView *bmv)
+update_selection_label(GdMainView *view,BjbMainView *bmv)
 {
     gint selected = 0 ;
-    GdMainView *view = bmv->priv->view ;
 
     if ( view )
     {
@@ -442,7 +441,7 @@ create_selection_toolbar(BjbMainView *parent)
   gtk_toolbar_insert(tool,space_l,-1);
 
   parent->priv->label = gtk_label_new("");
-  update_selection_label(parent);
+  update_selection_label(NULL,parent);
   GtkToolItem *item = gtk_tool_button_new(parent->priv->label,NULL);
   gtk_toolbar_insert(tool,item,-1);
 
@@ -735,26 +734,29 @@ bjb_main_view_new(GtkWidget *win,
                       self->priv->hbox_entry,
                       FALSE,FALSE,0) ;
 
-    self->priv->view = gd_main_view_new(DEFAULT_VIEW);
-    gtk_box_pack_start(GTK_BOX(vbox),
-                       GTK_WIDGET(self->priv->view),
-                       TRUE,
-                       TRUE,
-                       0);
+  self->priv->view = gd_main_view_new(DEFAULT_VIEW);
+  gtk_box_pack_start(GTK_BOX(vbox),
+                     GTK_WIDGET(self->priv->view),
+                     TRUE,
+                     TRUE,
+                     0);
 
-    gd_main_view_set_selection_mode ( self->priv->view, FALSE);
-    gd_main_view_set_model(self->priv->view,
-                           bjb_controller_get_model(controller));
+  gd_main_view_set_selection_mode ( self->priv->view, FALSE);
+  gd_main_view_set_model(self->priv->view,
+                         bjb_controller_get_model(controller));
+                         
+  g_signal_connect(self->priv->view,"view-selection-changed",
+                   G_CALLBACK(update_selection_label),self);
 
-    g_signal_connect(self->priv->view,"item-activated",
-                     G_CALLBACK(on_item_activated),self);
+  g_signal_connect(self->priv->view,"item-activated",
+                   G_CALLBACK(on_item_activated),self);
  
-    gtk_window_set_title (GTK_WINDOW (win), BIJIBEN_MAIN_WIN_TITLE);
+  gtk_window_set_title (GTK_WINDOW (win), BIJIBEN_MAIN_WIN_TITLE);
 
-    self->priv->notes_changed = g_signal_connect(book,"changed",
+  self->priv->notes_changed = g_signal_connect(book,"changed",
                                         G_CALLBACK(on_book_changed),self);
                                                                           
-    return self;
+  return self;
 }
 
 GtkWidget *
