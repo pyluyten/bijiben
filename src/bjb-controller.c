@@ -184,20 +184,27 @@ get_pixbuf_for_note ( BijiNoteObj *note )
 
   /* Background */
   cairo_rectangle(c, 0.5, 0.5, ICON_WIDTH, ICON_HEIGHT);
-
   note_color = biji_note_obj_get_rgba(note) ;
 
-  /* however libbiji makes sure there IS a color */
   if ( note_color )
     gdk_cairo_set_source_rgba (c,note_color);
 		
-  cairo_fill_preserve(c);
-  cairo_set_line_width (c,0.8);
-  cairo_set_source_rgb(c, 0.5, 0.5, 0.5);
+  cairo_fill(c);
+  
+  /* Borders */
+  cairo_set_source_rgba(c, 0.3, 0.3, 0.3,0.5);
+  cairo_set_line_width (c,0.6);
+  cairo_move_to (c, 0, 0);
+  cairo_line_to (c, 0, ICON_HEIGHT);
+  cairo_move_to (c, ICON_WIDTH, 0);
+  cairo_line_to (c, ICON_WIDTH, ICON_HEIGHT); 
+  cairo_stroke(c);
+  cairo_set_line_width (c,3.0);
+  cairo_move_to (c, 0, ICON_HEIGHT);
+  cairo_line_to (c, ICON_WIDTH, ICON_HEIGHT);
   cairo_stroke(c);
 
-
-  /* Pango draws */
+  /* Text */
   cairo_translate(c, 10, 10);
   layout = pango_cairo_create_layout(c);
 
