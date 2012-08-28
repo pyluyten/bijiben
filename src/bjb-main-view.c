@@ -607,13 +607,6 @@ on_key_pressed(GtkWidget *widget,GdkEvent  *event,gpointer user_data)
 }
 
 
-static gboolean
-on_book_changed(BijiNoteBook *book, BjbMainView *self )
-{
-  refresh_notes_model(self->priv->controller);
-  return TRUE ;
-}
-
 static GList *
 get_selected_paths(BjbMainView *self)
 {
@@ -689,7 +682,6 @@ on_item_activated(GdMainView        * gd,
 
 BjbMainView*
 bjb_main_view_new(GtkWidget *win,
-                  BijiNoteBook *book,
                   BjbController *controller)
 {
   BjbMainView *self ;
@@ -752,9 +744,6 @@ bjb_main_view_new(GtkWidget *win,
                    G_CALLBACK(on_item_activated),self);
  
   gtk_window_set_title (GTK_WINDOW (win), BIJIBEN_MAIN_WIN_TITLE);
-
-  self->priv->notes_changed = g_signal_connect(book,"changed",
-                                        G_CALLBACK(on_book_changed),self);
                                                                           
   return self;
 }

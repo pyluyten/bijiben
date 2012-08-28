@@ -459,14 +459,6 @@ bjb_controller_new ( BijiNoteBook *book ,
 }
 
 void
-refresh_notes_model (BjbController *self)
-{
-	bjb_controller_apply_needle(self);
-}
-
-
-
-void
 bjb_controller_set_book (BjbController *self, BijiNoteBook  *book )
 {
   self->priv->book = book ;

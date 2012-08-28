@@ -203,7 +203,6 @@ bjb_window_base_new(GtkApplication *app)
   
   bjb_window_base_set_frame(win,
                             bjb_main_view_new(ret,
-                                              bijiben_get_book(app),
                                               controller));
 
   prepare_view_for_usage((BjbMainView*)ret->priv->frame);

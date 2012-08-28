@@ -36,7 +36,7 @@ struct _BjbMainView
 
 GType bjb_main_view_get_type (void) G_GNUC_CONST;
 
-BjbMainView* bjb_main_view_new(GtkWidget *win, BijiNoteBook *book, BjbController *controller);
+BjbMainView* bjb_main_view_new(GtkWidget *win, BjbController *controller);
 GtkWidget *bjb_main_view_get_window(BjbMainView *view);
 
 void action_new_note_callback(GtkMenuItem *item,BjbMainView *view);

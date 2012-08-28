@@ -343,10 +343,9 @@ just_switch_to_main_view(BjbNoteView *view)
   GtkContainer *to_be;
     
   window = view->priv->window;
-  notes = bjb_window_base_get_book (window);
   controller = bjb_window_base_get_controller(window);
+  
   to_be = GTK_CONTAINER(bjb_main_view_new((gpointer)window,
-                                           notes,
                                            controller));
             
   bjb_window_base_set_frame((gpointer)view->priv->window,GTK_CONTAINER(to_be));
