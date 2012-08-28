@@ -70,8 +70,6 @@ struct _BjbMainViewPriv {
 
 G_DEFINE_TYPE (BjbMainView, bjb_main_view, GTK_TYPE_BOX);
 
-/* TODO : make this initialization correct
- * instead bjb_main_view_new */
 static void
 bjb_main_view_init (BjbMainView *object)
 {
@@ -157,39 +155,6 @@ biji_main_view_constructor (GType                  gtype,
     obj = G_OBJECT_CLASS (bjb_main_view_parent_class)->constructor (gtype, n_properties, properties);
   }
   return obj;
-}
-
-static void
-bjb_main_view_class_init (BjbMainViewClass *klass)
-{
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-  object_class->finalize = bjb_main_view_finalize;
-  object_class->get_property = bjb_main_view_get_property;
-  object_class->set_property = bjb_main_view_set_property;
-  object_class->constructor = biji_main_view_constructor;
-    
-  g_type_class_add_private (klass, sizeof (BjbMainViewPriv));
-  
-  properties[PROP_WINDOW] = g_param_spec_object ("window",
-                                                 "Window",
-                                                 "Parent Window",
-                                                 GTK_TYPE_WIDGET,
-                                                 G_PARAM_READWRITE |
-                                                 G_PARAM_CONSTRUCT |
-                                                 G_PARAM_STATIC_STRINGS);
-                                                 
-  g_object_class_install_property (object_class,PROP_WINDOW,properties[PROP_WINDOW]);
-
-  properties[PROP_BJB_CONTROLLER] = g_param_spec_object ("controller",
-                                                         "Controller",
-                                                         "BjbController",
-                                                         BJB_TYPE_CONTROLLER,
-                                                         G_PARAM_READWRITE |
-                                                         G_PARAM_CONSTRUCT |
-                                                         G_PARAM_STATIC_STRINGS);
-
-  g_object_class_install_property (object_class,PROP_BJB_CONTROLLER,properties[PROP_BJB_CONTROLLER]);
 }
 
 
@@ -697,73 +662,110 @@ on_item_activated(GdMainView        * gd,
   return FALSE ;
 }
 
-BjbMainView*
-bjb_main_view_new(GtkWidget *win,
-                  BjbController *controller)
+static void
+bjb_main_view_constructed(BjbMainView *self)
 {
-  BjbMainView *self ;
+  BjbMainViewPriv *priv;
   GtkWidget *vbox; 
     
-  self = g_object_new( BJB_TYPE_MAIN_VIEW,
-                       "window", win,
-                       "controller", controller,
-                       NULL);
-
-  self->priv->window = win ;
+  priv = self->priv ;
     
-  self->priv->vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
-  self->priv->vbox_up = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
+  priv->vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
+  priv->vbox_up = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
 
-  vbox = self->priv->vbox;
+  vbox = priv->vbox;
   gtk_box_pack_start(GTK_BOX(self),GTK_WIDGET(vbox),TRUE,TRUE,0);
-  gtk_box_pack_start(GTK_BOX(vbox),self->priv->vbox_up,FALSE,FALSE,0);
+  gtk_box_pack_start(GTK_BOX(vbox),priv->vbox_up,FALSE,FALSE,0);
 
   /* FIXME : clutter toolbar. */
-  self->priv->standard_toolbar = create_standard_toolbar(self);
-  gtk_box_pack_start(GTK_BOX(self->priv->vbox_up),self->priv->standard_toolbar,
+  priv->standard_toolbar = create_standard_toolbar(self);
+  gtk_box_pack_start(GTK_BOX(priv->vbox_up),priv->standard_toolbar,
                      FALSE,FALSE,0) ;
 
   /* FIXME : clutter toolbar. */
-  self->priv->select_toolbar = create_selection_toolbar(self);
-  gtk_box_pack_start(GTK_BOX(self->priv->vbox_up),self->priv->select_toolbar,
+  priv->select_toolbar = create_selection_toolbar(self);
+  gtk_box_pack_start(GTK_BOX(priv->vbox_up),priv->select_toolbar,
                      FALSE,FALSE,0) ;
 
   // Search entry is inside vbox up for test
-  self->priv->has_entry = FALSE ;
+  priv->has_entry = FALSE ;
   get_search_entry(self);
-  self->priv->key_pressed = g_signal_connect(self->priv->window,"key-press-event",
-                                            G_CALLBACK(on_key_pressed),self); 
-  self->priv->hbox_entry = gtk_box_new ( GTK_ORIENTATION_HORIZONTAL,0);  
+  priv->key_pressed = g_signal_connect(priv->window,"key-press-event",
+                                       G_CALLBACK(on_key_pressed),self); 
+  priv->hbox_entry = gtk_box_new ( GTK_ORIENTATION_HORIZONTAL,0);  
     
 
-  gtk_box_pack_start (GTK_BOX(self->priv->hbox_entry),
-                      self->priv->search_entry,
+  gtk_box_pack_start (GTK_BOX(priv->hbox_entry),
+                      priv->search_entry,
                       TRUE,FALSE,0) ;
                       
-  gtk_box_pack_start (GTK_BOX(self->priv->vbox_up),
-                      self->priv->hbox_entry,
+  gtk_box_pack_start (GTK_BOX(priv->vbox_up),
+                      priv->hbox_entry,
                       FALSE,FALSE,0) ;
 
-  self->priv->view = gd_main_view_new(DEFAULT_VIEW);
+  priv->view = gd_main_view_new(DEFAULT_VIEW);
   gtk_box_pack_start(GTK_BOX(vbox),
-                     GTK_WIDGET(self->priv->view),
+                     GTK_WIDGET(priv->view),
                      TRUE,
                      TRUE,
                      0);
 
-  gd_main_view_set_selection_mode ( self->priv->view, FALSE);
-  gd_main_view_set_model(self->priv->view,
-                         bjb_controller_get_model(controller));
+  gd_main_view_set_selection_mode ( priv->view, FALSE);
+  gd_main_view_set_model(priv->view,
+                         bjb_controller_get_model(priv->controller));
                          
-  g_signal_connect(self->priv->view,"view-selection-changed",
+  g_signal_connect(priv->view,"view-selection-changed",
                    G_CALLBACK(update_selection_label),self);
 
-  g_signal_connect(self->priv->view,"item-activated",
+  g_signal_connect(priv->view,"item-activated",
                    G_CALLBACK(on_item_activated),self);
  
-  gtk_window_set_title (GTK_WINDOW (win), BIJIBEN_MAIN_WIN_TITLE);
-                                                                          
-  return self;
+  gtk_window_set_title (GTK_WINDOW (priv->window), 
+                        BIJIBEN_MAIN_WIN_TITLE);
+}
+
+static void
+bjb_main_view_class_init (BjbMainViewClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = bjb_main_view_finalize;
+  object_class->get_property = bjb_main_view_get_property;
+  object_class->set_property = bjb_main_view_set_property;
+  object_class->constructor = biji_main_view_constructor;
+  object_class->constructed = bjb_main_view_constructed;
+    
+  g_type_class_add_private (klass, sizeof (BjbMainViewPriv));
+  
+  properties[PROP_WINDOW] = g_param_spec_object ("window",
+                                                 "Window",
+                                                 "Parent Window",
+                                                 GTK_TYPE_WIDGET,
+                                                 G_PARAM_READWRITE |
+                                                 G_PARAM_CONSTRUCT |
+                                                 G_PARAM_STATIC_STRINGS);
+                                                 
+  g_object_class_install_property (object_class,PROP_WINDOW,properties[PROP_WINDOW]);
+
+  properties[PROP_BJB_CONTROLLER] = g_param_spec_object ("controller",
+                                                         "Controller",
+                                                         "BjbController",
+                                                         BJB_TYPE_CONTROLLER,
+                                                         G_PARAM_READWRITE |
+                                                         G_PARAM_CONSTRUCT |
+                                                         G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_property (object_class,PROP_BJB_CONTROLLER,properties[PROP_BJB_CONTROLLER]);
+}
+
+BjbMainView*
+bjb_main_view_new(GtkWidget *win,
+                  BjbController *controller)
+{    	
+  return g_object_new( BJB_TYPE_MAIN_VIEW,
+                       "window", win,
+                       "controller", controller,
+                       NULL);
 }
 
 GtkWidget *
