@@ -26,6 +26,7 @@
 enum
 {
   PROP_0,
+  PROP_WINDOW,
   PROP_BJB_CONTROLLER,
   NUM_PROPERTIES
 };
@@ -110,6 +111,9 @@ bjb_main_view_get_property ( GObject      *object,
 
   switch (prop_id)
     {
+    case PROP_WINDOW:
+      g_value_set_object (value, self->priv->window);
+      break;
     case PROP_BJB_CONTROLLER:
       g_value_set_object (value, self->priv->controller);
       break;
@@ -129,6 +133,9 @@ bjb_main_view_set_property ( GObject        *object,
 
   switch (prop_id)
     {
+    case PROP_WINDOW:
+      self->priv->window = g_value_get_object(value);
+      break;
     case PROP_BJB_CONTROLLER:
 	  bjb_main_view_set_controller(self,g_value_get_object(value));
       break;
@@ -163,6 +170,16 @@ bjb_main_view_class_init (BjbMainViewClass *klass)
   object_class->constructor = biji_main_view_constructor;
     
   g_type_class_add_private (klass, sizeof (BjbMainViewPriv));
+  
+  properties[PROP_WINDOW] = g_param_spec_object ("window",
+                                                 "Window",
+                                                 "Parent Window",
+                                                 GTK_TYPE_WIDGET,
+                                                 G_PARAM_READWRITE |
+                                                 G_PARAM_CONSTRUCT |
+                                                 G_PARAM_STATIC_STRINGS);
+                                                 
+  g_object_class_install_property (object_class,PROP_WINDOW,properties[PROP_WINDOW]);
 
   properties[PROP_BJB_CONTROLLER] = g_param_spec_object ("controller",
                                                          "Controller",
@@ -688,7 +705,8 @@ bjb_main_view_new(GtkWidget *win,
   GtkWidget *vbox; 
     
   self = g_object_new( BJB_TYPE_MAIN_VIEW,
-                       "controller",controller,
+                       "window", win,
+                       "controller", controller,
                        NULL);
 
   self->priv->window = win ;
