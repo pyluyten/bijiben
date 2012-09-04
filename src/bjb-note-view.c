@@ -887,7 +887,7 @@ on_note_deleted(BijiNoteObj *note, BjbNoteView *view)
   return TRUE ;
 }
 
-ClutterActor *
+BjbNoteView *
 bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
 {
   BjbNoteView        *self ;
@@ -1018,5 +1018,11 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
   // Zeitgeist.
   insert_zeitgeist(note,ZEITGEIST_ZG_ACCESS_EVENT) ;
     
-  return self->priv->embed ;
+  return self ;
+}
+
+ClutterActor *
+bjb_note_view_get_actor ( BjbNoteView *v)
+{
+  return v->priv->embed ;
 }

@@ -38,7 +38,9 @@ typedef struct {
 
 GType bjb_note_view_get_type (void);
 
-ClutterActor * bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window);
+BjbNoteView * bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window);
+
+ClutterActor * bjb_note_view_get_actor (BjbNoteView *view);
 
 G_END_DECLS
 
