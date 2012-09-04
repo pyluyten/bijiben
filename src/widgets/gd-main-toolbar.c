@@ -102,10 +102,7 @@ get_empty_button (ChildType type)
   switch (type)
     {
     case CHILD_MENU:
-      //button = gtk_menu_button_new ();
-      button = bijiben_menu_button_new(
-                       gtk_image_new_from_stock("emblem-system-symbolic",
-                                                GTK_ICON_SIZE_BUTTON));
+      button = gtk_menu_button_new ();
       break;
     case CHILD_TOGGLE:
       button = gtk_toggle_button_new ();
@@ -128,10 +125,7 @@ get_symbolic_button (const gchar *icon_name,
   switch (type)
     {
     case CHILD_MENU:
-      //button = gtk_menu_button_new ();
-      button = bijiben_menu_button_new(
-                       gtk_image_new_from_stock("emblem-system-symbolic",
-                                                GTK_ICON_SIZE_BUTTON));
+      button = gtk_menu_button_new ();
       gtk_widget_destroy (gtk_bin_get_child (GTK_BIN (button)));
       break;
     case CHILD_TOGGLE:
@@ -162,10 +156,7 @@ get_text_button (const gchar *label,
   switch (type)
     {
     case CHILD_MENU:
-      //button = gtk_menu_button_new ();
-      button = bijiben_menu_button_new(
-                       gtk_image_new_from_stock("emblem-system-symbolic",
-                                                GTK_ICON_SIZE_BUTTON));
+      button = gtk_menu_button_new ();
       gtk_widget_destroy (gtk_bin_get_child (GTK_BIN (button)));
 
       w = gtk_label_new (label);
