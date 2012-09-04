@@ -2,12 +2,11 @@
 #define _BJB_WINDOW_BASE_H
 
 #include <gtk/gtk.h>
+#include <clutter-gtk/clutter-gtk.h>
 #include <libbiji/libbiji.h>
 
 #include "bjb-settings.h"
 #include "bjb-controller.h"
-
-
 
 /* The main window has three possible states
  * Opened notes are like tabs.*/
@@ -53,9 +52,11 @@ BjbController * bjb_window_base_get_controller ( BjbWindowBase *window ) ;
 
 PangoFontDescription *bjb_window_base_get_font(GtkWidget *window);
 
-void bjb_window_base_set_frame(gpointer win,GtkContainer *frame);
+void bjb_window_base_set_frame(BjbWindowBase *bwb,ClutterActor *frame);
 
-GtkContainer * bjb_window_base_get_frame(gpointer win);
+ClutterActor * bjb_window_base_get_frame(BjbWindowBase *bwb);
+
+ClutterActor * bjb_window_base_get_stage(BjbWindowBase *bwb);
 
 gpointer bjb_window_base_get_app(GtkWidget *win);
 

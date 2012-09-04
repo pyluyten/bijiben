@@ -45,10 +45,10 @@ tag_activated (GSimpleAction *action,
                gpointer       user_data)
 {
   GApplication *app = user_data;
-	
+
   GtkWindow *win = create_new_main_window(app);
   bjb_window_base_set_frame((gpointer)win,
-                         get_tags_frame(GTK_WIDGET(win)));
+                             bjb_tags_view_new(GTK_WIDGET(win)));
 }
 
 static void

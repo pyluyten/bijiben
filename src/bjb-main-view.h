@@ -2,8 +2,9 @@
 #define _MAIN_VIEW_H_
 
 #include <glib-object.h>
-#include "gtk/gtk.h"
+#include <gtk/gtk.h>
 #include <libbiji/libbiji.h>
+#include <clutter-gtk/clutter-gtk.h>
 
 #include "bjb-controller.h"
 
@@ -23,20 +24,21 @@ typedef struct _BjbMainViewPriv BjbMainViewPriv;
 
 struct _BjbMainViewClass
 {
-  //GtkFrameClass parent_class;
-  GtkBoxClass parent_class;
+  ClutterActorClass parent_class ;
 };
 
 struct _BjbMainView
 {
-  //GtkFrame parent_instance;
-  GtkBox parent_instance ;
+  ClutterActor parent_instance ;
   BjbMainViewPriv *priv;
 };
 
 GType bjb_main_view_get_type (void) G_GNUC_CONST;
 
-BjbMainView* bjb_main_view_new(GtkWidget *win, BjbController *controller);
+BjbMainView * bjb_main_view_new(GtkWidget *win, BjbController *controller);
+
+ClutterActor * bjb_main_view_get_actor(BjbMainView *b) ;
+
 GtkWidget *bjb_main_view_get_window(BjbMainView *view);
 
 void action_new_note_callback(GtkMenuItem *item,BjbMainView *view);
@@ -48,8 +50,7 @@ void update_notes_with_string_search(BjbMainView *view, gchar *needle);
 
 void switch_to_note_view(BjbMainView *view,BijiNoteObj *note) ;
 void hide_search_entry(BjbMainView *view); /* FIXME make this static */
-void prepare_view_for_usage(BjbMainView *view);
-
+//void prepare_view_for_usage(BjbMainView *view);
 
 G_END_DECLS
 

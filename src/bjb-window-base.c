@@ -35,19 +35,19 @@ enum
 /* As the main window remains, it owns the data */
 struct _BjbWindowBasePriv
 {
-  // To register new windows and access the data.
+  /* To register new windows and access the data */
   GtkApplication *app ;
   BjbController  *controller;
     
-  // The real data
+  /* The real data */
   GList *tags ;
 
-  // actually only the frame is used
-  GtkContainer *frame ;
+  /* UI */
+  ClutterActor *stage, *frame ;
   int current_view ;
   gchar *entry ;
 
-  // To avoid loiding several times
+  /* To avoid loiding several times */
   PangoFontDescription *font ;
 };
 
@@ -57,8 +57,8 @@ G_DEFINE_TYPE (BjbWindowBase, bjb_window_base, GTK_TYPE_APPLICATION_WINDOW);
 
 static GObject *
 bjb_window_base_constructor (GType                  gtype,
-                       guint                  n_properties,
-                       GObjectConstructParam *properties)
+                             guint                  n_properties,
+                             GObjectConstructParam  *properties)
 {
   GObject *obj;
   {
@@ -71,7 +71,7 @@ bjb_window_base_constructor (GType                  gtype,
 static void
 bjb_window_base_finalize (GObject *object)
 {
-	/* TODO */
+  /* TODO */
 }
 
 static void
@@ -104,7 +104,7 @@ bjb_window_base_set_property (GObject    *object,
   switch (property_id)
     {
     case PROP_GTK_APP:
-	  bjb_window_base_set_application(self,g_value_get_object(value));
+      bjb_window_base_set_application(self,g_value_get_object(value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -124,12 +124,11 @@ bjb_window_base_class_init (BjbWindowBaseClass *klass)
 
   g_object_class_install_property (gobject_class,PROP_GTK_APP,
                                    g_param_spec_object ("gtk-application",
-							                		    "Gtk-Application",
+                                                        "Gtk-Application",
                                                         "Gtk Application",
                                                         GTK_TYPE_APPLICATION,
-							                            G_PARAM_READWRITE));
-														  
-	
+                                                        G_PARAM_READWRITE));
+
   g_type_class_add_private (klass, sizeof (BjbWindowBasePriv));
 }
 
@@ -188,24 +187,34 @@ bjb_window_base_init (BjbWindowBase *self)
 GtkWindow *
 bjb_window_base_new(GtkApplication *app)
 {    
-  BjbWindowBase *ret ;
-  BjbController *controller ;
-	
-  ret = g_object_new(BJB_TYPE_WINDOW_BASE,"gtk-application",app,NULL);
-  GtkWindow *win = GTK_WINDOW(ret);
-  ret->priv->app = app ;
+  BjbWindowBase     *self ;
+  BjbWindowBasePriv *priv ;
+  BjbMainView       *view;
+  BjbController     *controller ;
+  GtkWindow         *win ;
+  GtkWidget         *embed ;
+  ClutterActor      *frame;
+
+  self = g_object_new(BJB_TYPE_WINDOW_BASE,"gtk-application",app,NULL);
+  priv = self->priv ;
+  
+  priv->app = app ;
+
+  win = GTK_WINDOW(self);
+  
   gtk_window_set_application (win, GTK_APPLICATION (app));
-  gtk_window_set_title (win, "Notes");
   gtk_window_set_hide_titlebar_when_maximized(win,TRUE);
 
-  controller = bjb_controller_new(bijiben_get_book(app) , ret->priv->entry );
-  ret->priv->controller = controller ;
-  
-  bjb_window_base_set_frame(win,
-                            bjb_main_view_new(ret,
-                                              controller));
+  embed = gtk_clutter_embed_new();
+  gtk_container_add(GTK_CONTAINER(self),embed);
+  priv->stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(embed));
 
-  prepare_view_for_usage((BjbMainView*)ret->priv->frame);
+  controller = bjb_controller_new(bijiben_get_book(app),priv->entry );
+  priv->controller = controller ;
+
+  /* UI : notes view. But some settings could allow other default. */
+  view = bjb_main_view_new ( GTK_WIDGET(self),controller);
+  priv->frame = bjb_main_view_get_actor(view);
 
   return win ;
 }
@@ -224,34 +233,34 @@ window_base_get_font(GtkWidget *window)
 }
 
 void
-bjb_window_base_set_frame(gpointer win,GtkContainer *frame)
+bjb_window_base_set_frame(BjbWindowBase *bwb,ClutterActor *frame)
 {
-  BjbWindowBase *b ;
-  
-  b = BJB_WINDOW_BASE(win);
-  
-  if ( b->priv->frame && GTK_IS_CONTAINER(b->priv->frame))
+  /* TODO removing frame should finalize
+   * or we can implement some interface
+   * (bool) (hide_frame) (bwb) */
+  if ( bwb->priv->frame )
   {
-    gtk_widget_destroy(GTK_WIDGET(b->priv->frame));
-    b->priv->frame= frame ;
+    clutter_actor_destroy(bwb->priv->frame);
+    bwb->priv->frame = NULL ;
   }
-  
-  else
+
+  if ( CLUTTER_IS_ACTOR( bwb->priv->frame) )
   {
-    b->priv->frame = frame ;
+    bwb->priv->frame = frame ;
+    clutter_actor_add_child (bwb->priv->stage, frame);
   }
-  
-  gtk_container_add(GTK_CONTAINER(win),GTK_WIDGET(b->priv->frame));
 }
 
-GtkContainer *
-bjb_window_base_get_frame(gpointer win)
+ClutterActor *
+bjb_window_base_get_frame(BjbWindowBase *bwb)
 {
-  if (BJB_IS_WINDOW_BASE(win))
-    return BJB_WINDOW_BASE(win)->priv->frame ;
+  return bwb->priv->frame ;
+}
 
-  else
-    return NULL ;
+ClutterActor *
+bjb_window_base_get_stage(BjbWindowBase *bwb)
+{
+  return bwb->priv->stage ;
 }
 
 gpointer bjb_window_base_get_app(GtkWidget *win)
@@ -310,13 +319,14 @@ bjb_window_base_get_tags(GtkWidget * win)
 void 
 bjb_window_base_set_tags(GtkWidget * win, GList * tags)
 {
-    BjbWindowBase *b = BJB_WINDOW_BASE(win);
-    if ( b->priv->tags != NULL )
-    {
-       g_list_free_full (b->priv->tags,
-                         (GDestroyNotify) g_free);
-    }
-    b->priv->tags = tags ;
+  BjbWindowBase *b = BJB_WINDOW_BASE(win);
+  
+  if ( b->priv->tags != NULL )
+  {
+    g_list_free_full (b->priv->tags,(GDestroyNotify) g_free);
+  }
+  
+  b->priv->tags = tags ;
 }
 
 

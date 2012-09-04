@@ -20,7 +20,8 @@
 #define _TAGS_VIEW_H_
 
 #include <glib-object.h>
-#include "gtk/gtk.h"
+#include <gtk/gtk.h>
+#include <clutter/clutter.h>
 
 G_BEGIN_DECLS
 
@@ -38,18 +39,18 @@ typedef struct _BjbTagsViewPrivate BjbTagsViewPrivate;
 
 struct _BjbTagsViewClass
 {
-	GtkBoxClass parent_class;
+  GtkBoxClass parent_class;
 };
 
 struct _BjbTagsView
 {
-	GtkBox parent_instance ;
-	BjbTagsViewPrivate *priv;
+  GtkBox parent_instance ;
+  BjbTagsViewPrivate *priv;
 };
 
 GType bjb_tags_view_get_type (void) G_GNUC_CONST;
 
-GtkContainer * get_tags_frame(GtkWidget *biji_main_window);
+ClutterActor * bjb_tags_view_new(GtkWidget *biji_main_window);
 
 G_END_DECLS
 

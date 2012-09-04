@@ -20,7 +20,6 @@
 #include "bjb-selection-panel.h"
 #include "bjb-rename-note.h"
 
-
 #define DEFAULT_VIEW GD_MAIN_VIEW_ICON
 
 enum
@@ -39,9 +38,8 @@ struct _BjbMainViewPriv {
   GtkWidget      *window;
   GtkWidget      *icon_view ;
   GtkWidget      *vbox;
-  GtkWidget      *standard_toolbar; 
-
-  /* TODO Properties */ 
+  GtkWidget      *standard_toolbar;
+  ClutterActor   *embed ; 
 
   /* Selection TODO : use one clutter widget */
   GtkWidget      *select_toolbar;
@@ -68,7 +66,7 @@ struct _BjbMainViewPriv {
                                  // FIXME : delete when search bar done.
 };
 
-G_DEFINE_TYPE (BjbMainView, bjb_main_view, GTK_TYPE_BOX);
+G_DEFINE_TYPE (BjbMainView, bjb_main_view, CLUTTER_TYPE_ACTOR);
 
 static void
 bjb_main_view_init (BjbMainView *object)
@@ -108,7 +106,7 @@ bjb_main_view_get_property ( GObject      *object,
   BjbMainView *self = BJB_MAIN_VIEW (object);
 
   switch (prop_id)
-    {
+  {
     case PROP_WINDOW:
       g_value_set_object (value, self->priv->window);
       break;
@@ -118,32 +116,30 @@ bjb_main_view_get_property ( GObject      *object,
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
-    }
+  }
 }
 
 static void
 bjb_main_view_set_property ( GObject        *object,
-			                 guint          prop_id,
-			                 const GValue   *value,
-			                 GParamSpec     *pspec)
+                             guint          prop_id,
+                             const GValue   *value,
+                             GParamSpec     *pspec)
 {
   BjbMainView *self = BJB_MAIN_VIEW (object);
 
   switch (prop_id)
-    {
+  {
     case PROP_WINDOW:
       self->priv->window = g_value_get_object(value);
       break;
     case PROP_BJB_CONTROLLER:
-	  bjb_main_view_set_controller(self,g_value_get_object(value));
+      bjb_main_view_set_controller(self,g_value_get_object(value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
-    }
+  }
 }
-
-/* TODO static  void bjb_main_view_get_property */
 
 static GObject *
 biji_main_view_constructor (GType                  gtype,
@@ -202,40 +198,38 @@ on_selection_mode_changed ( GtkWidget *button, BjbMainView *self)
 static gboolean
 on_view_mode_changed ( GtkWidget *button, BjbMainView *self)
 {
-    BjbViewModeButton *bvmb = BJB_VIEW_MODE_BUTTON ( button ) ;
-    GdMainView *view = self->priv->view ;
+  BjbViewModeButton *bvmb = BJB_VIEW_MODE_BUTTON ( button ) ;
+  GdMainView *view = self->priv->view ;
     
-    BjbViewModeType current = bjb_view_mode_button_get_selection_mode  ( bvmb ) ;
+  BjbViewModeType current = bjb_view_mode_button_get_selection_mode  ( bvmb ) ;
     
-    switch ( current )
-    {
-        case BJB_VIEW_MODE_GRID :
-            gd_main_view_set_view_type ( view ,GD_MAIN_VIEW_LIST );
-            break ;
-        default : 
-            gd_main_view_set_view_type ( view ,GD_MAIN_VIEW_ICON );
-            break ;
+  switch ( current )
+  {
+    case BJB_VIEW_MODE_GRID :
+      gd_main_view_set_view_type ( view ,GD_MAIN_VIEW_LIST );
+      break ;
+    default : 
+      gd_main_view_set_view_type ( view ,GD_MAIN_VIEW_ICON );
+      break ;
     }
     
-    return FALSE ;
+  return FALSE ;
 }
 
 // Callbacks
 
 void
-switch_to_note_view(BjbMainView *view,BijiNoteObj *note)
-{	
+switch_to_note_view(BjbMainView *self,BijiNoteObj *note)
+{
   /* Sanitize */
-  g_signal_handler_disconnect(view->priv->window,
-                              view->priv->key_pressed) ;
-  view->priv->key_pressed = 0 ;
-    
-  GtkWidget *win = view->priv->window;
-  bjb_window_base_set_frame((gpointer)win,
-                             GTK_CONTAINER(bjb_note_view_new(win,note,TRUE)));
+  g_signal_handler_disconnect(self->priv->window,
+                              self->priv->key_pressed) ;
+  self->priv->key_pressed = 0 ;
+
+  clutter_actor_destroy ( self->priv->embed );
+  g_warning( "called gtk_widget_destroy. Will call bjb_note_view_new. clean this.");
   
-  gtk_window_set_title(GTK_WINDOW(win),biji_note_get_title (note));
-  gtk_widget_show_all(win);
+  bjb_note_view_new(self->priv->window,note,TRUE);
 }
 
 
@@ -245,8 +239,8 @@ clear_search_entry_callback(GtkEntry *entry,GtkEntryIconPosition icon_pos,
                             GdkEvent *event,BjbMainView *self)
 {
 
-    gtk_entry_set_text(entry,"");
-    bjb_controller_set_needle(self->priv->controller,"");
+  gtk_entry_set_text(entry,"");
+  bjb_controller_set_needle(self->priv->controller,"");
 
 }
 
@@ -523,11 +517,8 @@ void prepare_view_for_usage(BjbMainView *self)
   BjbMainViewPriv *priv ;
   
   priv = self->priv ;
-	
-  /* First show all, then exceptions */
-  gtk_widget_show_all(priv->window);
-  
-  /* TODO : test if selection mode  */
+
+  gtk_widget_show_all(priv->vbox);
   gtk_widget_hide(priv->select_toolbar);
   
   /* Handle the search entry showing */
@@ -592,7 +583,7 @@ on_key_pressed(GtkWidget *widget,GdkEvent  *event,gpointer user_data)
 static GList *
 get_selected_paths(BjbMainView *self)
 {
-    return gd_main_view_get_selection ( self->priv->view ) ; 
+  return gd_main_view_get_selection ( self->priv->view ) ; 
 }
 
 static gchar *
@@ -666,28 +657,32 @@ static void
 bjb_main_view_constructed(BjbMainView *self)
 {
   BjbMainViewPriv *priv;
-  GtkWidget *vbox; 
-    
+  GtkWidget *vbox ;
+  ClutterActor *stage;
+  ClutterConstraint *constraint ;
+
+  //G_OBJECT_CLASS (bjb_main_view_parent_class)->constructed(self);
+  
   priv = self->priv ;
-    
+
+  /* TODO : get rid of GtkBoxes */
   priv->vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
   priv->vbox_up = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
 
   vbox = priv->vbox;
-  gtk_box_pack_start(GTK_BOX(self),GTK_WIDGET(vbox),TRUE,TRUE,0);
   gtk_box_pack_start(GTK_BOX(vbox),priv->vbox_up,FALSE,FALSE,0);
 
-  /* FIXME : clutter toolbar. */
+  /* TODO : clutter toolbar. */
   priv->standard_toolbar = create_standard_toolbar(self);
   gtk_box_pack_start(GTK_BOX(priv->vbox_up),priv->standard_toolbar,
                      FALSE,FALSE,0) ;
 
-  /* FIXME : clutter toolbar. */
+  /* TODO : clutter toolbar. */
   priv->select_toolbar = create_selection_toolbar(self);
   gtk_box_pack_start(GTK_BOX(priv->vbox_up),priv->select_toolbar,
                      FALSE,FALSE,0) ;
 
-  // Search entry is inside vbox up for test
+  /* TODO : sunken search entry */
   priv->has_entry = FALSE ;
   get_search_entry(self);
   priv->key_pressed = g_signal_connect(priv->window,"key-press-event",
@@ -722,6 +717,21 @@ bjb_main_view_constructed(BjbMainView *self)
  
   gtk_window_set_title (GTK_WINDOW (priv->window), 
                         BIJIBEN_MAIN_WIN_TITLE);
+
+  /* TODO : embed is self ... */
+  priv->embed = gtk_clutter_actor_new_with_contents(vbox);
+
+  stage = bjb_window_base_get_stage (priv->window);
+  clutter_actor_add_child (stage, priv->embed) ;
+
+  constraint = clutter_bind_constraint_new (stage,CLUTTER_BIND_WIDTH,0) ;
+  clutter_actor_add_constraint (priv->embed, constraint );
+
+  constraint = clutter_bind_constraint_new ( stage,CLUTTER_BIND_HEIGHT,0);
+  clutter_actor_add_constraint (priv->embed,constraint);
+
+  prepare_view_for_usage(self);
+  gtk_widget_show_all (priv->window) ;
 }
 
 static void
@@ -758,18 +768,24 @@ bjb_main_view_class_init (BjbMainViewClass *klass)
   g_object_class_install_property (object_class,PROP_BJB_CONTROLLER,properties[PROP_BJB_CONTROLLER]);
 }
 
-BjbMainView*
+BjbMainView *
 bjb_main_view_new(GtkWidget *win,
                   BjbController *controller)
-{    	
+{
   return g_object_new( BJB_TYPE_MAIN_VIEW,
                        "window", win,
                        "controller", controller,
                        NULL);
 }
 
+ClutterActor *
+bjb_main_view_get_actor(BjbMainView *b)
+{
+  return b->priv->embed ;
+}
+
 GtkWidget *
 bjb_main_view_get_window(BjbMainView *view)
 {
-    return view->priv->window ;
+  return view->priv->window ;
 }

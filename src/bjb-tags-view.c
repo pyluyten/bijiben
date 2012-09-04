@@ -548,11 +548,11 @@ create_toolbar(BjbTagsView *parent)
                    G_CALLBACK(action_new_tag_callback),parent);
   gtk_toolbar_insert (tool,iter,-1);
 
-  return ret ;	
+  return ret ;
 }
 
-GtkContainer *
-get_tags_frame(GtkWidget *biji_main_window)
+ClutterActor *
+bjb_tags_view_new(GtkWidget *biji_main_window)
 {
   BjbTagsView * ret = g_object_new(BJB_TYPE_TAGS_VIEW,NULL);
   ret->priv->window = biji_main_window ;
@@ -561,7 +561,7 @@ get_tags_frame(GtkWidget *biji_main_window)
 
   /** Toolbar */ 
   gtk_box_pack_start(GTK_BOX(vbox),create_toolbar(ret),
-	                   FALSE,FALSE,0);
+                    FALSE,FALSE,0);
 
   /* Scrolled */  
   GList *tags ;
@@ -577,5 +577,7 @@ get_tags_frame(GtkWidget *biji_main_window)
                    G_CALLBACK(on_tag_list_button_press),ret);
     
   gtk_window_set_title (win, "Biji - View tags");
-  return GTK_CONTAINER(ret) ;
+
+  ClutterActor *dummy = NULL ;
+  return dummy ;
 }

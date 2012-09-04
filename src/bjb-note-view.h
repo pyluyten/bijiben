@@ -1,10 +1,8 @@
-/* It's the frame, that is, almost the window. But we do use
- * gtk view from libbiji */
-
-#ifndef _NOTE_VIEW
-#define _NOTE_VIEW
+#ifndef _NOTE_VIEW_H
+#define _NOTE_VIEW_H
 
 #include <glib-object.h>
+#include <clutter-gtk/clutter-gtk.h>
 
 #include <libbiji/libbiji.h>
 
@@ -30,19 +28,18 @@ G_BEGIN_DECLS
 typedef struct _BjbNoteViewPrivate BjbNoteViewPrivate;
 
 typedef struct {
-  GtkFrame parent;
+  ClutterActor parent;
   BjbNoteViewPrivate * priv ;
 } BjbNoteView;
 
 typedef struct {
-  GtkFrameClass parent_class;
+  ClutterActorClass parent_class;
 } BjbNoteViewClass;
 
 GType bjb_note_view_get_type (void);
 
-BjbNoteView * bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window);
-
+ClutterActor * bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window);
 
 G_END_DECLS
 
-#endif /* _NOTE_VIEW */
+#endif /* _NOTE_VIEW_H */

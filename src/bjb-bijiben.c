@@ -60,21 +60,21 @@ bijiben_new_window (GApplication *app,GFile *file)
     g_message("notebook null");
     return ;
   }
-	
+
   // No file : show main window
   if (file == NULL)
   {
-	  bjb_window_base_new( GTK_APPLICATION(app));
+    bjb_window_base_new( GTK_APPLICATION(app));
   }
 
   // show main window, then switch to note. maybe FIXME if external note.
   else
   {
     BijiNoteObj* cur= biji_note_get_new_from_file(g_file_get_path(file));
-	GtkWindow *win = bjb_window_base_new(GTK_APPLICATION(app));
+    GtkWindow *win = bjb_window_base_new(GTK_APPLICATION(app));
 
-	bjb_window_base_set_frame((gpointer)win,
-	                GTK_CONTAINER(bjb_note_view_new(GTK_WIDGET(win),cur,TRUE)));
+    bjb_window_base_set_frame(BJB_WINDOW_BASE(win),
+                              bjb_note_view_new(GTK_WIDGET(win),cur,TRUE));
   
     gtk_window_set_title(GTK_WINDOW(win),biji_note_get_title (cur));
   }
@@ -210,7 +210,8 @@ create_new_window_for_note(gpointer app , BijiNoteObj *note)
   //                  GTK_CONTAINER(bjb_note_view_new(GTK_WIDGET(win),note,FALSE)));
   //gtk_window_set_title(GTK_WINDOW(win),biji_note_get_title (note));
 
-  switch_to_note_view(BJB_MAIN_VIEW(bjb_window_base_get_frame(win)),note);
+  switch_to_note_view(BJB_MAIN_VIEW(bjb_window_base_get_frame(BJB_WINDOW_BASE(win))),
+                                    note);
 }
 
 // return pointer to BJB main window
