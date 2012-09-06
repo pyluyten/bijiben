@@ -349,7 +349,7 @@ just_switch_to_main_view(BjbNoteView *view)
   to_be = bjb_main_view_new((gpointer)window,controller);
             
   bjb_window_base_set_frame((gpointer)view->priv->window,to_be);
-  prepare_view_for_usage((BjbMainView*)to_be);
+  //prepare_view_for_usage((BjbMainView*)to_be);
 }
 
 static void

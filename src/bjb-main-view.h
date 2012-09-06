@@ -50,7 +50,6 @@ void update_notes_with_string_search(BjbMainView *view, gchar *needle);
 
 void switch_to_note_view(BjbMainView *view,BijiNoteObj *note) ;
 void hide_search_entry(BjbMainView *view); /* FIXME make this static */
-//void prepare_view_for_usage(BjbMainView *view);
 
 G_END_DECLS
 

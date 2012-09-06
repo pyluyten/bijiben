@@ -36,34 +36,32 @@ static GParamSpec *properties[NUM_PROPERTIES] = { NULL, };
 
 struct _BjbMainViewPriv {
   GtkWidget      *window;
-  GtkWidget      *icon_view ;
-  GtkWidget      *vbox;
-  GtkWidget      *standard_toolbar;
-  ClutterActor   *embed ; 
-
-  /* Selection TODO : use one clutter widget */
-  GtkWidget      *select_toolbar;
   GtkWidget      *label;
-  GtkToolItem    *finish_selection ;
-  GtkWidget      *actions ;  // actions bar for selected notes.
+  ClutterActor   *embed ;
+  ClutterActor   *content;
 
-  /* Search Entry TODO : use clutter instead */
-  GtkWidget      *vbox_up ;  
+  /* Toolbar */
+  ClutterActor   *standard_toolbar;
+
+  /* Selection Mode */
+  ClutterActor   *select_toolbar;
+  ClutterActor   *actions ;
+  GtkToolItem    *finish_selection ;
+
+  /* Search Entry  */
   GtkWidget      *hbox_entry ;
   GtkWidget      *search_entry ;
   gboolean        has_entry ;
 
-  /* Private */ 
+  /* View Notes , model */ 
   GdMainView     *view ; 
   BjbController  *controller ;
 
   /* signals */
-  gulong notes_changed ;         // 
-  
-  gulong click_signal ;          // Signal to delete (icon view)
-  
-  gulong key_pressed ;           // a key pressed shows the entry.
-                                 // FIXME : delete when search bar done.
+  gulong notes_changed ;
+  gulong click_signal ;      /*        Signal to delete (icon view)   */
+  gulong key_pressed ;       /* a key pressed shows the search entry. */
+
 };
 
 G_DEFINE_TYPE (BjbMainView, bjb_main_view, CLUTTER_TYPE_ACTOR);
@@ -85,8 +83,14 @@ bjb_main_view_finalize (GObject *object)
 {
   BjbMainView *view = BJB_MAIN_VIEW(object) ;
 
+  /* Signals */
+
   g_signal_handler_disconnect(bjb_window_base_get_book(view->priv->window),
                               view->priv->notes_changed);
+
+  /* TODO Main View */
+
+  /* TODO widgets, actors */               
 
   G_OBJECT_CLASS (bjb_main_view_parent_class)->finalize (object);
 }
@@ -162,37 +166,55 @@ bjb_main_view_get_book(BjbMainView *view)
 }
 
 static void
-on_selection_mode_changed ( GtkWidget *button, BjbMainView *self)
+on_selection_mode_changed (GtkWidget *button, BjbMainView *self)
 {
-    GtkWidget *actions ;
-    
-    if ( gd_main_view_get_selection_mode(self->priv->view))
-    {
-        gd_main_view_set_selection_mode ( self->priv->view , FALSE ) ;
-        
-        gtk_widget_destroy (self->priv->actions);
+  g_warning("Beeing implemented : on selection mode changed");
 
-        gtk_widget_show_all(self->priv->standard_toolbar);
-        gtk_widget_hide(self->priv->select_toolbar);
+  BjbMainViewPriv   *priv ;
+  ClutterConstraint *constraint ;
+
+  priv = self->priv ;
+
+  if ( gd_main_view_get_selection_mode (priv->view))
+  {
+    gd_main_view_set_selection_mode (priv->view , FALSE ) ;
+
+    clutter_actor_show (priv->standard_toolbar);
+    clutter_actor_hide (priv->select_toolbar);
+    clutter_actor_hide (priv->actions);
+  }
+
+  else
+  {
+    gd_main_view_set_selection_mode (priv->view , TRUE ) ;
+
+    if ( !priv->actions )
+    {
+      priv->actions = get_selection_panel (self) ;
+      clutter_actor_add_child(priv->content,priv->actions);
+      clutter_actor_set_opacity(priv->actions,122);
+
+      constraint = clutter_align_constraint_new (priv->content,
+                                                 CLUTTER_ALIGN_X_AXIS,
+                                                 0.50);
+      clutter_actor_add_constraint (priv->actions, constraint);
+
+      constraint = clutter_align_constraint_new (priv->content,
+                                                 CLUTTER_ALIGN_Y_AXIS,
+                                                 0.95);
+      clutter_actor_add_constraint (priv->actions, constraint);
+
     }
 
-    else
-    {
-        gd_main_view_set_selection_mode ( self->priv->view , TRUE ) ;
-        actions = get_selection_panel (self) ;
-        self->priv->actions = actions;
-        gtk_widget_show_all ( actions ) ;
+    clutter_actor_show(priv->actions);
+    clutter_actor_hide(self->priv->standard_toolbar);
+    clutter_actor_show(self->priv->select_toolbar);
 
-        hide_search_entry(self);
-      
-        gtk_box_pack_start(GTK_BOX(self->priv->vbox),actions,FALSE,FALSE,0);
-        gtk_widget_hide(self->priv->standard_toolbar);
-        gtk_widget_show_all(self->priv->select_toolbar);
-        
-    }
+    /* Do we really want to hide search entry when selecting ? */
+    hide_search_entry(self);
+  }
 
-    return ;
-
+  return ;
 }
 
 static gboolean
@@ -350,12 +372,13 @@ update_selection_label(GdMainView *view,BjbMainView *bmv)
 
 /* Toolbar */
 
-static GtkWidget *
+static ClutterActor *
 create_standard_toolbar(BjbMainView *parent)
 {
-  GtkWidget *ret ;
-  GtkToolbar *tool;
-  GtkToolItem *space_l, *space_r ;
+  ClutterActor *self ;
+  GtkWidget    *ret, *label ;
+  GtkToolbar   *tool;
+  GtkToolItem  *new_note, *iter, *check, *space_l, *space_r ;
 
   ret = gtk_toolbar_new();
   tool = GTK_TOOLBAR(ret);
@@ -363,8 +386,7 @@ create_standard_toolbar(BjbMainView *parent)
   gtk_separator_tool_item_set_draw(GTK_SEPARATOR_TOOL_ITEM(space_l),FALSE);
 
   /* New Note button */
-  GtkToolItem *new_note ;
-  GtkWidget *label = gtk_button_new_with_label ("New");
+  label = gtk_button_new_with_label ("New");
   new_note = gtk_tool_button_new (label,NULL);
   g_signal_connect(new_note,"clicked",
                    G_CALLBACK(action_new_note_callback),parent);
@@ -375,7 +397,7 @@ create_standard_toolbar(BjbMainView *parent)
   gtk_toolbar_insert(tool,space_l,-1);
 
   GtkWidget *la = gtk_label_new("New and Recent");
-  GtkToolItem *iter = gtk_tool_button_new(la,NULL);
+  iter = gtk_tool_button_new(la,NULL);
   gtk_toolbar_insert(tool,iter,-1);
   
   space_r = gtk_separator_tool_item_new(); 
@@ -388,26 +410,28 @@ create_standard_toolbar(BjbMainView *parent)
   g_signal_connect ( iter, "clicked",
                     G_CALLBACK(on_view_mode_changed),parent);
   gtk_toolbar_insert(tool,iter,-1); 
-	
+
   /* select button */
-  GtkWidget *check = get_icon("emblem-default-symbolic") ;
-  iter = gtk_tool_button_new(check,NULL);
+  check = get_icon("emblem-default-symbolic") ;
+  iter = gtk_tool_button_new(GTK_WIDGET(check),NULL);
   g_signal_connect(iter,"clicked",
                    G_CALLBACK(on_selection_mode_changed),parent);
   gtk_toolbar_insert (tool,iter,-1); 
-	
-  return ret ;	
+
+  gtk_widget_show_all(ret);
+  self = gtk_clutter_actor_new_with_contents(ret);
+  return self ;
 }
 
-static GtkWidget *
+static ClutterActor *
 create_selection_toolbar(BjbMainView *parent)
 {
-  GtkWidget *ret ;
-  GtkToolbar *tool;
-  GtkToolItem *space_l, *space_r ;
-	
+  GtkWidget    *ret ;
+  GtkToolbar   *tool;
+  GtkToolItem  *space_l, *space_r ;
+
   ret = gtk_toolbar_new();
-  tool = GTK_TOOLBAR(ret);	
+  tool = GTK_TOOLBAR(ret);
 
   /* Label for selected notes */
 
@@ -439,8 +463,9 @@ create_selection_toolbar(BjbMainView *parent)
   gtk_widget_override_background_color(GTK_WIDGET(tool),
                                        GTK_STATE_FLAG_NORMAL,
                                        get_color("DarkSeaGreen4"));
-	
-  return ret ;
+
+  gtk_widget_show_all(ret);
+  return gtk_clutter_actor_new_with_contents(ret);
 }
 
 GtkWidget *
@@ -453,16 +478,16 @@ get_search_entry(BjbMainView *self)
   GtkEntryCompletion *completion ;
   GtkTreeModel *completion_model ;
   GtkEntryBuffer *  entry_buf ;
-  
+
   priv = self->priv ;
   controller = bjb_window_base_get_controller(BJB_WINDOW_BASE(priv->window));
 
   needle = bjb_controller_get_needle(controller);
-  	
-  priv->search_entry = gtk_entry_new ();  
+
+  priv->search_entry = gtk_entry_new ();
   entry = GTK_ENTRY(priv->search_entry);
-  
-  
+
+
   if ( needle != NULL )
   { 
     priv->has_entry = TRUE ;
@@ -480,16 +505,16 @@ get_search_entry(BjbMainView *self)
   gtk_entry_completion_set_model (completion, completion_model);
   
   gtk_entry_completion_set_text_column (completion, 0);
-		
+
   g_signal_connect (priv->search_entry, "icon-press",
-	                  G_CALLBACK (clear_search_entry_callback),self);
+                    G_CALLBACK (clear_search_entry_callback),self);
 
   entry_buf = gtk_entry_get_buffer(entry);
   g_signal_connect(entry_buf,"inserted-text",
-	               G_CALLBACK(action_entry_insert_callback),self);
+                   G_CALLBACK(action_entry_insert_callback),self);
   g_signal_connect(entry_buf,"deleted-text",
-	               G_CALLBACK(action_entry_delete_callback),self);	
-		
+                   G_CALLBACK(action_entry_delete_callback),self);
+
   return priv->search_entry ;
 }
 
@@ -510,28 +535,6 @@ hide_search_entry(BjbMainView *view)
   gtk_entry_set_text(GTK_ENTRY(view->priv->search_entry),"");
   gtk_widget_hide (view->priv->search_entry);
   gtk_widget_grab_focus(GTK_WIDGET(view->priv->search_entry));
-}
-
-void prepare_view_for_usage(BjbMainView *self)
-{
-  BjbMainViewPriv *priv ;
-  
-  priv = self->priv ;
-
-  gtk_widget_show_all(priv->vbox);
-  gtk_widget_hide(priv->select_toolbar);
-  
-  /* Handle the search entry showing */
-  if ( !self->priv->has_entry )
-  {
-    gtk_widget_hide( self->priv->search_entry);
-  }
-  
-  else 
-  {
-    gtk_widget_grab_focus(GTK_WIDGET(self->priv->search_entry));
-    gtk_editable_set_position (GTK_EDITABLE(self->priv->search_entry),-1);
-  }
 }
 
 static gboolean
@@ -656,54 +659,88 @@ on_item_activated(GdMainView        * gd,
 static void
 bjb_main_view_constructed(BjbMainView *self)
 {
-  BjbMainViewPriv *priv;
-  GtkWidget *vbox ;
-  ClutterActor *stage;
-  ClutterConstraint *constraint ;
+  BjbMainViewPriv      *priv;
+  ClutterActor         *stage, *bin, *search, *view;
+  ClutterLayoutManager *filler, *packer, *overlay;
+  ClutterConstraint    *constraint ;
 
-  //G_OBJECT_CLASS (bjb_main_view_parent_class)->constructed(self);
-  
+  G_OBJECT_CLASS (bjb_main_view_parent_class)->constructed(G_OBJECT(self));
+
   priv = self->priv ;
+  stage = bjb_window_base_get_stage (BJB_WINDOW_BASE(priv->window));
 
-  /* TODO : get rid of GtkBoxes */
-  priv->vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
-  priv->vbox_up = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
+  /* Probably move this to window_base or delete this */
+  filler = clutter_bin_layout_new(CLUTTER_BIN_ALIGNMENT_FILL,
+                                  CLUTTER_BIN_ALIGNMENT_FILL);
 
-  vbox = priv->vbox;
-  gtk_box_pack_start(GTK_BOX(vbox),priv->vbox_up,FALSE,FALSE,0);
+  filler = clutter_box_layout_new();
+  bin = clutter_actor_new();
+  clutter_actor_set_layout_manager(bin,filler);
+  clutter_actor_add_child(stage,bin);
+  clutter_layout_manager_child_set(filler,
+                                   CLUTTER_CONTAINER(stage),
+                                   bin,
+                                   "y-fill",TRUE,
+                                   NULL);
 
-  /* TODO : clutter toolbar. */
+  packer = clutter_box_layout_new();
+  clutter_box_layout_set_vertical(CLUTTER_BOX_LAYOUT(packer),TRUE);
+
+  priv->embed = clutter_actor_new();
+  clutter_actor_set_layout_manager (priv->embed,packer) ;
+  clutter_actor_add_child (bin, priv->embed) ;
+
+  /* Standard toolbar (current appart from selection toolbar */
   priv->standard_toolbar = create_standard_toolbar(self);
-  gtk_box_pack_start(GTK_BOX(priv->vbox_up),priv->standard_toolbar,
-                     FALSE,FALSE,0) ;
 
-  /* TODO : clutter toolbar. */
+  clutter_box_layout_pack(CLUTTER_BOX_LAYOUT(packer),
+                          priv->standard_toolbar,TRUE,TRUE,FALSE,
+                          CLUTTER_BOX_ALIGNMENT_START,
+                          CLUTTER_BOX_ALIGNMENT_START);
+
+  /* Selection toolbar. TODO : include this in main toolbar      */
   priv->select_toolbar = create_selection_toolbar(self);
-  gtk_box_pack_start(GTK_BOX(priv->vbox_up),priv->select_toolbar,
-                     FALSE,FALSE,0) ;
+  clutter_actor_hide(priv->select_toolbar);
 
-  /* TODO : sunken search entry */
+  clutter_box_layout_pack(CLUTTER_BOX_LAYOUT(packer),
+                          priv->select_toolbar,TRUE,TRUE,FALSE,
+                          CLUTTER_BOX_ALIGNMENT_START,
+                          CLUTTER_BOX_ALIGNMENT_START);
+
+  /* Overlay contains : search, notes, panel */
+  overlay = clutter_bin_layout_new(CLUTTER_BIN_ALIGNMENT_FILL,
+                                   CLUTTER_BIN_ALIGNMENT_FILL);
+  priv->content = clutter_actor_new();
+  clutter_actor_set_layout_manager(priv->content,overlay);
+
+  clutter_box_layout_pack(CLUTTER_BOX_LAYOUT(packer),
+                          priv->content,TRUE,TRUE,TRUE,
+                          CLUTTER_BOX_ALIGNMENT_START,
+                          CLUTTER_BOX_ALIGNMENT_START);
+
+  /* Search entry .TODO : sunken search entry */
   priv->has_entry = FALSE ;
   get_search_entry(self);
+
+  priv->hbox_entry = gtk_box_new ( GTK_ORIENTATION_HORIZONTAL,26);
+  gtk_box_pack_start(GTK_BOX(priv->hbox_entry),priv->search_entry,TRUE,TRUE,0);
+
+  search = gtk_clutter_actor_new_with_contents(priv->hbox_entry);
+  
   priv->key_pressed = g_signal_connect(priv->window,"key-press-event",
-                                       G_CALLBACK(on_key_pressed),self); 
-  priv->hbox_entry = gtk_box_new ( GTK_ORIENTATION_HORIZONTAL,0);  
-    
+                                       G_CALLBACK(on_key_pressed),self);
 
-  gtk_box_pack_start (GTK_BOX(priv->hbox_entry),
-                      priv->search_entry,
-                      TRUE,FALSE,0) ;
-                      
-  gtk_box_pack_start (GTK_BOX(priv->vbox_up),
-                      priv->hbox_entry,
-                      FALSE,FALSE,0) ;
+  if ( self->priv->has_entry )
+  {
+    gtk_widget_show( self->priv->search_entry);
+    gtk_widget_grab_focus(GTK_WIDGET(self->priv->search_entry));
+    gtk_editable_set_position (GTK_EDITABLE(self->priv->search_entry),-1);
+  }
 
+  /* Main view */
   priv->view = gd_main_view_new(DEFAULT_VIEW);
-  gtk_box_pack_start(GTK_BOX(vbox),
-                     GTK_WIDGET(priv->view),
-                     TRUE,
-                     TRUE,
-                     0);
+  view = gtk_clutter_actor_new_with_contents(GTK_WIDGET(priv->view));
+  clutter_actor_add_child(priv->content,view);
 
   gd_main_view_set_selection_mode ( priv->view, FALSE);
   gd_main_view_set_model(priv->view,
@@ -718,19 +755,20 @@ bjb_main_view_constructed(BjbMainView *self)
   gtk_window_set_title (GTK_WINDOW (priv->window), 
                         BIJIBEN_MAIN_WIN_TITLE);
 
-  /* TODO : embed is self ... */
-  priv->embed = gtk_clutter_actor_new_with_contents(vbox);
-
-  stage = bjb_window_base_get_stage (priv->window);
-  clutter_actor_add_child (stage, priv->embed) ;
+  /* tmp trick but might lead to issues
+   * TODO : choose between LayoutManager & Constraint     */
+  constraint = clutter_bind_constraint_new (stage,CLUTTER_BIND_WIDTH,0) ;
+  clutter_actor_add_constraint (view, constraint );
 
   constraint = clutter_bind_constraint_new (stage,CLUTTER_BIND_WIDTH,0) ;
-  clutter_actor_add_constraint (priv->embed, constraint );
+  clutter_actor_add_constraint (bin, constraint );
+
+  constraint = clutter_bind_constraint_new (stage,CLUTTER_BIND_WIDTH,0) ;
+  clutter_actor_add_constraint (priv->standard_toolbar, constraint );
 
   constraint = clutter_bind_constraint_new ( stage,CLUTTER_BIND_HEIGHT,0);
-  clutter_actor_add_constraint (priv->embed,constraint);
+  clutter_actor_add_constraint (view,constraint);
 
-  prepare_view_for_usage(self);
   gtk_widget_show_all (priv->window) ;
 }
 

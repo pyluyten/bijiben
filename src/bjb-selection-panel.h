@@ -4,7 +4,6 @@
 #include <gtk/gtk.h>
 #include "bjb-main-view.h"
 
-GtkWidget * get_selection_panel(BjbMainView *v);
+ClutterActor * get_selection_panel(BjbMainView *v);
 
 #endif
-
