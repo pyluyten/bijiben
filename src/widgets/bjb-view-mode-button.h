@@ -44,24 +44,24 @@ typedef enum {
 
 struct _BjbViewModeButtonClass
 {
-	GtkToolButtonClass parent_class;
+  GObjectClass parent_class;
 };
 
 struct _BjbViewModeButton
 {
-	GtkToolButton parent_instance;
-
-    BjbViewModeButtonPrivate *priv; 
+  GObject parent_instance;
+  BjbViewModeButtonPrivate *priv; 
 };
 
 GType bjb_view_mode_button_get_type (void) G_GNUC_CONST;
 
-GtkWidget * bjb_view_mode_button_new ( BjbViewModeType mode ) ;
+BjbViewModeButton * bjb_view_mode_button_new ( BjbViewModeType mode ) ;
+
+GtkWidget *bjb_view_mode_button_get_widget (BjbViewModeButton *self);
 
 BjbViewModeType bjb_view_mode_button_get_selection_mode ( BjbViewModeButton *self ) ;
 
 void bjb_view_mode_button_set_selection_mode (BjbViewModeButton *self, BjbViewModeType mode ) ;
-
 
 G_END_DECLS
 

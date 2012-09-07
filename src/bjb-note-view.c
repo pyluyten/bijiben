@@ -45,7 +45,7 @@ struct _BjbNoteViewPrivate {
 
   // Convenience
   GdkRGBA *color ;
-	
+
   // hack when widget is destroyed.Probably obsolete.
   gboolean to_be_saved ;
 
@@ -60,10 +60,12 @@ bjb_note_view_finalize(GObject *object)
 {
   BjbNoteView *view = BJB_NOTE_VIEW(object) ;
 
-  // Don't unref buffer. Biji Does it when we close note.
+  /* Don't unref buffer. Biji Does it when we close note. */
   g_signal_handler_disconnect(view->priv->current_note,view->priv->renamed);
   g_signal_handler_disconnect(view->priv->window,view->priv->destroy);
   g_signal_handler_disconnect(view->priv->current_note,view->priv->deleted);
+
+  /* TODO */
 
   G_OBJECT_CLASS (bjb_note_view_parent_class)->finalize (object);
 }
@@ -336,20 +338,17 @@ on_window_closed(GtkWidget *window,gpointer note)
 // Callbacks
 
 static void
-just_switch_to_main_view(BjbNoteView *view)
+just_switch_to_main_view(BjbNoteView *self)
 {
-  GtkWindow *window;
-  BijiNoteBook *notes;
+  GtkWindow     *window;
   BjbController *controller;
-  GtkContainer *to_be;
-    
-  window = view->priv->window;
+
+  clutter_actor_destroy(self->priv->embed);
+
+  window = self->priv->window;
   controller = bjb_window_base_get_controller(BJB_WINDOW_BASE(window));
-  
-  to_be = bjb_main_view_new((gpointer)window,controller);
-            
-  bjb_window_base_set_frame((gpointer)view->priv->window,to_be);
-  //prepare_view_for_usage((BjbMainView*)to_be);
+
+  bjb_main_view_new((gpointer)window,controller);
 }
 
 static void
@@ -895,6 +894,7 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
   GtkWidget          *vbox,*scrolled_editor;
   ClutterActor       *stage,*embed ;
   ClutterConstraint  *constraint;
+  gchar              *font ;
 
   // view new from note deserializes the note-content.
   self = g_object_new (BJB_TYPE_NOTE_VIEW, NULL);
@@ -920,7 +920,6 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
                                         self->priv->current_note);
 
   /* Apply the selected font */ 
-  gchar *font ;
   g_object_get (G_OBJECT(settings),"font",&font,NULL);
   gtk_widget_modify_font(GTK_WIDGET(self->priv->view),
                          pango_font_description_from_string(font));
@@ -971,7 +970,7 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
                         text,FALSE,FALSE,0);
     gtk_box_pack_start (GTK_BOX(vbox),template,FALSE,FALSE,0);
   }
-    
+
   /* // Infobar : No tags note. DEPRECATED.
   else if ( biji_note_obj_get_tags(note) == NULL )
   {
@@ -1017,7 +1016,7 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
 
   // Zeitgeist.
   insert_zeitgeist(note,ZEITGEIST_ZG_ACCESS_EVENT) ;
-    
+
   return self ;
 }
 

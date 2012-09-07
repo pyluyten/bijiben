@@ -3,22 +3,22 @@
 
 #include "utils/bjb-icons-colors.h"
 #include "widgets/bjb-menu-tool.h"
+#include "widgets/bjb-view-mode-button.h"
 #include "widgets/gd-main-toolbar.h"
 #include "widgets/gd-main-icon-view.h"
 #include "widgets/gd-main-view.h"
 #include "widgets/gd-main-view-generic.h"
-#include "widgets/bjb-view-mode-button.h"
 
 #include "bjb-app-menu.h"
 #include "bjb-bijiben.h"
 #include "bjb-controller.h"
-#include "bjb-tracker.h"
 #include "bjb-main-view.h"
 #include "bjb-note-view.h"
-#include "bjb-tags-view.h"
-#include "bjb-window-base.h"
-#include "bjb-selection-panel.h"
 #include "bjb-rename-note.h"
+#include "bjb-selection-toolbar.h"
+#include "bjb-tags-view.h"
+#include "bjb-tracker.h"
+#include "bjb-window-base.h"
 
 #define DEFAULT_VIEW GD_MAIN_VIEW_ICON
 
@@ -35,6 +35,8 @@ static GParamSpec *properties[NUM_PROPERTIES] = { NULL, };
 /************************** Gobject ***************************/
 
 struct _BjbMainViewPriv {
+  GtkToolItem    *_switch_but;
+  
   GtkWidget      *window;
   GtkWidget      *label;
   ClutterActor   *embed ;
@@ -157,7 +159,6 @@ biji_main_view_constructor (GType                  gtype,
   return obj;
 }
 
-
 /* TODO delete this */
 BijiNoteBook *
 bjb_main_view_get_book(BjbMainView *view)
@@ -181,32 +182,12 @@ on_selection_mode_changed (GtkWidget *button, BjbMainView *self)
 
     clutter_actor_show (priv->standard_toolbar);
     clutter_actor_hide (priv->select_toolbar);
-    clutter_actor_hide (priv->actions);
   }
 
   else
   {
     gd_main_view_set_selection_mode (priv->view , TRUE ) ;
 
-    if ( !priv->actions )
-    {
-      priv->actions = get_selection_panel (self) ;
-      clutter_actor_add_child(priv->content,priv->actions);
-      clutter_actor_set_opacity(priv->actions,122);
-
-      constraint = clutter_align_constraint_new (priv->content,
-                                                 CLUTTER_ALIGN_X_AXIS,
-                                                 0.50);
-      clutter_actor_add_constraint (priv->actions, constraint);
-
-      constraint = clutter_align_constraint_new (priv->content,
-                                                 CLUTTER_ALIGN_Y_AXIS,
-                                                 0.95);
-      clutter_actor_add_constraint (priv->actions, constraint);
-
-    }
-
-    clutter_actor_show(priv->actions);
     clutter_actor_hide(self->priv->standard_toolbar);
     clutter_actor_show(self->priv->select_toolbar);
 
@@ -220,21 +201,19 @@ on_selection_mode_changed (GtkWidget *button, BjbMainView *self)
 static gboolean
 on_view_mode_changed ( GtkWidget *button, BjbMainView *self)
 {
-  BjbViewModeButton *bvmb = BJB_VIEW_MODE_BUTTON ( button ) ;
-  GdMainView *view = self->priv->view ;
-    
-  BjbViewModeType current = bjb_view_mode_button_get_selection_mode  ( bvmb ) ;
+  GdMainView     *view = self->priv->view ;
+  GdMainViewType current = gd_main_view_get_selection_mode(view);
     
   switch ( current )
   {
-    case BJB_VIEW_MODE_GRID :
+    case GD_MAIN_VIEW_ICON :
       gd_main_view_set_view_type ( view ,GD_MAIN_VIEW_LIST );
       break ;
     default : 
       gd_main_view_set_view_type ( view ,GD_MAIN_VIEW_ICON );
       break ;
-    }
-    
+  }
+
   return FALSE ;
 }
 
@@ -248,9 +227,7 @@ switch_to_note_view(BjbMainView *self,BijiNoteObj *note)
                               self->priv->key_pressed) ;
   self->priv->key_pressed = 0 ;
 
-  clutter_actor_destroy ( self->priv->embed );
-  g_warning( "called gtk_widget_destroy. Will call bjb_note_view_new. clean this.");
-  
+  clutter_actor_destroy ( self->priv->embed );  
   bjb_note_view_new(self->priv->window,note,TRUE);
 }
 
@@ -372,6 +349,21 @@ update_selection_label(GdMainView *view,BjbMainView *bmv)
 
 /* Toolbar */
 
+static GtkWidget *
+_get_symbolic_button (const gchar *icon_name)
+{
+  GtkWidget *button, *w;
+
+  button = gtk_button_new ();
+  gtk_style_context_add_class (gtk_widget_get_style_context (button), "raised");
+
+  w = gtk_image_new_from_icon_name (icon_name, GTK_ICON_SIZE_MENU);
+  gtk_widget_show (w);
+  gtk_container_add (GTK_CONTAINER (button), w);
+
+  return button;
+}
+
 static ClutterActor *
 create_standard_toolbar(BjbMainView *parent)
 {
@@ -379,6 +371,7 @@ create_standard_toolbar(BjbMainView *parent)
   GtkWidget    *ret, *label ;
   GtkToolbar   *tool;
   GtkToolItem  *new_note, *iter, *check, *space_l, *space_r ;
+  BjbViewModeButton *bvmb ;
 
   ret = gtk_toolbar_new();
   tool = GTK_TOOLBAR(ret);
@@ -406,13 +399,14 @@ create_standard_toolbar(BjbMainView *parent)
   gtk_toolbar_insert(tool,space_r,-1); 
 
   /* switch view button */
-  iter = GTK_TOOL_ITEM ( bjb_view_mode_button_new (BJB_VIEW_MODE_LIST) );
-  g_signal_connect ( iter, "clicked",
+  bvmb = bjb_view_mode_button_new (BJB_VIEW_MODE_LIST);
+  iter = gtk_tool_button_new(bjb_view_mode_button_get_widget(bvmb),NULL);
+  g_signal_connect (iter, "clicked",
                     G_CALLBACK(on_view_mode_changed),parent);
   gtk_toolbar_insert(tool,iter,-1); 
 
   /* select button */
-  check = get_icon("emblem-default-symbolic") ;
+  check = _get_symbolic_button("emblem-default-symbolic");
   iter = gtk_tool_button_new(GTK_WIDGET(check),NULL);
   g_signal_connect(iter,"clicked",
                    G_CALLBACK(on_selection_mode_changed),parent);
@@ -542,16 +536,15 @@ on_key_pressed(GtkWidget *widget,GdkEvent  *event,gpointer user_data)
 {
   BjbMainView *view = BJB_MAIN_VIEW (user_data);
 
-  /* Do not allow search when selecting items */
-  if ( gd_main_view_get_selection_mode(view->priv->view)==TRUE )
-  {
+  /* Do not allow search when selecting items
+   * Note : this might change , migt be wrong */
+  if (gd_main_view_get_selection_mode(view->priv->view))
     return TRUE ;
-  }
 
   /* Reveal the entry is text is input. TODO add more keys not input*/
-  if ( view->priv->has_entry == FALSE )
+  if (!view->priv->has_entry)
   {
-	  switch (event->key.keyval)
+    switch (event->key.keyval)
     {
       case GDK_KEY_Control_L :
       case GDK_KEY_Control_R :
@@ -560,7 +553,7 @@ on_key_pressed(GtkWidget *widget,GdkEvent  *event,gpointer user_data)
       case GDK_KEY_Alt_L :
       case GDK_KEY_Alt_R :
       case GDK_KEY_Escape :
-        return FALSE ; // or return TRUE ? why escape would matter? maybe ?
+        return TRUE ;
 
       default:
         show_search_entry (view,event);    
@@ -570,12 +563,12 @@ on_key_pressed(GtkWidget *widget,GdkEvent  *event,gpointer user_data)
   /* If there is already an entry and escape pressed, hide entry */
   else
   {
-	  g_message("true, has entry");
-	  if ( event->key.keyval == GDK_KEY_Escape )
-	  {
-	    hide_search_entry(view);
+    g_message("true, has entry");
+    if ( event->key.keyval == GDK_KEY_Escape )
+    {
+      hide_search_entry(view);
       return TRUE ;
-	  }
+    }
   }
 
   /* Let the input drop into entry */
@@ -603,10 +596,14 @@ get_note_url_from_tree_path(GtkTreePath *path, BjbMainView *self)
   return note_path ;
 }
 
-void action_delete_selected_notes(GtkWidget *w,BjbMainView *view)
+void
+action_delete_selected_notes(GtkWidget *w,BjbMainView *view)
 {
   GList *notes = NULL ;
-  gint i ; 
+  gint i ;
+
+  g_return_if_fail(GTK_IS_WIDGET(w));
+  g_return_if_fail(BJB_IS_MAIN_VIEW(view));
 
   /*  GtkTreePath */
   GList *paths = get_selected_paths(view);
@@ -657,15 +654,19 @@ on_item_activated(GdMainView        * gd,
 }
 
 static void
-bjb_main_view_constructed(BjbMainView *self)
+bjb_main_view_constructed(GObject *o)
 {
+  BjbMainView          *self;
   BjbMainViewPriv      *priv;
-  ClutterActor         *stage, *bin, *search, *view;
+  ClutterActor         *stage, *bin, *search, *view, *selection_bar;
   ClutterLayoutManager *filler, *packer, *overlay;
   ClutterConstraint    *constraint ;
+  BjbSelectionToolbar  *panel ;
+  GdkRGBA              invisible = {0.0, 0.0, 0.0, 0.0};
 
-  G_OBJECT_CLASS (bjb_main_view_parent_class)->constructed(G_OBJECT(self));
+  G_OBJECT_CLASS (bjb_main_view_parent_class)->constructed(G_OBJECT(o));
 
+  self = BJB_MAIN_VIEW(o);
   priv = self->priv ;
   stage = bjb_window_base_get_stage (BJB_WINDOW_BASE(priv->window));
 
@@ -721,11 +722,19 @@ bjb_main_view_constructed(BjbMainView *self)
   /* Search entry .TODO : sunken search entry */
   priv->has_entry = FALSE ;
   get_search_entry(self);
+  gtk_widget_show(priv->search_entry);
 
   priv->hbox_entry = gtk_box_new ( GTK_ORIENTATION_HORIZONTAL,26);
   gtk_box_pack_start(GTK_BOX(priv->hbox_entry),priv->search_entry,TRUE,TRUE,0);
+/*  gtk_widget_override_background_color (priv->hbox_entry,
+                                        GTK_STATE_FLAG_NORMAL,
+                                        &invisible); */
 
   search = gtk_clutter_actor_new_with_contents(priv->hbox_entry);
+  clutter_actor_add_child (priv->content,search);
+
+  constraint = clutter_bind_constraint_new (bin,CLUTTER_BIND_WIDTH,0);
+  clutter_actor_add_constraint (search,constraint);
   
   priv->key_pressed = g_signal_connect(priv->window,"key-press-event",
                                        G_CALLBACK(on_key_pressed),self);
@@ -751,12 +760,17 @@ bjb_main_view_constructed(BjbMainView *self)
 
   g_signal_connect(priv->view,"item-activated",
                    G_CALLBACK(on_item_activated),self);
+
+  /* Selection Panel */
+  panel = bjb_selection_toolbar_new (priv->content,priv->view,self);
+  selection_bar = bjb_selection_toolbar_get_actor (panel);
+//  clutter_actor_set_x_expand (selection_bar, TRUE);
+  clutter_actor_add_child (bin, selection_bar);
  
   gtk_window_set_title (GTK_WINDOW (priv->window), 
                         BIJIBEN_MAIN_WIN_TITLE);
 
-  /* tmp trick but might lead to issues
-   * TODO : choose between LayoutManager & Constraint     */
+  /* TODO : probably choose between LayoutManager & Constraint    */
   constraint = clutter_bind_constraint_new (stage,CLUTTER_BIND_WIDTH,0) ;
   clutter_actor_add_constraint (view, constraint );
 
@@ -766,7 +780,11 @@ bjb_main_view_constructed(BjbMainView *self)
   constraint = clutter_bind_constraint_new (stage,CLUTTER_BIND_WIDTH,0) ;
   clutter_actor_add_constraint (priv->standard_toolbar, constraint );
 
-  constraint = clutter_bind_constraint_new ( stage,CLUTTER_BIND_HEIGHT,0);
+  constraint = clutter_bind_constraint_new (stage,CLUTTER_BIND_WIDTH,0) ;
+  clutter_actor_add_constraint (priv->select_toolbar, constraint );
+
+  constraint = clutter_bind_constraint_new (stage,
+                                            CLUTTER_BIND_HEIGHT,-50.0);
   clutter_actor_add_constraint (view,constraint);
 
   gtk_widget_show_all (priv->window) ;

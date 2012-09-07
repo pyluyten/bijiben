@@ -34,8 +34,8 @@ bijiben_SOURCES = \
 	bjb-note-view.c \
 	bjb-rename-note.h \
 	bjb-rename-note.c \
-	bjb-selection-panel.c \
-	bjb-selection-panel.h \
+        bjb-selection-toolbar.c \
+        bjb-selection-toolbar.h \
 	bjb-settings.h \
 	bjb-settings.c \
 	bjb-share.c \
