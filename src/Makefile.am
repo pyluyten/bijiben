@@ -54,8 +54,6 @@ bijiben_SOURCES = \
 	bjb-zeitgeist-dataprovider.c \
 	widgets/bjb-menu-tool.c \
 	widgets/bjb-menu-tool.h \
-	widgets/bjb-view-mode-button.c \
-	widgets/bjb-view-mode-button.h \
 	widgets/gd-main-icon-view.c \
 	widgets/gd-main-icon-view.h \
 	widgets/gd-main-toolbar.c \
