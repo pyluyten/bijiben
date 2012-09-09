@@ -41,15 +41,15 @@ ClutterActor * bjb_main_view_get_actor(BjbMainView *b) ;
 
 GtkWidget *bjb_main_view_get_window(BjbMainView *view);
 
-void action_new_note_callback(GtkMenuItem *item,BjbMainView *view);
 void action_new_window_callback(GtkAction *action, gpointer bjb_main_view);
+
 void action_delete_selected_notes(GtkWidget *w,BjbMainView *view);
 
 void update_notes_with_tag_search(BjbMainView *view, gchar *tag);
+
 void update_notes_with_string_search(BjbMainView *view, gchar *needle);
 
 void switch_to_note_view(BjbMainView *view,BijiNoteObj *note) ;
-void hide_search_entry(BjbMainView *view); /* FIXME make this static */
 
 G_END_DECLS
 

@@ -28,6 +28,8 @@ bijiben_SOURCES = \
 	bjb-debug.h \
 	bjb-debug.c \
 	bjb-main.c \
+	bjb-main-toolbar.c \
+	bjb-main-toolbar.h \
 	bjb-main-view.h \
 	bjb-main-view.c \
 	bjb-note-view.h \

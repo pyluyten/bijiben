@@ -633,7 +633,7 @@ gd_main_view_set_selection_mode (GdMainView *self,
     }
 }
 
-GdMainViewType
+gboolean
 gd_main_view_get_selection_mode (GdMainView *self)
 {
   return self->priv->selection_mode;
