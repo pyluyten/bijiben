@@ -277,8 +277,8 @@ bjb_main_view_constructed(GObject *o)
 {
   BjbMainView          *self;
   BjbMainViewPriv      *priv;
-  ClutterActor         *stage, *bin, *view, *selection_bar;
-  ClutterLayoutManager *filler, *packer, *overlay;
+  ClutterActor         *stage, *bin, *top, *view, *selection_bar;
+  ClutterLayoutManager *filler, *packer, *switcher, *overlay;
   ClutterConstraint    *constraint ;
   BjbSelectionToolbar  *panel ;
   BjbSearchToolbar     *search_bar;
@@ -312,16 +312,39 @@ bjb_main_view_constructed(GObject *o)
   clutter_actor_set_layout_manager (priv->embed,packer) ;
   clutter_actor_add_child (bin, priv->embed) ;
 
+  /* Top contains main toolbar and search entry */
+  switcher = clutter_box_layout_new();
+  clutter_box_layout_set_vertical(CLUTTER_BOX_LAYOUT(switcher),TRUE);
+
+  top = clutter_actor_new();
+  clutter_actor_set_layout_manager(top,switcher);
+
+  clutter_box_layout_pack(CLUTTER_BOX_LAYOUT(packer),
+                          top,TRUE,TRUE,FALSE,
+                          CLUTTER_BOX_ALIGNMENT_START,
+                          CLUTTER_BOX_ALIGNMENT_START);
+
   /* main Toolbar */
   priv->main_toolbar = bjb_main_toolbar_new(priv->view,self);
   priv->toolbar_actor = bjb_main_toolbar_get_actor(priv->main_toolbar);
 
-  clutter_box_layout_pack(CLUTTER_BOX_LAYOUT(packer),
+  clutter_box_layout_pack(CLUTTER_BOX_LAYOUT(switcher),
                           priv->toolbar_actor,TRUE,TRUE,FALSE,
                           CLUTTER_BOX_ALIGNMENT_START,
                           CLUTTER_BOX_ALIGNMENT_START);
 
-  /* Overlay contains : (search?,) notes, selection panel  */
+  /* Search entry toolbar */
+  search_bar = bjb_search_toolbar_new(priv->window,
+                                      top,
+                                      priv->controller);
+  priv->search_actor = bjb_search_toolbar_get_actor(search_bar);
+  
+  clutter_box_layout_pack(CLUTTER_BOX_LAYOUT(switcher),
+                          priv->search_actor,TRUE,TRUE,FALSE,
+                          CLUTTER_BOX_ALIGNMENT_START,
+                          CLUTTER_BOX_ALIGNMENT_START);
+
+  /* Overlay contains : Notes view and selection panel  */
   overlay = clutter_bin_layout_new(CLUTTER_BIN_ALIGNMENT_FILL,
                                    CLUTTER_BIN_ALIGNMENT_FILL);
   priv->content = clutter_actor_new();
@@ -331,13 +354,6 @@ bjb_main_view_constructed(GObject *o)
                           priv->content,TRUE,TRUE,TRUE,
                           CLUTTER_BOX_ALIGNMENT_START,
                           CLUTTER_BOX_ALIGNMENT_START);
-
-  /* Search entry toolbar */
-  search_bar = bjb_search_toolbar_new(priv->window,
-                                      stage,
-                                      priv->controller);
-  priv->search_actor = bjb_search_toolbar_get_actor(search_bar);
-  clutter_actor_add_child (bin, priv->search_actor);
 
   /* Main view */
   view = gtk_clutter_actor_new_with_contents(GTK_WIDGET(priv->view));
@@ -364,6 +380,9 @@ bjb_main_view_constructed(GObject *o)
 
   constraint = clutter_bind_constraint_new (stage,CLUTTER_BIND_WIDTH,0);
   clutter_actor_add_constraint (bin, constraint );
+
+  constraint = clutter_bind_constraint_new (stage,CLUTTER_BIND_WIDTH,0);
+  clutter_actor_add_constraint (top, constraint );
 
   constraint = clutter_bind_constraint_new (stage,CLUTTER_BIND_WIDTH,0);
   clutter_actor_add_constraint(priv->toolbar_actor,constraint);
