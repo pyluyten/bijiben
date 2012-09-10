@@ -150,13 +150,6 @@ biji_main_view_constructor (GType                  gtype,
   return obj;
 }
 
-/* TODO delete this */
-BijiNoteBook *
-bjb_main_view_get_book(BjbMainView *view)
-{
-  return bjb_window_base_get_book(view->priv->window);
-}
-
 /* Callbacks */
 
 void
