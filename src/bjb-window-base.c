@@ -206,6 +206,8 @@ bjb_window_base_new(GtkApplication *app)
   gtk_window_set_hide_titlebar_when_maximized(win,TRUE);
 
   embed = gtk_clutter_embed_new();
+  gtk_clutter_embed_set_use_layout_size(embed,TRUE);
+  
   gtk_container_add(GTK_CONTAINER(self),embed);
   priv->stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(embed));
 

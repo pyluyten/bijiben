@@ -292,18 +292,14 @@ bjb_main_view_constructed(GObject *o)
   priv->view = gd_main_view_new(DEFAULT_VIEW);
 
   /* Probably move this to window_base or delete this */
-  filler = clutter_bin_layout_new(CLUTTER_BIN_ALIGNMENT_FILL,
-                                  CLUTTER_BIN_ALIGNMENT_FILL);
-
-  filler = clutter_box_layout_new();
+  filler = clutter_bin_layout_new (CLUTTER_BIN_ALIGNMENT_CENTER,
+                                   CLUTTER_BIN_ALIGNMENT_CENTER);
   bin = clutter_actor_new();
   clutter_actor_set_layout_manager(bin,filler);
   clutter_actor_add_child(stage,bin);
-  clutter_layout_manager_child_set(filler,
-                                   CLUTTER_CONTAINER(stage),
-                                   bin,
-                                   "y-fill",TRUE,
-                                   NULL);
+
+  constraint = clutter_bind_constraint_new (stage, CLUTTER_BIND_SIZE, 0.0);
+  clutter_actor_add_constraint (bin, constraint);
 
   packer = clutter_box_layout_new();
   clutter_box_layout_set_orientation(CLUTTER_BOX_LAYOUT(packer),
@@ -312,6 +308,8 @@ bjb_main_view_constructed(GObject *o)
   priv->embed = clutter_actor_new();
   clutter_actor_set_layout_manager (priv->embed,packer) ;
   clutter_actor_add_child (bin, priv->embed) ;
+  clutter_actor_set_x_expand (priv->embed, TRUE);
+  clutter_actor_set_y_expand (priv->embed, TRUE);
 
   /* Top contains main toolbar and search entry */
   switcher = clutter_box_layout_new();
@@ -321,45 +319,38 @@ bjb_main_view_constructed(GObject *o)
   top = clutter_actor_new();
   clutter_actor_set_layout_manager(top,switcher);
 
-  clutter_box_layout_pack(CLUTTER_BOX_LAYOUT(packer),
-                          top,TRUE,TRUE,FALSE,
-                          CLUTTER_BOX_ALIGNMENT_START,
-                          CLUTTER_BOX_ALIGNMENT_START);
+  clutter_actor_add_child(priv->embed,top);
 
   /* main Toolbar */
   priv->main_toolbar = bjb_main_toolbar_new(priv->view,self);
   priv->toolbar_actor = bjb_main_toolbar_get_actor(priv->main_toolbar);
 
-  clutter_box_layout_pack(CLUTTER_BOX_LAYOUT(switcher),
-                          priv->toolbar_actor,TRUE,TRUE,FALSE,
-                          CLUTTER_BOX_ALIGNMENT_START,
-                          CLUTTER_BOX_ALIGNMENT_START);
+  clutter_actor_add_child(top,priv->toolbar_actor);
+  clutter_actor_set_x_expand (priv->toolbar_actor, TRUE);
 
   /* Search entry toolbar */
   search_bar = bjb_search_toolbar_new(priv->window,
                                       top,
                                       priv->controller);
   priv->search_actor = bjb_search_toolbar_get_actor(search_bar);
-  
-  clutter_box_layout_pack(CLUTTER_BOX_LAYOUT(switcher),
-                          priv->search_actor,TRUE,TRUE,FALSE,
-                          CLUTTER_BOX_ALIGNMENT_START,
-                          CLUTTER_BOX_ALIGNMENT_START);
+
+  clutter_actor_add_child(top,priv->search_actor);
+  clutter_actor_set_x_expand (priv->search_actor, TRUE);
 
   /* Overlay contains : Notes view and selection panel  */
-  overlay = clutter_bin_layout_new(CLUTTER_BIN_ALIGNMENT_FILL,
-                                   CLUTTER_BIN_ALIGNMENT_FILL);
+  overlay = clutter_bin_layout_new(CLUTTER_BIN_ALIGNMENT_CENTER,
+                                   CLUTTER_BIN_ALIGNMENT_CENTER);
   priv->content = clutter_actor_new();
   clutter_actor_set_layout_manager(priv->content,overlay);
 
-  clutter_box_layout_pack(CLUTTER_BOX_LAYOUT(packer),
-                          priv->content,TRUE,TRUE,TRUE,
-                          CLUTTER_BOX_ALIGNMENT_START,
-                          CLUTTER_BOX_ALIGNMENT_START);
+  clutter_actor_add_child(priv->embed,priv->content);
+  clutter_actor_set_y_expand (priv->content, TRUE);
 
   /* Main view */
   view = gtk_clutter_actor_new_with_contents(GTK_WIDGET(priv->view));
   clutter_actor_add_child(priv->content,view);
+  clutter_actor_set_x_expand (view, TRUE);
+  clutter_actor_set_y_expand (view, TRUE);
 
   gd_main_view_set_selection_mode ( priv->view, FALSE);
   gd_main_view_set_model(priv->view,
@@ -369,28 +360,12 @@ bjb_main_view_constructed(GObject *o)
                    G_CALLBACK(on_item_activated),self);
 
   /* Selection Panel */
-  panel = bjb_selection_toolbar_new (priv->content,priv->view,self);
+  panel = bjb_selection_toolbar_new (bin,priv->view,self);
   selection_bar = bjb_selection_toolbar_get_actor (panel);
   clutter_actor_add_child (bin, selection_bar);
  
   gtk_window_set_title (GTK_WINDOW (priv->window), 
                         BIJIBEN_MAIN_WIN_TITLE);
-
-  /* TODO : probably choose between LayoutManager & Constraint    */
-  constraint = clutter_bind_constraint_new (stage,CLUTTER_BIND_WIDTH,0);
-  clutter_actor_add_constraint (view, constraint );
-
-  constraint = clutter_bind_constraint_new (stage,CLUTTER_BIND_WIDTH,0);
-  clutter_actor_add_constraint (bin, constraint );
-
-  constraint = clutter_bind_constraint_new (stage,CLUTTER_BIND_WIDTH,0);
-  clutter_actor_add_constraint (top, constraint );
-
-  constraint = clutter_bind_constraint_new (stage,CLUTTER_BIND_WIDTH,0);
-  clutter_actor_add_constraint(priv->toolbar_actor,constraint);
-
-  constraint = clutter_bind_constraint_new (stage,CLUTTER_BIND_HEIGHT,-50.0);
-  clutter_actor_add_constraint (view,constraint);
 
   gtk_widget_show_all (priv->window) ;
 }

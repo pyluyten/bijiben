@@ -116,7 +116,7 @@ on_selection_mode_clicked (GtkWidget *button, BjbMainToolbar *self)
   {
     gd_main_view_set_selection_mode (view, FALSE);
     context = gtk_widget_get_style_context (widget);
-    gtk_style_context_remove_class (context, "documents-selection-mode");
+    gtk_style_context_remove_class (context, "selection-mode");
     gtk_widget_reset_style (widget);
   }
 
@@ -124,7 +124,7 @@ on_selection_mode_clicked (GtkWidget *button, BjbMainToolbar *self)
   {
     gd_main_view_set_selection_mode (view, TRUE);
     context = gtk_widget_get_style_context (widget);
-    gtk_style_context_add_class (context, "documents-selection-mode");
+    gtk_style_context_add_class (context, "selection-mode");
     gtk_widget_reset_style (widget);
   }
 
