@@ -306,7 +306,8 @@ bjb_main_view_constructed(GObject *o)
                                    NULL);
 
   packer = clutter_box_layout_new();
-  clutter_box_layout_set_vertical(CLUTTER_BOX_LAYOUT(packer),TRUE);
+  clutter_box_layout_set_orientation(CLUTTER_BOX_LAYOUT(packer),
+                                     CLUTTER_ORIENTATION_VERTICAL);
 
   priv->embed = clutter_actor_new();
   clutter_actor_set_layout_manager (priv->embed,packer) ;
@@ -314,7 +315,8 @@ bjb_main_view_constructed(GObject *o)
 
   /* Top contains main toolbar and search entry */
   switcher = clutter_box_layout_new();
-  clutter_box_layout_set_vertical(CLUTTER_BOX_LAYOUT(switcher),TRUE);
+  clutter_box_layout_set_orientation(CLUTTER_BOX_LAYOUT(switcher),
+                                     CLUTTER_ORIENTATION_VERTICAL);
 
   top = clutter_actor_new();
   clutter_actor_set_layout_manager(top,switcher);
