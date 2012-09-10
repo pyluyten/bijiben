@@ -329,7 +329,9 @@ bjb_search_toolbar_init (BjbSearchToolbar *self)
 {
   BjbSearchToolbarPrivate    *priv;
   GtkWidget                  *bin;
-  GdkRGBA                     color = {0.0, 0.0, 0.0, 0.0};
+  GtkStyleContext            *context;
+  GtkToolItem                *separator;
+//  GdkRGBA                     color = {0.0, 0.0, 0.0, 0.0};
 
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BJB_TYPE_SEARCH_TOOLBAR, BjbSearchToolbarPrivate);
   priv = self->priv;
@@ -340,7 +342,11 @@ bjb_search_toolbar_init (BjbSearchToolbar *self)
   gtk_toolbar_set_show_arrow (GTK_TOOLBAR (priv->widget), FALSE);
   gtk_toolbar_set_icon_size (GTK_TOOLBAR (priv->widget), GTK_ICON_SIZE_LARGE_TOOLBAR);
 
-  priv->search_entry = gtk_entry_new ();
+  separator = gtk_tool_item_new ();
+  gtk_tool_item_set_expand (separator,TRUE);
+  gtk_toolbar_insert (GTK_TOOLBAR(priv->widget),separator,-1);
+
+  priv->search_entry = gtk_search_entry_new ();
   gtk_entry_set_icon_from_stock (GTK_ENTRY(priv->search_entry),
                                  GTK_ENTRY_ICON_SECONDARY,
                                  GTK_STOCK_CLEAR);
@@ -351,14 +357,24 @@ bjb_search_toolbar_init (BjbSearchToolbar *self)
   gtk_toolbar_insert(GTK_TOOLBAR(priv->widget),entry_item,-1);
   gtk_tool_item_set_expand(entry_item,TRUE);
 
+  separator = gtk_tool_item_new ();
+  gtk_tool_item_set_expand (separator,TRUE);
+  gtk_toolbar_insert (GTK_TOOLBAR(priv->widget),separator,-1);
+
+  context = gtk_widget_get_style_context (priv->widget);
+  gtk_style_context_add_class (context,"primary-toolbar");
+  
+
   priv->actor = gtk_clutter_actor_new_with_contents (priv->widget);
   clutter_actor_set_opacity (priv->actor, 0);
   g_object_set (priv->actor, "show-on-set-parent", FALSE, NULL);
 
+/*
   bin = gtk_clutter_actor_get_widget (GTK_CLUTTER_ACTOR (priv->actor));
   gtk_widget_override_background_color (bin,
                                         GTK_STATE_FLAG_NORMAL,
                                         &color);
+*/
 
   gtk_widget_show_all (priv->widget);
 }
