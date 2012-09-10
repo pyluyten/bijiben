@@ -236,10 +236,10 @@ bjb_selection_toolbar_set_item_visibility (BjbSelectionToolbar *self)
       g_free (favorite_label);
     }
 
-  gtk_widget_set_visible (priv->toolbar_print, show_print);
+//  gtk_widget_set_visible (priv->toolbar_print, show_print);
   gtk_widget_set_visible (priv->toolbar_trash, show_trash);
-  gtk_widget_set_visible (priv->toolbar_open, show_open);
-  gtk_widget_set_visible (priv->toolbar_favorite, show_favorite);
+//  gtk_widget_set_visible (priv->toolbar_open, show_open);
+//  gtk_widget_set_visible (priv->toolbar_favorite, show_favorite);
 
   priv->inside_refresh = FALSE; 
 }
@@ -372,6 +372,7 @@ bjb_selection_toolbar_init (BjbSelectionToolbar *self)
   gtk_toolbar_insert (GTK_TOOLBAR (priv->widget), priv->left_group, -1);
   gtk_widget_show_all (GTK_WIDGET (priv->left_group));
 
+/*
   priv->toolbar_favorite = gtk_toggle_button_new ();
   image = gtk_image_new_from_icon_name ("emblem-favorite-symbolic", GTK_ICON_SIZE_INVALID);
   gtk_image_set_pixel_size (GTK_IMAGE (image), 32);
@@ -381,7 +382,9 @@ bjb_selection_toolbar_init (BjbSelectionToolbar *self)
                     "clicked",
                     G_CALLBACK (bjb_selection_toolbar_favorite_clicked),
                     self);
+*/
 
+/*
   priv->toolbar_print = gtk_button_new ();
   image = gtk_image_new_from_icon_name ("printer-symbolic", GTK_ICON_SIZE_INVALID);
   gtk_image_set_pixel_size (GTK_IMAGE (image), 32);
@@ -392,6 +395,7 @@ bjb_selection_toolbar_init (BjbSelectionToolbar *self)
                     "clicked",
                     G_CALLBACK (bjb_selection_toolbar_print_clicked),
                     self);
+*/
 
   priv->separator = gtk_separator_tool_item_new ();
   gtk_separator_tool_item_set_draw (GTK_SEPARATOR_TOOL_ITEM (priv->separator), FALSE);
@@ -405,6 +409,7 @@ bjb_selection_toolbar_init (BjbSelectionToolbar *self)
   gtk_toolbar_insert (GTK_TOOLBAR (priv->widget), priv->right_group, -1);
   gtk_widget_show_all (GTK_WIDGET (priv->right_group));
 
+/*
   priv->toolbar_collection = gtk_button_new ();
   image = gtk_image_new_from_icon_name ("list-add-symbolic", GTK_ICON_SIZE_INVALID);
   gtk_image_set_pixel_size (GTK_IMAGE (image), 32);
@@ -415,6 +420,7 @@ bjb_selection_toolbar_init (BjbSelectionToolbar *self)
                     "clicked",
                     G_CALLBACK (bjb_selection_toolbar_collection_clicked),
                     self);
+*/
 
   priv->toolbar_trash = gtk_button_new ();
   image = gtk_image_new_from_icon_name ("user-trash-symbolic", GTK_ICON_SIZE_INVALID);
@@ -423,6 +429,8 @@ bjb_selection_toolbar_init (BjbSelectionToolbar *self)
   gtk_widget_set_tooltip_text (GTK_WIDGET (priv->toolbar_trash), _("Delete"));
   gtk_container_add (GTK_CONTAINER (priv->right_box), priv->toolbar_trash);
 
+
+/*
   priv->toolbar_open = gtk_button_new ();
   image = gtk_image_new_from_icon_name ("document-open-symbolic", GTK_ICON_SIZE_INVALID);
   gtk_image_set_pixel_size (GTK_IMAGE (image), 32);
@@ -432,6 +440,7 @@ bjb_selection_toolbar_init (BjbSelectionToolbar *self)
                     "clicked",
                     G_CALLBACK (bjb_selection_toolbar_open_clicked),
                     self);
+*/
 
   gtk_widget_show_all (priv->widget);
 
