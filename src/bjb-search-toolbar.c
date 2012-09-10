@@ -98,6 +98,7 @@ bjb_search_toolbar_fade_out (BjbSearchToolbar *self)
   gtk_entry_set_text(GTK_ENTRY(self->priv->search_entry),"");
 }
 
+/*
 static void
 bjb_search_toolbar_notify_width (GObject *object,
                                  GParamSpec *pspec,
@@ -117,7 +118,7 @@ bjb_search_toolbar_notify_width (GObject *object,
 
   clutter_bind_constraint_set_offset (CLUTTER_BIND_CONSTRAINT (priv->width_constraint), -1 * offset);
   gtk_widget_grab_focus(priv->search_entry);
-}
+}*/
 
 static gboolean
 on_key_pressed (GtkWidget *widget,GdkEvent  *event,gpointer user_data)
@@ -294,23 +295,8 @@ bjb_search_toolbar_constructed (GObject *obj)
   /* Constraints */
   priv->width_constraint = clutter_bind_constraint_new (priv->parent_actor,
                                                         CLUTTER_BIND_WIDTH,
-                                                        -300.0); 
+                                                        0.0); 
   clutter_actor_add_constraint (priv->actor, priv->width_constraint);
-
-  g_signal_connect (priv->actor,
-                    "notify::width",
-                    G_CALLBACK (bjb_search_toolbar_notify_width),
-                    self);
-
-  constraint = clutter_align_constraint_new (priv->parent_actor,
-                                             CLUTTER_ALIGN_X_AXIS,
-                                             0.50);
-  clutter_actor_add_constraint (priv->actor, constraint);
-
-  constraint = clutter_align_constraint_new (priv->parent_actor,
-                                             CLUTTER_ALIGN_Y_AXIS,
-                                             0.95);
-  clutter_actor_add_constraint (priv->actor, constraint);
 
 /* to implement when switching view...
  * When coming back to search view *
@@ -331,7 +317,6 @@ bjb_search_toolbar_init (BjbSearchToolbar *self)
   GtkWidget                  *bin;
   GtkStyleContext            *context;
   GtkToolItem                *separator;
-//  GdkRGBA                     color = {0.0, 0.0, 0.0, 0.0};
 
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BJB_TYPE_SEARCH_TOOLBAR, BjbSearchToolbarPrivate);
   priv = self->priv;
@@ -363,18 +348,10 @@ bjb_search_toolbar_init (BjbSearchToolbar *self)
 
   context = gtk_widget_get_style_context (priv->widget);
   gtk_style_context_add_class (context,"primary-toolbar");
-  
 
   priv->actor = gtk_clutter_actor_new_with_contents (priv->widget);
   clutter_actor_set_opacity (priv->actor, 0);
   g_object_set (priv->actor, "show-on-set-parent", FALSE, NULL);
-
-/*
-  bin = gtk_clutter_actor_get_widget (GTK_CLUTTER_ACTOR (priv->actor));
-  gtk_widget_override_background_color (bin,
-                                        GTK_STATE_FLAG_NORMAL,
-                                        &color);
-*/
 
   gtk_widget_show_all (priv->widget);
 }
