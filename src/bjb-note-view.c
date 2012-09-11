@@ -377,10 +377,10 @@ action_rename_note_callback (GtkWidget *item, gpointer user_data)
   gchar              *title;
   
   view = BJB_NOTE_VIEW (user_data);
-  
-  title = note_title_dialog(GTK_WINDOW(view->priv->window),
-                            "Rename Note",
-                            biji_note_get_title(view->priv->current_note));
+  priv = view->priv;
+
+  title = note_title_dialog(GTK_WINDOW(priv->window),"Rename Note",
+                            biji_note_get_title(priv->current_note));
 
   if ( !title)
   {
@@ -393,9 +393,8 @@ action_rename_note_callback (GtkWidget *item, gpointer user_data)
     g_message("renaming note");
   }
 
-  set_note_title(view->priv->current_note,title);
-  gtk_window_set_title (GTK_WINDOW(view->priv->window),
-                        title);
+  set_note_title (priv->current_note,title);
+  gtk_window_set_title (GTK_WINDOW(priv->window),title);
 }
 
 static void
@@ -604,6 +603,8 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
   button = gd_main_toolbar_add_button (gd, NULL, NULL, TRUE);
 
   gtk_container_add(GTK_CONTAINER(button),grid);
+  gtk_widget_show_all(button);
+  gtk_widget_set_vexpand (button, TRUE);
   g_signal_connect (button,"clicked",G_CALLBACK(action_switch_to_notes_callback),self);
 
   /* Note title */
@@ -613,6 +614,7 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
   button = gd_main_toolbar_add_button (gd, NULL, NULL, FALSE);
 
   color = GTK_DRAWING_AREA(gtk_drawing_area_new());
+  gtk_widget_show (GTK_WIDGET(color));
   gtk_container_add (GTK_CONTAINER(button), GTK_WIDGET (color));
 
   gtk_widget_show_all (button);
@@ -803,8 +805,8 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
   BjbNoteView            *self;
   BjbNoteViewPrivate     *priv;
   BjbSettings            *settings;
-  GtkWidget              *scrolled_editor;
-  ClutterActor           *stage, *vbox,*content;
+  GtkWidget              *scroll;
+  ClutterActor           *stage, *vbox;
   ClutterConstraint      *constraint;
   ClutterLayoutManager   *full, *box, *bin;
   gchar                  *font;
@@ -856,7 +858,7 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
   clutter_actor_add_child(priv->embed,vbox);
 
   /* Main Toolbar  */
-  ClutterActor *bar = bjb_note_main_toolbar_new(self,vbox,note);
+  bjb_note_main_toolbar_new(self,vbox,note);
 
   /* Overlay contains Text and EditToolbar */
   ClutterActor *overlay = clutter_actor_new();
@@ -869,9 +871,25 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
   clutter_actor_set_y_expand(overlay,TRUE);
 
   /* GtkTextView */
-  ClutterActor *text_actor = gtk_clutter_actor_new_with_contents(GTK_WIDGET(priv->view));
+  scroll = gtk_scrolled_window_new (NULL,NULL);
+  gtk_widget_show (scroll);
 
+  gtk_widget_set_hexpand (scroll, TRUE);
+  gtk_widget_set_vexpand (scroll, TRUE);
+  
+  gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scroll),
+                                       GTK_SHADOW_IN);
+                                       
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroll),
+                                  GTK_POLICY_NEVER,
+                                  GTK_POLICY_AUTOMATIC);
+
+  gtk_container_add (GTK_CONTAINER (scroll), GTK_WIDGET(priv->view));
+  gtk_widget_show (GTK_WIDGET (priv->view));
+
+  ClutterActor *text_actor = gtk_clutter_actor_new_with_contents (scroll);
   clutter_actor_add_child(overlay,text_actor);
+
   clutter_actor_set_x_expand(text_actor,TRUE);
   clutter_actor_set_y_expand(text_actor,TRUE);
 
