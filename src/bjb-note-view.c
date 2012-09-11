@@ -364,25 +364,23 @@ action_switch_to_notes_callback(GtkButton *but,BjbNoteView *view)
 }
 
 static void
-action_view_tags_callback(GtkButton *but,BjbNoteView *view)
+action_view_tags_callback (GtkWidget *item, gpointer user_data)
 {
-  // If Infobar we should hide it...
-  if (BJB_NOTE_IS_VIEW(view))
-  {
-    show_tags_dialog(view);
-  }
-  else
-  {
-    g_message("callback view tags wrong");
-  }
+  show_tags_dialog(BJB_NOTE_VIEW(user_data));
 }
 
 static void
-action_rename_note_callback(GtkButton *but,BjbNoteView *view)
+action_rename_note_callback (GtkWidget *item, gpointer user_data)
 {
-  gchar * title = note_title_dialog(GTK_WINDOW(view->priv->window),
-                                 "Rename Note",
-                                 biji_note_get_title(view->priv->current_note));
+  BjbNoteView        *view;
+  BjbNoteViewPrivate *priv;
+  gchar              *title;
+  
+  view = BJB_NOTE_VIEW (user_data);
+  
+  title = note_title_dialog(GTK_WINDOW(view->priv->window),
+                            "Rename Note",
+                            biji_note_get_title(view->priv->current_note));
 
   if ( !title)
   {
@@ -435,17 +433,16 @@ on_info_bar_callback(GtkWidget *infobar,gint response, BjbNoteView *view)
 }
 
 static void
-delete_item_callback(GtkMenuItem *item,BjbNoteView *view)
+delete_item_callback (GtkWidget *item, gpointer user_data)
 {
-  g_return_if_fail(BJB_NOTE_IS_VIEW(view));
+  BjbNoteView *view = BJB_NOTE_VIEW (user_data);
 
   biji_note_delete_from_tracker(view->priv->current_note);
 
-  // Delete the note from collection
+  /* Delete the note from collection
+   * The deleted note will emit a signal. */
   biji_note_book_remove_note(bjb_window_base_get_book(view->priv->window),
                              view->priv->current_note);
-
-  // The deleted note will emit a signal.
 }
 
 static void
@@ -528,153 +525,116 @@ on_color_clicked(GtkWidget *but,BjbNoteView *view)
   gtk_widget_show_all(dialog);
 }
 
+/* Main Note Toolbar */
 
 /* Draw the color button */
 static gboolean
 on_color_draw(GtkWidget *widget, cairo_t *cr, BijiNoteObj *note)
 {
-   g_message("on color draw");
-    
-   cairo_rectangle  (cr,1,1,100,100);  
+  cairo_rectangle  (cr,1,1,100,100);  
 
-   GdkRGBA *color = biji_note_obj_get_rgba(note) ;
+  GdkRGBA *color = biji_note_obj_get_rgba(note) ;
 
-   if ( !color )
-   {
-     gdk_rgba_parse( color, DEFAULT_NOTE_COLOR ) ;
-   }
+  if ( !color )
+    gdk_rgba_parse (color, DEFAULT_NOTE_COLOR );
 
-   gdk_cairo_set_source_rgba (cr, biji_note_obj_get_rgba(note));
-   cairo_fill (cr);
-   return FALSE ;
+  gdk_cairo_set_source_rgba (cr, biji_note_obj_get_rgba(note));
+  cairo_fill (cr);
+  return TRUE;
+}
+
+/* Note View Toolbar */
+
+GtkWidget *
+bjb_note_menu_new (BjbNoteView *self)
+{
+  GtkWidget   *result, *item;
+  
+  result = gtk_menu_new();
+
+  /* Rename */
+  item = gtk_menu_item_new_with_label("Rename");
+  gtk_menu_shell_append(GTK_MENU_SHELL(result),item);
+  g_signal_connect(item,"activate",
+                   G_CALLBACK(action_rename_note_callback),self); 
+  gtk_widget_show(item);
+  
+  /* View Tags */
+  item = gtk_menu_item_new_with_label("Tags");
+  gtk_menu_shell_append(GTK_MENU_SHELL(result),item);
+  g_signal_connect(item,"activate",
+                   G_CALLBACK(action_view_tags_callback),self);
+  gtk_widget_show(item);
+
+  /* Delete Note */
+  item = gtk_menu_item_new_with_label("Delete this note");
+  gtk_menu_shell_append(GTK_MENU_SHELL(result),item);
+  g_signal_connect(item,"activate",
+                   G_CALLBACK(delete_item_callback),self);
+  gtk_widget_show(item);
+
+  return result;
 }
 
 static ClutterActor *
-bjb_note_main_toolbar_new (BjbNoteView *parent, BijiNoteObj *obj)
+bjb_note_main_toolbar_new (BjbNoteView *self,
+                           ClutterActor *parent,
+                           BijiNoteObj *note)
 {
-  GtkWidget     *w, *button ;
-  GdMainToolbar *gd;
+  GdMainToolbar    *gd;
+  GtkWidget        *w, *button, *grid, *notes_label, *notes_icon;
+  GtkDrawingArea   *color;
+  ClutterActor     *result;
 
   w = gd_main_toolbar_new();
   gd = GD_MAIN_TOOLBAR(w);
 
-  button = gd_main_toolbar_add_button(gd,
-                                      "go-previous-symbolic",
-                                      "Notes",
-                                      TRUE);
-
-  gd_main_toolbar_set_labels (gd,biji_note_get_title(obj),NULL);
-
+  result = gtk_clutter_actor_new_with_contents(w);
+  clutter_actor_add_child(parent,result);
   gtk_widget_show_all(w);
+  clutter_actor_set_x_expand(result,TRUE);
 
-  return gtk_clutter_actor_new_with_contents(w);
-}
+  /* Go to main view */
+  grid = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,2);
+  notes_icon = get_icon("go-previous-symbolic");
+  gtk_box_pack_start(GTK_BOX(grid),notes_icon,TRUE,TRUE,TRUE);
+  notes_label = gtk_label_new("Notes");
+  gtk_box_pack_start(GTK_BOX(grid),notes_label,TRUE,TRUE,TRUE);
 
-static GtkWidget *
-create_toolbar(BjbNoteView *parent,BijiNoteObj *note)
-{
-  GtkWidget *ret ;
-  GtkToolbar *tool;
-  GtkToolItem *space_l, *space_r ;
+  button = gd_main_toolbar_add_button (gd, NULL, NULL, TRUE);
 
-  ret = gtk_toolbar_new();
-  tool = GTK_TOOLBAR(ret);
+  gtk_container_add(GTK_CONTAINER(button),grid);
+  g_signal_connect (button,"clicked",G_CALLBACK(action_switch_to_notes_callback),self);
 
-  if ( parent->priv->is_main_window )
-  {
-    
-    // Go to Notes button
-    GtkToolItem *go_to_notes ;
-    GtkWidget *notes_button ;
-    GtkWidget *but_grid;
-    GtkWidget *notes_icon ;
-    GtkWidget *notes_label;
+  /* Note title */
+  gd_main_toolbar_set_labels (gd,biji_note_get_title(note),NULL);
 
-    go_to_notes = gtk_tool_item_new();
-    but_grid = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,2);
-    notes_icon = get_icon("go-previous-symbolic");
-    gtk_box_pack_start(GTK_BOX(but_grid),notes_icon,TRUE,TRUE,TRUE);
-    notes_label = gtk_label_new("Notes");
-    gtk_box_pack_start(GTK_BOX(but_grid),notes_label,TRUE,TRUE,TRUE);
-    notes_button = gtk_button_new();
-    gtk_container_add(GTK_CONTAINER(notes_button),but_grid);
-    g_signal_connect(notes_button,"clicked",
-                     G_CALLBACK(action_switch_to_notes_callback),parent) ;  
-    gtk_container_add (GTK_CONTAINER(go_to_notes),notes_button);
-    gtk_tool_item_set_expand(go_to_notes,FALSE);
-    gtk_toolbar_insert (tool,go_to_notes,-1);
+  /* Note Color */
+  button = gd_main_toolbar_add_button (gd, NULL, NULL, FALSE);
 
-  }
+  color = GTK_DRAWING_AREA(gtk_drawing_area_new());
+  gtk_container_add (GTK_CONTAINER(button), GTK_WIDGET (color));
 
-  // space
-  space_l = gtk_separator_tool_item_new(); 
-  gtk_separator_tool_item_set_draw(GTK_SEPARATOR_TOOL_ITEM(space_l),FALSE);
-  gtk_tool_item_set_expand(space_l,TRUE);
-  gtk_toolbar_insert (tool,space_l,-1);
-    
-  // 
-  space_r = gtk_separator_tool_item_new(); 
-  gtk_separator_tool_item_set_draw(GTK_SEPARATOR_TOOL_ITEM(space_r),FALSE);
-  gtk_tool_item_set_expand(space_r,TRUE);
-  gtk_toolbar_insert (tool,space_r,-1);
+  gtk_widget_show_all (button);
 
-  // Color Chooser (Simple Cairo).
-  GtkToolItem *color ;
-  GtkWidget *co = gtk_drawing_area_new();
-  color = gtk_tool_button_new(co,NULL);
-  g_signal_connect(co,"draw",G_CALLBACK(on_color_draw),note);
-  g_signal_connect(color,"clicked",
-                   G_CALLBACK(on_color_clicked),parent) ;
-  //gtk_tool_button_set_relief_style(color,GTK_RELIEF_NORMAL);
-  gtk_toolbar_insert (tool,color,-1); // */
+  g_signal_connect (color,"draw",G_CALLBACK(on_color_draw),note);
+  g_signal_connect (button,"clicked",G_CALLBACK(on_color_clicked),self);
 
+  /* Sharing */
+  button = gd_main_toolbar_add_button (gd, "send-to-symbolic",
+                                       NULL, FALSE);
 
-  /* Sharing is not yet implemented, only e-mail (bjb-share) */
-  GtkToolItem *share_b ;  
-  share_b = gtk_tool_button_new(get_icon("send-to-symbolic"),NULL);
-  g_signal_connect(share_b,"clicked",
+  g_signal_connect(button,"clicked",
                    G_CALLBACK(on_email_note_callback),note);
-  gtk_toolbar_insert(tool,GTK_TOOL_ITEM(share_b),-1);
-  
 
-  // Action menu 
-  GtkToolItem *action = gtk_tool_item_new();
-  GtkMenu *action_menu = GTK_MENU(gtk_menu_new());
-  GtkWidget *action_image = get_icon("emblem-system-symbolic");
+  /* Menu */
+  button = gd_main_toolbar_add_menu(gd,NULL,NULL,FALSE);
 
-  BijibenMenuButton *action_toggle = bijiben_menu_button_new(action_image);
-  bijiben_menu_button_set_menu(action_toggle,GTK_MENU(action_menu));
+  gtk_menu_button_set_menu (GTK_MENU_BUTTON (button),
+                            bjb_note_menu_new (self));
 
-  gtk_container_add(GTK_CONTAINER(action),GTK_WIDGET(action_toggle));
-  gtk_toolbar_insert (tool,action,-1);
-  
-  // Action menu - Rename
-  GtkWidget *rename_it = gtk_menu_item_new_with_label("Rename");
-  gtk_menu_shell_append(GTK_MENU_SHELL(action_menu),rename_it);
-  g_signal_connect(rename_it,
-                   "activate",
-	               G_CALLBACK(action_rename_note_callback),
-                   parent); 
-  gtk_widget_show(rename_it);
-  
-  // Action menu - Tags
-  GtkWidget *tags_item = gtk_menu_item_new_with_label("Tags");
-  gtk_menu_shell_append(GTK_MENU_SHELL(action_menu),tags_item);
-  g_signal_connect(tags_item,"activate",
-	                 G_CALLBACK(action_view_tags_callback),parent);
-  gtk_widget_show(tags_item);
-
-  // Action menu - Delete
-  GtkWidget *delete_item = gtk_menu_item_new_with_label("Delete this note");
-  gtk_menu_shell_append(GTK_MENU_SHELL(action_menu),delete_item);
-  g_signal_connect(delete_item,"activate",
-                   G_CALLBACK(delete_item_callback),parent);
-  gtk_widget_show(delete_item);
-
-  gtk_widget_show_all(ret);
-  return ret ;
+  return result;
 }
-
 
 static gboolean
 on_cut_clicked ( GtkWidget *button, GtkTextView *view)
@@ -772,24 +732,14 @@ create_edit_bar (BjbNoteView *parent)
 static void
 show_edit_bar(BjbNoteView *self, gboolean sticky)
 {
-  g_warning ("show edit bar not im");
+  BjbNoteViewPrivate *priv = self->priv;
 
-  clutter_actor_show(self->priv->edit_actor);
-/*
-  if ( GTK_IS_WIDGET(view->priv->edit_bar ) )
-  {
-    gtk_widget_destroy(view->priv->edit_bar);
-  }
-    
-  view->priv->edit_bar = create_edit_bar(view);
-  gtk_box_pack_start(GTK_BOX(view->priv->vbox),view->priv->edit_bar,
-                     FALSE,FALSE,0);
-  gtk_widget_show_all(view->priv->edit_bar);
-  gtk_text_view_scroll_mark_onscreen(view->priv->view, 
-                                     gtk_text_buffer_get_insert(
-                                                gtk_text_view_get_buffer(
-                                                          view->priv->view)));
-*/
+  clutter_actor_show(priv->edit_actor);
+
+  gtk_text_view_scroll_mark_onscreen(priv->view, 
+                              gtk_text_buffer_get_insert(
+                                       gtk_text_view_get_buffer(
+                                                          priv->view)));
 }
 
 static void
@@ -884,31 +834,6 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
                                    G_CALLBACK(on_window_closed),
                                    priv->current_note);
 
-  /* Apply the selected font */ 
-  g_object_get (G_OBJECT(settings),"font",&font,NULL);
-  gtk_widget_modify_font(GTK_WIDGET(priv->view),
-                         pango_font_description_from_string(font));
-    
-  /* User defined color */
-  GdkRGBA *color = NULL ;
-  color = biji_note_obj_get_rgba(priv->current_note) ;
-    
-  if ( !color )
-  {
-    gdk_rgba_parse(color, DEFAULT_NOTE_COLOR);
-    biji_note_obj_set_rgba(priv->current_note,color);
-  }
-
-  self->priv->color = color ;
-  set_editor_color(self,priv->color);
-
-  /* Padding */
-  gtk_text_view_set_pixels_above_lines (GTK_TEXT_VIEW(priv->view),
-                                        8);
-  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(priv->view),16);
-
-  priv->toolbars_box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL,0));
-
   /* Start packing ui */
   stage = bjb_window_base_get_stage(BJB_WINDOW_BASE(priv->window));
 
@@ -931,12 +856,7 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
   clutter_actor_add_child(priv->embed,vbox);
 
   /* Main Toolbar  */
-//  GtkWidget *tool = create_toolbar(self,note);
-//  ClutterActor *bar = gtk_clutter_actor_new_with_contents(tool);
-  ClutterActor *bar = bjb_note_main_toolbar_new(self,note);
-
-  clutter_actor_add_child(vbox,bar);
-  clutter_actor_set_x_expand(bar,TRUE);
+  ClutterActor *bar = bjb_note_main_toolbar_new(self,vbox,note);
 
   /* Overlay contains Text and EditToolbar */
   ClutterActor *overlay = clutter_actor_new();
@@ -955,6 +875,29 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
   clutter_actor_set_x_expand(text_actor,TRUE);
   clutter_actor_set_y_expand(text_actor,TRUE);
 
+  /* Apply the selected font */ 
+  g_object_get (G_OBJECT(settings),"font",&font,NULL);
+  gtk_widget_modify_font(GTK_WIDGET(priv->view),
+                         pango_font_description_from_string(font));
+
+  /* Padding */
+  gtk_text_view_set_pixels_above_lines (GTK_TEXT_VIEW(priv->view),
+                                        8);
+  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(priv->view),16);
+
+  /* User defined color */
+  GdkRGBA *color = NULL ;
+  color = biji_note_obj_get_rgba(priv->current_note) ;
+    
+  if ( !color )
+  {
+    gdk_rgba_parse(color, DEFAULT_NOTE_COLOR);
+    biji_note_obj_set_rgba(priv->current_note,color);
+  }
+
+  self->priv->color = color ;
+  set_editor_color(self,priv->color);
+
   /* Edition Toolbar when text is selected */
   priv->edit_bar = create_edit_bar(self) ;
   priv->edit_actor = gtk_clutter_actor_new_with_contents(priv->edit_bar);
@@ -963,24 +906,11 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
   clutter_actor_add_child(vbox,priv->edit_actor);
   clutter_actor_set_x_expand(priv->edit_actor,TRUE);
 
-  /* If some text is selected we do show the proper bar 
+  /* If some text is selected we do show the proper bar */
   g_signal_connect(editor,"selection"           ,G_CALLBACK(on_text_selected),self);
   g_signal_connect(editor,"button-press-event"  ,G_CALLBACK(on_button_pressed),self);
   g_signal_connect(editor,"button-release-event",G_CALLBACK(on_button_pressed),self);
   g_signal_connect(editor,"no-more-selection"   ,G_CALLBACK(on_text_not_selected),self);
-*/
-  /* Infobar for template notes
-  if ( note_obj_is_template(note) )
-  {
-    GtkWidget *template = gtk_info_bar_new();
-    gchar *message = g_strdup_printf("This note is a template. All notes with \
-    tag %s will contain that text.",_biji_note_template_get_tag(note));
-    GtkWidget *text = gtk_label_new(message);
-    gtk_box_pack_start (GTK_BOX(gtk_info_bar_get_content_area(GTK_INFO_BAR(template))),
-                        text,FALSE,FALSE,0);
-    gtk_box_pack_start (GTK_BOX(vbox),template,FALSE,FALSE,0);
-  }
-  */
 
   gtk_widget_show_all(priv->window);
   
