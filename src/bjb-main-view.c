@@ -2,7 +2,6 @@
 #include <libbiji/libbiji.h>
 
 #include "utils/bjb-icons-colors.h"
-#include "widgets/bjb-menu-tool.h"
 #include "widgets/gd-main-toolbar.h"
 #include "widgets/gd-main-icon-view.h"
 #include "widgets/gd-main-view.h"

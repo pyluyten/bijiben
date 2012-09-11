@@ -2,7 +2,6 @@
 #include <libbiji/libbiji.h>
 
 #include "utils/bjb-icons-colors.h"
-#include "widgets/bjb-menu-tool.h"
 #include "widgets/gd-main-toolbar.h"
 
 #include "bjb-bijiben.h"
@@ -524,7 +523,7 @@ on_color_clicked(GtkWidget *but,BjbNoteView *view)
   gtk_widget_show_all(dialog);
 }
 
-/* Main Note Toolbar */
+/* Note View Toolbar */
 
 /* Draw the color button */
 static gboolean
@@ -541,8 +540,6 @@ on_color_draw(GtkWidget *widget, cairo_t *cr, BijiNoteObj *note)
   cairo_fill (cr);
   return TRUE;
 }
-
-/* Note View Toolbar */
 
 GtkWidget *
 bjb_note_menu_new (BjbNoteView *self)
@@ -612,6 +609,7 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
 
   /* Note Color */
   button = gd_main_toolbar_add_button (gd, NULL, NULL, FALSE);
+  gtk_widget_set_hexpand (button, TRUE);
 
   color = GTK_DRAWING_AREA(gtk_drawing_area_new());
   gtk_widget_show (GTK_WIDGET(color));
