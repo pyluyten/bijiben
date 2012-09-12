@@ -2,7 +2,6 @@
 #include <libbiji/libbiji.h>
 
 #include "utils/bjb-icons-colors.h"
-#include "widgets/bjb-menu-tool.h"
 #include "widgets/gd-main-toolbar.h"
 #include "widgets/gd-main-icon-view.h"
 #include "widgets/gd-main-view.h"
@@ -38,6 +37,7 @@ static GParamSpec *properties[NUM_PROPERTIES] = { NULL, };
 struct _BjbMainViewPriv {  
   GtkWidget        *window;
   GtkWidget        *label;
+  ClutterActor     *bin;
   ClutterActor     *embed ;
   ClutterActor     *content;
 
@@ -74,16 +74,15 @@ bjb_main_view_init (BjbMainView *object)
 static void
 bjb_main_view_finalize (GObject *object)
 {
-  BjbMainView *view = BJB_MAIN_VIEW(object) ;
+  BjbMainView     *self = BJB_MAIN_VIEW(object) ;
+  BjbMainViewPriv *priv = self->priv;
 
   /* Signals */
+  g_signal_handler_disconnect(bjb_window_base_get_book(priv->window),
+                              priv->notes_changed);
 
-  g_signal_handler_disconnect(bjb_window_base_get_book(view->priv->window),
-                              view->priv->notes_changed);
-
-  /* TODO Main View */
-
-  /* TODO widgets, actors */               
+  /* Widgets, actors */
+  clutter_actor_destroy (priv->bin);
 
   G_OBJECT_CLASS (bjb_main_view_parent_class)->finalize (object);
 }
@@ -155,8 +154,10 @@ biji_main_view_constructor (GType                  gtype,
 void
 switch_to_note_view(BjbMainView *self,BijiNoteObj *note)
 {
-  clutter_actor_destroy ( self->priv->embed );  
-  bjb_note_view_new(self->priv->window,note,TRUE);
+  GtkWidget *window = self->priv->window;
+
+  g_object_unref (self);
+  bjb_note_view_new (window,note,TRUE);
 }
 
 static void
@@ -270,7 +271,7 @@ bjb_main_view_constructed(GObject *o)
 {
   BjbMainView          *self;
   BjbMainViewPriv      *priv;
-  ClutterActor         *stage, *bin, *top, *view, *selection_bar;
+  ClutterActor         *stage, *top, *view, *selection_bar;
   ClutterLayoutManager *filler, *packer, *switcher, *overlay;
   ClutterConstraint    *constraint ;
   BjbSelectionToolbar  *panel ;
@@ -287,12 +288,13 @@ bjb_main_view_constructed(GObject *o)
   /* Probably move this to window_base or delete this */
   filler = clutter_bin_layout_new (CLUTTER_BIN_ALIGNMENT_CENTER,
                                    CLUTTER_BIN_ALIGNMENT_CENTER);
-  bin = clutter_actor_new();
-  clutter_actor_set_layout_manager(bin,filler);
-  clutter_actor_add_child(stage,bin);
+  priv->bin = clutter_actor_new();
+  clutter_actor_set_name (priv->bin, "bin");
+  clutter_actor_set_layout_manager(priv->bin,filler);
+  clutter_actor_add_child(stage,priv->bin);
 
   constraint = clutter_bind_constraint_new (stage, CLUTTER_BIND_SIZE, 0.0);
-  clutter_actor_add_constraint (bin, constraint);
+  clutter_actor_add_constraint (priv->bin, constraint);
 
   packer = clutter_box_layout_new();
   clutter_box_layout_set_orientation(CLUTTER_BOX_LAYOUT(packer),
@@ -300,7 +302,7 @@ bjb_main_view_constructed(GObject *o)
 
   priv->embed = clutter_actor_new();
   clutter_actor_set_layout_manager (priv->embed,packer) ;
-  clutter_actor_add_child (bin, priv->embed) ;
+  clutter_actor_add_child (priv->bin, priv->embed) ;
   clutter_actor_set_x_expand (priv->embed, TRUE);
   clutter_actor_set_y_expand (priv->embed, TRUE);
 
@@ -353,14 +355,13 @@ bjb_main_view_constructed(GObject *o)
                    G_CALLBACK(on_item_activated),self);
 
   /* Selection Panel */
-  panel = bjb_selection_toolbar_new (bin,priv->view,self);
+  panel = bjb_selection_toolbar_new (priv->content,priv->view,self);
   selection_bar = bjb_selection_toolbar_get_actor (panel);
-  clutter_actor_add_child (bin, selection_bar);
- 
-  gtk_window_set_title (GTK_WINDOW (priv->window), 
-                        BIJIBEN_MAIN_WIN_TITLE);
+  clutter_actor_add_child (priv->bin, selection_bar);
 
-  gtk_widget_show_all (priv->window) ;
+  gtk_widget_show_all (priv->window);
+  gtk_window_set_title (GTK_WINDOW (priv->window),
+                        BIJIBEN_MAIN_WIN_TITLE);
 }
 
 static void

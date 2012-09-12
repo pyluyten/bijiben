@@ -24,10 +24,6 @@
 #include <math.h>
 #include <glib/gi18n.h>
 
-/***** tmp hack instead of gtk menu button *********/
-#include "bjb-menu-tool.h"
-/***** ENDOF : tmp hack instead of gtk menu button */
-
 G_DEFINE_TYPE (GdMainToolbar, gd_main_toolbar, GTK_TYPE_TOOLBAR)
 
 typedef enum {
