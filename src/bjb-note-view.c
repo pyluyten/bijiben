@@ -5,6 +5,7 @@
 #include "widgets/gd-main-toolbar.h"
 
 #include "bjb-bijiben.h"
+#include "bjb-editor-toolbar.h"
 #include "bjb-rename-note.h"
 #include "bjb-share.h"
 #include "bjb-tracker.h"
@@ -33,7 +34,8 @@ struct _BjbNoteViewPrivate {
   ClutterActor      *edit_actor;
   GtkBox            *toolbars_box;
   GtkTextView       *view;
-  GtkWidget         *edit_bar ;
+  BjbEditorToolbar  *edit_bar;
+  ClutterActor      *edit_bar_actor;
   gboolean           edit_bar_is_sticky ;
 
   /* Manage tags dialog */
@@ -754,50 +756,6 @@ create_edit_bar (BjbNoteView *parent)
   return result ;
 }
 
-static void
-show_edit_bar(BjbNoteView *self, gboolean sticky)
-{
-  BjbNoteViewPrivate *priv = self->priv;
-
-  clutter_actor_show(priv->edit_actor);
-
-  gtk_text_view_scroll_mark_onscreen(priv->view, 
-                              gtk_text_buffer_get_insert(
-                                       gtk_text_view_get_buffer(
-                                                          priv->view)));
-}
-
-static void
-on_text_selected(GObject *toto,BjbNoteView *view)
-{
-  show_edit_bar(view,FALSE);
-}
-
-static gboolean
-on_button_pressed(GtkWidget *widget,GdkEvent  *event,BjbNoteView *view)
-{
-  /* If anything else than right-click, do not break things. */
-  if ( event->button.button != 3 )
-  {
-    return FALSE ;    
-  }
-
-  /* If right click, show toolbar and that's all */
-  show_edit_bar(view,TRUE);
-  return TRUE ;
-  
-}
-
-static void
-on_text_not_selected(GObject *toto,BjbNoteView *view)
-{
-  if ( view->priv->edit_bar_is_sticky == FALSE )
-    clutter_actor_hide (view->priv->edit_actor);
-
-  else 
-    view->priv->edit_bar_is_sticky = FALSE ;
-}
-
 static gboolean
 on_note_renamed(BijiNoteObj *note, GtkWidget *win)
 {
@@ -939,19 +897,10 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
   self->priv->color = color ;
   set_editor_color(self,priv->color);
 
-  /* Edition Toolbar when text is selected */
-  priv->edit_bar = create_edit_bar(self) ;
-  priv->edit_actor = gtk_clutter_actor_new_with_contents(priv->edit_bar);
-
-  // tmp hack : do not use the overlay, just show the toolbar under
-  clutter_actor_add_child(vbox,priv->edit_actor);
-  clutter_actor_set_x_expand(priv->edit_actor,TRUE);
-
-  /* If some text is selected we do show the proper bar */
-  g_signal_connect(editor,"selection"           ,G_CALLBACK(on_text_selected),self);
-  g_signal_connect(editor,"button-press-event"  ,G_CALLBACK(on_button_pressed),self);
-  g_signal_connect(editor,"button-release-event",G_CALLBACK(on_button_pressed),self);
-  g_signal_connect(editor,"no-more-selection"   ,G_CALLBACK(on_text_not_selected),self);
+  /* Edition Toolbar */
+  priv->edit_bar = bjb_editor_toolbar_new (overlay, self, editor);
+  priv->edit_bar_actor = bjb_editor_toolbar_get_actor (priv->edit_bar);
+  clutter_actor_add_child (priv->embed, priv->edit_bar_actor);
 
   gtk_widget_show_all(priv->window);
   

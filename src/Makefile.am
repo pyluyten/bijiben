@@ -27,6 +27,8 @@ bijiben_SOURCES = \
 	bjb-controller.h \
 	bjb-debug.h \
 	bjb-debug.c \
+	bjb-editor-toolbar.c \
+	bjb-editor-toolbar.h \
 	bjb-main.c \
 	bjb-main-toolbar.c \
 	bjb-main-toolbar.h \
