@@ -515,12 +515,20 @@ on_color_clicked(GtkWidget *but,BjbNoteView *view)
   dialog = gtk_color_chooser_dialog_new ("Choose note background",
                                          GTK_WINDOW(view->priv->window));  
 
-  g_signal_connect (dialog,
-                    "response",
-                    G_CALLBACK (on_color_choosed),
-                    view); 
+  g_signal_connect (dialog,"response",
+                    G_CALLBACK (on_color_choosed),view); 
 
   gtk_widget_show_all(dialog);
+}
+
+static gboolean
+color_key_pressed_event (GtkWidget *widget,
+                         GdkEvent  *event,
+                         gpointer   user_data)
+{
+  on_color_clicked (widget, user_data);
+
+  return TRUE;
 }
 
 /* Note View Toolbar */
@@ -578,9 +586,13 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
                            BijiNoteObj *note)
 {
   GdMainToolbar    *gd;
-  GtkWidget        *w, *button, *grid, *notes_label, *notes_icon;
-  GtkDrawingArea   *color;
   ClutterActor     *result;
+  GtkWidget        *w,*button;
+  
+  GtkWidget        *grid,*notes_label,*notes_icon;
+
+  GtkWidget        *color_square,*color;
+  GtkSizeGroup     *size;
 
   w = gd_main_toolbar_new();
   gd = GD_MAIN_TOOLBAR(w);
@@ -607,18 +619,25 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
   /* Note title */
   gd_main_toolbar_set_labels (gd,biji_note_get_title(note),NULL);
 
-  /* Note Color */
-  button = gd_main_toolbar_add_button (gd, NULL, NULL, FALSE);
-  gtk_widget_set_hexpand (button, TRUE);
+  /* Note Color *
+   * the size requisition is done later on
+   * because it needs another widget */
+  color_square = gd_main_toolbar_add_button (gd, NULL, NULL, FALSE);
 
-  color = GTK_DRAWING_AREA(gtk_drawing_area_new());
-  gtk_widget_show (GTK_WIDGET(color));
-  gtk_container_add (GTK_CONTAINER(button), GTK_WIDGET (color));
+  color = gtk_drawing_area_new();
+  gtk_widget_set_hexpand (color, TRUE);
+  gtk_widget_set_vexpand (color, TRUE);
+  gtk_container_add (GTK_CONTAINER(color_square), GTK_WIDGET (color));
 
-  gtk_widget_show_all (button);
+  gtk_widget_set_vexpand (color_square, TRUE);
+  gtk_widget_set_hexpand (color_square, TRUE);
+  gtk_widget_show_all (color_square);
 
   g_signal_connect (color,"draw",G_CALLBACK(on_color_draw),note);
-  g_signal_connect (button,"clicked",G_CALLBACK(on_color_clicked),self);
+
+  /* GdkDrawingArea does not have "clicked" signal */
+  gtk_widget_add_events (color, GDK_BUTTON_PRESS_MASK);
+  g_signal_connect (color,"button-press-event",G_CALLBACK(color_key_pressed_event),self);
 
   /* Sharing */
   button = gd_main_toolbar_add_button (gd, "send-to-symbolic",
@@ -628,10 +647,16 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
                    G_CALLBACK(on_email_note_callback),note);
 
   /* Menu */
-  button = gd_main_toolbar_add_menu(gd,NULL,NULL,FALSE);
+  button = gd_main_toolbar_add_menu(gd,"emblem-system-symbolic",NULL,FALSE);
 
   gtk_menu_button_set_menu (GTK_MENU_BUTTON (button),
                             bjb_note_menu_new (self));
+
+  /* Fix the h size for color square since gdk drawing area */
+  size = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+  gtk_size_group_add_widget (size, button);
+  gtk_size_group_add_widget (size, color_square);
+  g_object_unref (size);
 
   return result;
 }
