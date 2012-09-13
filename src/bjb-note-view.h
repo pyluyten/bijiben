@@ -42,6 +42,8 @@ BjbNoteView * bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_m
 
 ClutterActor * bjb_note_view_get_actor (BjbNoteView *view);
 
+GtkWidget * bjb_note_view_get_base_window (BjbNoteView *v);
+
 G_END_DECLS
 
 #endif /* _NOTE_VIEW_H */

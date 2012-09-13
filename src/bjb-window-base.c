@@ -49,6 +49,10 @@ struct _BjbWindowBasePriv
 
   /* To avoid loiding several times */
   PangoFontDescription *font ;
+
+  /* Tmp. Instead we want to be able to create a window base
+   * without the view */
+  BjbMainView       *view;
 };
 
 /* Gobject */
@@ -189,7 +193,6 @@ bjb_window_base_new(GtkApplication *app)
 {    
   BjbWindowBase     *self ;
   BjbWindowBasePriv *priv ;
-  BjbMainView       *view;
   BjbController     *controller ;
   GtkWindow         *win ;
   GtkWidget         *embed ;
@@ -215,8 +218,8 @@ bjb_window_base_new(GtkApplication *app)
   priv->controller = controller ;
 
   /* UI : notes view. But some settings could allow other default. */
-  view = bjb_main_view_new ( GTK_WIDGET(self),controller);
-  priv->frame = bjb_main_view_get_actor(view);
+  priv->view = bjb_main_view_new ( GTK_WIDGET(self),controller);
+  priv->frame = bjb_main_view_get_actor(priv->view);
 
   return win ;
 }
@@ -355,4 +358,10 @@ void
 bjb_window_base_set_application ( BjbWindowBase *self, GtkApplication *app)
 {
     self->priv->app = app ;
+}
+
+gpointer
+bjb_window_base_get_main_view (BjbWindowBase *self)
+{
+  return (gpointer) self->priv->view;
 }

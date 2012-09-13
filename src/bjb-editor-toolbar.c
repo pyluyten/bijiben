@@ -26,6 +26,7 @@
 #include <gtk/gtk.h>
 
 #include "bjb-editor-toolbar.h"
+#include "bjb-window-base.h"
 
 enum
 {
@@ -40,15 +41,6 @@ static GParamSpec *properties[NUM_PROPERTIES] = { NULL, };
 
 struct _BjbEditorToolbarPrivate
 {
-  /* check */
-  GHashTable         *item_listeners;
-  GtkWidget          *toolbar_collection;
-  GtkWidget          *toolbar_favorite;
-  GtkWidget          *toolbar_open;
-  GtkWidget          *toolbar_print;
-  GtkWidget          *toolbar_trash;
-  gboolean           inside_refresh;
-
   /* Editor is the text view */
   BjbNoteView        *view;
   ClutterActor       *actor;
@@ -57,12 +49,20 @@ struct _BjbEditorToolbarPrivate
   ClutterActor       *parent_actor;
   ClutterConstraint  *width_constraint;
 
-  /* misc gtk */
-  GtkToolItem        *left_group;
-  GtkToolItem        *right_group;
-  GtkToolItem        *separator;
-  GtkWidget          *left_box;
-  GtkWidget          *right_box;
+  /* TODO
+   * If text is cut/clipped we should have the toolbar remain visible */
+  gboolean           *clipboard;
+
+  /* BUTTONS */
+  GtkToolItem        *group;
+  GtkWidget          *box;
+  GtkWidget          *toolbar_cut;
+  GtkWidget          *toolbar_copy;
+  GtkWidget          *toolbar_paste;
+  GtkWidget          *toolbar_bold;
+  GtkWidget          *toolbar_italic;
+  GtkWidget          *toolbar_strike;
+  GtkWidget          *toolbar_link;
 };
 
 G_DEFINE_TYPE (BjbEditorToolbar, bjb_editor_toolbar, G_TYPE_OBJECT);
@@ -96,245 +96,6 @@ bjb_editor_toolbar_fade_out (BjbEditorToolbar *self)
   g_signal_connect_swapped (animation, "completed", G_CALLBACK (clutter_actor_hide), priv->actor);
 }
 
-
-static void
-bjb_editor_toolbar_dialog_response (GtkDialog *dialog, gint response_id, gpointer user_data)
-{
-  BjbEditorToolbar *self = BJB_EDITOR_TOOLBAR (user_data);
-
-  if (response_id != GTK_RESPONSE_OK)
-    return;
-
-  gtk_widget_destroy (GTK_WIDGET (dialog));
-  bjb_editor_toolbar_fade_in (self);
-}
-
-
-static void
-bjb_editor_toolbar_collection_clicked (GtkButton *button, gpointer user_data)
-{
-}
-
-
-static gboolean
-bjb_editor_toolbar_disconnect_listeners_foreach (gpointer key, gpointer value, gpointer user_data)
-{
-  g_signal_handler_disconnect (value, GPOINTER_TO_UINT (key));
-  return TRUE;
-}
-
-
-static void
-bjb_editor_toolbar_favorite_clicked (GtkButton *button, gpointer user_data)
-{
-  /* TODO */
-}
-
-
-static void
-bjb_editor_toolbar_open_clicked (GtkButton *button, gpointer user_data)
-{
-  /* TODO */
-}
-
-
-static void
-bjb_editor_toolbar_print_clicked (GtkButton *button, gpointer user_data)
-{
-  /* TODO */
-}
-
-
-static void
-bjb_editor_toolbar_set_item_visibility (BjbEditorToolbar *self)
-{
-  BjbEditorToolbarPrivate *priv = self->priv;
-  GList *apps = NULL;
-  GList *l;
-  GList *selection;
-  gboolean show_favorite = TRUE;
-  gboolean show_open = TRUE;
-  gboolean show_print = TRUE;
-  gboolean show_trash = TRUE;
-  gchar *open_label;
-  guint fav_count = 0;
-  guint apps_length;
-  guint sel_length;
-
-  g_warning ("bjb selection toolbar set item visibility");
-
-  priv->inside_refresh = TRUE;
-
-  //selection = bjb_selection_controller_get_selection (priv->sel_cntrlr);
-  //for (l = g_list_first (selection); l != NULL; l = g_list_next (l))
-  //  {
-      /*PhotosBaseItem *item;
-      const gchar *default_app_name;
-      const gchar *urn = (gchar *) l->data;
-
-      item = PHOTOS_BASE_ITEM (photos_base_manager_get_object_by_id (priv->item_mngr, urn));
-
-      if (photos_base_item_is_favorite (item))
-        fav_count++;
-
-      default_app_name = photos_base_item_get_default_app_name (item);
-      if (default_app_name != NULL && g_list_find (apps, default_app_name) == NULL)
-        apps = g_list_prepend (apps, (gpointer) g_strdup (default_app_name));
-
-      show_trash = show_trash && photos_base_item_can_trash (item);
-      show_print = show_print && !photos_base_item_is_collection (item);*/
-      show_trash = TRUE ;
-      show_print = TRUE ;
-   // }
-
-  //sel_length = g_list_length (selection);
-  //show_favorite = show_favorite && ((fav_count == 0) || (fav_count == sel_length));
-
-  //apps_length = g_list_length (apps);
-  //show_open = (apps_length > 0);
-  show_open = TRUE ;
-
-  /*if (sel_length > 1)
-    show_print = FALSE; */
-
-  if (apps_length == 1)
-    /* Translators: this is the Open action in a context menu */
-    open_label = g_strdup_printf (_("Open with %s"), (gchar *) apps->data);
-  else
-    /* Translators: this is the Open action in a context menu */
-    open_label = g_strdup (_("Open"));
-
-  gtk_widget_set_tooltip_text (priv->toolbar_open, open_label);
-  g_free (open_label);
-  g_list_free_full (apps, g_free);
-
-  if (show_favorite)
-    {
-      GtkStyleContext *context;
-      gchar *favorite_label;
-
-      context = gtk_widget_get_style_context (priv->toolbar_favorite);
-
-      if (fav_count == sel_length)
-        {
-          favorite_label = g_strdup (_("Remove from favorites"));
-          gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->toolbar_favorite), TRUE);
-          gtk_style_context_add_class (context, "documents-favorite");
-        }
-      else
-        {
-          favorite_label = g_strdup (_("Add to favorites"));
-          gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->toolbar_favorite), FALSE);
-          gtk_style_context_remove_class (context, "documents-favorite");
-        }
-
-      gtk_widget_reset_style (priv->toolbar_favorite);
-      gtk_widget_set_tooltip_text (priv->toolbar_favorite, favorite_label);
-      g_free (favorite_label);
-    }
-
-//  gtk_widget_set_visible (priv->toolbar_print, show_print);
-  gtk_widget_set_visible (priv->toolbar_trash, show_trash);
-//  gtk_widget_set_visible (priv->toolbar_open, show_open);
-//  gtk_widget_set_visible (priv->toolbar_favorite, show_favorite);
-
-  priv->inside_refresh = FALSE; 
-}
-
-
-static void
-bjb_editor_toolbar_set_item_listeners (BjbEditorToolbar *self, GList *selection)
-{
-/*
-  BjbEditorToolbarPrivate *priv = self->priv;
-  GList *l;
-
-  g_hash_table_foreach_remove (priv->item_listeners, bjb_editor_toolbar_disconnect_listeners_foreach, NULL);
-
-  for (l = g_list_first (selection); l != NULL; l = g_list_next (l))
-    {
-      GObject *object;
-      gchar *urn = (gchar *) l->data;
-      gulong id;
-
-      object = photos_base_manager_get_object_by_id (priv->item_mngr, urn);
-      id = g_signal_connect_swapped (object,
-                                     "info-updated",
-                                     G_CALLBACK (bjb_editor_toolbar_set_item_visibility),
-                                     self);
-      g_hash_table_insert (priv->item_listeners, GUINT_TO_POINTER (id), g_object_ref (object));
-    }
-*/
-}
-
-
-static void
-bjb_editor_toolbar_selection_changed (gpointer dummy, gpointer user_data)
-{
-  BjbEditorToolbar *self = BJB_EDITOR_TOOLBAR (user_data);
-  BjbEditorToolbarPrivate *priv = self->priv;
-
-  GList *selection;
-
-/*
-  if (!bjb_selection_controller_get_selection_mode (priv->sel_cntrlr))
-    return;
-*/
-
-  //selection = gd_main_view_get_selection(view);
-  //bjb_editor_toolbar_set_item_listeners (self, selection);
-
-  if (g_list_length (selection) > 0)
-  {
-    bjb_editor_toolbar_set_item_visibility (self);
-    bjb_editor_toolbar_fade_in (self);
-  }
-  
-  else
-    bjb_editor_toolbar_fade_out (self);
-}
-
-
-/*
-static void
-bjb_editor_toolbar_selection_mode_changed (PhotosSelectionController *sel_cntrlr,
-                                                 gboolean mode,
-                                                 gpointer user_data)
-{
-  BjbEditorToolbar *self = BJB_EDITOR_TOOLBAR (user_data);
-
-  if (mode)
-    bjb_editor_toolbar_selection_changed (sel_cntrlr, self);
-  else
-    bjb_editor_toolbar_fade_out (self);
-}*/
-
-
-static void
-bjb_editor_toolbar_dispose (GObject *object)
-{
-  BjbEditorToolbar *self = BJB_EDITOR_TOOLBAR (object);
-  BjbEditorToolbarPrivate *priv = self->priv;
-
-  if (priv->item_listeners != NULL)
-    {
-      g_hash_table_unref (priv->item_listeners);
-      priv->item_listeners = NULL;
-    }
-
-  /*g_clear_object (&priv->item_mngr);
-
-  if (priv->sel_cntrlr != NULL)
-    {
-      g_object_unref (priv->sel_cntrlr);
-      priv->sel_cntrlr = NULL;
-    }
-  */
-
-  G_OBJECT_CLASS (bjb_editor_toolbar_parent_class)->dispose (object);
-}
-
-
 static void
 bjb_editor_toolbar_init (BjbEditorToolbar *self)
 {
@@ -349,7 +110,7 @@ bjb_editor_toolbar_init (BjbEditorToolbar *self)
 
   priv->widget = gtk_toolbar_new ();
   gtk_toolbar_set_show_arrow (GTK_TOOLBAR (priv->widget), FALSE);
-  gtk_toolbar_set_icon_size (GTK_TOOLBAR (priv->widget), GTK_ICON_SIZE_LARGE_TOOLBAR);
+  gtk_toolbar_set_icon_size (GTK_TOOLBAR (priv->widget), GTK_ICON_SIZE_SMALL_TOOLBAR);
   context = gtk_widget_get_style_context (priv->widget);
   gtk_style_context_add_class (context, "osd");
 
@@ -362,107 +123,68 @@ bjb_editor_toolbar_init (BjbEditorToolbar *self)
                                         GTK_STATE_FLAG_NORMAL,
                                         &color);
 
-  priv->left_box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
-  priv->left_group = gtk_tool_item_new ();
-  gtk_container_add (GTK_CONTAINER (priv->left_group), priv->left_box);
-  gtk_toolbar_insert (GTK_TOOLBAR (priv->widget), priv->left_group, -1);
-  gtk_widget_show_all (GTK_WIDGET (priv->left_group));
+  /* TODO : fix this, buttons have to appear without bar
+   * perhaps add directly actors to clutter hbox           */
+  priv->box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
+  priv->group = gtk_tool_item_new ();
+  gtk_container_add (GTK_CONTAINER (priv->group), priv->box);
+  gtk_toolbar_insert (GTK_TOOLBAR (priv->widget), priv->group, -1);
+  gtk_widget_show_all (GTK_WIDGET (priv->group));
 
-/*
-  priv->toolbar_favorite = gtk_toggle_button_new ();
-  image = gtk_image_new_from_icon_name ("emblem-favorite-symbolic", GTK_ICON_SIZE_INVALID);
-  gtk_image_set_pixel_size (GTK_IMAGE (image), 32);
-  gtk_container_add (GTK_CONTAINER (priv->toolbar_favorite), image);
-  gtk_container_add (GTK_CONTAINER (priv->left_box), priv->toolbar_favorite);
-  g_signal_connect (priv->toolbar_favorite,
-                    "clicked",
-                    G_CALLBACK (bjb_editor_toolbar_favorite_clicked),
-                    self);
-*/
+  /* Cut */
+  priv->toolbar_cut = gtk_button_new_with_label ("Cut");
+  gtk_container_add (GTK_CONTAINER (priv->box), priv->toolbar_cut);
 
-/*
-  priv->toolbar_print = gtk_button_new ();
-  image = gtk_image_new_from_icon_name ("printer-symbolic", GTK_ICON_SIZE_INVALID);
-  gtk_image_set_pixel_size (GTK_IMAGE (image), 32);
-  gtk_container_add (GTK_CONTAINER (priv->toolbar_print), image);
-  gtk_widget_set_tooltip_text (GTK_WIDGET (priv->toolbar_print), _("Print"));
-  gtk_container_add (GTK_CONTAINER (priv->left_box), priv->toolbar_print);
-  g_signal_connect (priv->toolbar_print,
-                    "clicked",
-                    G_CALLBACK (bjb_editor_toolbar_print_clicked),
-                    self);
-*/
+  /* Copy */
+  priv->toolbar_copy = gtk_button_new_with_label ("Copy");
+  gtk_container_add (GTK_CONTAINER (priv->box), priv->toolbar_copy);
 
-  priv->separator = gtk_separator_tool_item_new ();
-  gtk_separator_tool_item_set_draw (GTK_SEPARATOR_TOOL_ITEM (priv->separator), FALSE);
-  gtk_widget_set_visible (GTK_WIDGET (priv->separator), TRUE);
-  gtk_tool_item_set_expand (priv->separator, TRUE);
-  gtk_toolbar_insert (GTK_TOOLBAR (priv->widget), priv->separator, -1);
+  /* 'n paste */
+  priv->toolbar_paste = gtk_button_new_with_label ("Paste");
+  gtk_container_add (GTK_CONTAINER (priv->box), priv->toolbar_paste);
 
-  priv->right_box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
-  priv->right_group = gtk_tool_item_new ();
-  gtk_container_add (GTK_CONTAINER (priv->right_group), priv->right_box);
-  gtk_toolbar_insert (GTK_TOOLBAR (priv->widget), priv->right_group, -1);
-  gtk_widget_show_all (GTK_WIDGET (priv->right_group));
+  /* GtkWidget         *toolbar_bold   */
+  priv->toolbar_bold = gtk_button_new ();
+  image = gtk_image_new_from_icon_name ("gtk-bold", GTK_ICON_SIZE_INVALID);
+  gtk_image_set_pixel_size (GTK_IMAGE (image), 24);
+  gtk_container_add (GTK_CONTAINER (priv->toolbar_bold), image);
+  gtk_widget_set_tooltip_text (GTK_WIDGET (priv->toolbar_bold), _("Bold"));
+  gtk_container_add (GTK_CONTAINER (priv->box), priv->toolbar_bold);
 
-/*
-  priv->toolbar_collection = gtk_button_new ();
-  image = gtk_image_new_from_icon_name ("list-add-symbolic", GTK_ICON_SIZE_INVALID);
-  gtk_image_set_pixel_size (GTK_IMAGE (image), 32);
-  gtk_container_add (GTK_CONTAINER (priv->toolbar_collection), image);
-  gtk_widget_set_tooltip_text (GTK_WIDGET (priv->toolbar_collection), _("Organize"));
-  gtk_container_add (GTK_CONTAINER (priv->right_box), priv->toolbar_collection);
-  g_signal_connect (priv->toolbar_collection,
-                    "clicked",
-                    G_CALLBACK (bjb_editor_toolbar_collection_clicked),
-                    self);
-*/
+  /* GtkWidget          *toolbar_italic; */
+  priv->toolbar_italic = gtk_button_new ();
+  image = gtk_image_new_from_icon_name ("gtk-italic", GTK_ICON_SIZE_INVALID);
+  gtk_image_set_pixel_size (GTK_IMAGE (image), 24);
+  gtk_container_add (GTK_CONTAINER (priv->toolbar_italic), image);
+  gtk_widget_set_tooltip_text (GTK_WIDGET (priv->toolbar_italic), _("Italic"));
+  gtk_container_add (GTK_CONTAINER (priv->box), priv->toolbar_italic);
 
-  priv->toolbar_trash = gtk_button_new ();
-  image = gtk_image_new_from_icon_name ("user-trash-symbolic", GTK_ICON_SIZE_INVALID);
-  gtk_image_set_pixel_size (GTK_IMAGE (image), 32);
-  gtk_container_add (GTK_CONTAINER (priv->toolbar_trash), image);
-  gtk_widget_set_tooltip_text (GTK_WIDGET (priv->toolbar_trash), _("Delete"));
-  gtk_container_add (GTK_CONTAINER (priv->right_box), priv->toolbar_trash);
+  /* GtkWidget          *toolbar_strike; */
+  priv->toolbar_strike = gtk_button_new ();
+  image = gtk_image_new_from_icon_name ("gtk-strikethrough", GTK_ICON_SIZE_INVALID);
+  gtk_image_set_pixel_size (GTK_IMAGE (image), 24);
+  gtk_container_add (GTK_CONTAINER (priv->toolbar_strike), image);
+  gtk_widget_set_tooltip_text (GTK_WIDGET (priv->toolbar_strike), _("Strike"));
+  gtk_container_add (GTK_CONTAINER (priv->box), priv->toolbar_strike);
 
+  /* GtkWidget          *toolbar_link; */
+  priv->toolbar_link = gtk_button_new ();
+  image = gtk_image_new_from_icon_name ("emblem-symbolic-link", GTK_ICON_SIZE_INVALID);
+  gtk_image_set_pixel_size (GTK_IMAGE (image), 24);
+  gtk_container_add (GTK_CONTAINER (priv->toolbar_link), image);
+  gtk_widget_set_tooltip_text (GTK_WIDGET (priv->toolbar_link), _("Strike"));
+  gtk_container_add (GTK_CONTAINER (priv->box), priv->toolbar_link);
 
-/*
-  priv->toolbar_open = gtk_button_new ();
-  image = gtk_image_new_from_icon_name ("document-open-symbolic", GTK_ICON_SIZE_INVALID);
-  gtk_image_set_pixel_size (GTK_IMAGE (image), 32);
-  gtk_container_add (GTK_CONTAINER (priv->toolbar_open), image);
-  gtk_container_add (GTK_CONTAINER (priv->right_box), priv->toolbar_open);
-  g_signal_connect (priv->toolbar_open,
-                    "clicked",
-                    G_CALLBACK (bjb_editor_toolbar_open_clicked),
-                    self);
-*/
-
-  gtk_widget_show_all (priv->widget);
-
-  //priv->item_mngr = photos_item_manager_new ();
-
-  /*priv->sel_cntrlr = bjb_selection_controller_new ();
-  g_signal_connect (priv->sel_cntrlr,
-                    "selection-changed",
-                    G_CALLBACK (bjb_editor_toolbar_selection_changed),
-                    self);
-
-  
-
-  g_signal_connect (priv->sel_cntrlr,
-                    "selection-mode-changed",
-                    G_CALLBACK (bjb_editor_toolbar_selection_mode_changed),
-                    self);*/
-
-  clutter_actor_show(priv->actor);
+  //gtk_widget_show_all (priv->widget);
+  gtk_widget_show_all (priv->group);
+  clutter_actor_show (priv->actor);
 }
 
 static void
 bjb_editor_toolbar_get_property (GObject  *object,
-                                    guint     property_id,
-                                    GValue   *value,
-                                    GParamSpec *pspec)
+                                 guint     property_id,
+                                 GValue   *value,
+                                 GParamSpec *pspec)
 {
   BjbEditorToolbar *self = BJB_EDITOR_TOOLBAR (object);
 
@@ -479,9 +201,9 @@ bjb_editor_toolbar_get_property (GObject  *object,
 
 static void
 bjb_editor_toolbar_set_property (GObject  *object,
-                                    guint     property_id,
-                                    const GValue *value,
-                                    GParamSpec *pspec)
+                                 guint     property_id,
+                                 const GValue *value,
+                                 GParamSpec *pspec)
 {
   BjbEditorToolbar *self = BJB_EDITOR_TOOLBAR (object);
 
@@ -504,8 +226,8 @@ bjb_editor_toolbar_set_property (GObject  *object,
 
 static void
 bjb_editor_toolbar_notify_width (GObject *object,
-                                    GParamSpec *pspec,
-                                    gpointer user_data)
+                                 GParamSpec *pspec,
+                                 gpointer user_data)
 {
   BjbEditorToolbar *self = BJB_EDITOR_TOOLBAR (user_data);
   BjbEditorToolbarPrivate *priv = self->priv;
@@ -525,9 +247,8 @@ bjb_editor_toolbar_notify_width (GObject *object,
 static void
 show_edit_bar(BjbEditorToolbar *self, gboolean sticky)
 {
-  BjbEditorToolbarPrivate *priv = self->priv;
+//  BjbEditorToolbarPrivate *priv = self->priv;
 
-//  clutter_actor_show(priv->edit_actor);
   bjb_editor_toolbar_fade_in (self);
 
   /* TODO */
@@ -562,20 +283,90 @@ on_button_pressed (GtkWidget *widget,GdkEvent  *event,BjbEditorToolbar *self)
 static void
 on_text_not_selected(GObject *toto,BjbEditorToolbar *self)
 {
-  // if ( view->priv->edit_bar_is_sticky == FALSE )
-    bjb_editor_toolbar_fade_out (self);
+  /* TODO : check if (private?) clipboard first */
+  bjb_editor_toolbar_fade_out (self);
+}
 
-  /*else 
-    view->priv->edit_bar_is_sticky = FALSE ;*/
+static gboolean
+on_cut_clicked (GtkWidget *button, GtkTextView *view)
+{
+  g_signal_emit_by_name (view,"cut-clipboard");
+  return TRUE ;
+}
+
+static gboolean
+on_copy_clicked (GtkWidget *button, GtkTextView *view)
+{
+  g_signal_emit_by_name (view,"copy-clipboard");
+  return TRUE ;
+}
+
+static gboolean
+on_paste_clicked (GtkWidget *button, GtkTextView *view)
+{
+  g_signal_emit_by_name (view,"paste-clipboard");
+  return TRUE ;
+}
+
+static void
+bold_button_callback (GtkWidget *button,GtkTextView *view)
+{
+  biji_toggle_bold_tag (view);
+}
+
+static void
+italic_button_callback (GtkWidget *button,GtkTextView *view)
+{
+  biji_toggle_italic_tag (view);
+}
+
+static void
+strike_button_callback (GtkWidget *button,GtkTextView *view)
+{
+  biji_toggle_strike_tag (view);
+}
+
+/* TODO : Libiji : BijiNote * bjb_notebook_note_new (notebook,string);
+ *
+ * Toggle button
+ *
+ * Also, this is unstable since as soon as the parent win is
+ * destroyed, the child crashes. */
+static void
+link_callback (GtkWidget *button, BjbEditorToolbar *self)
+{
+  gchar                   *link, *folder ;
+  GtkWidget               *window;
+  BijiNoteObj             *result;
+  BijiNoteBook            *book;
+  BjbWindowBase           *base;
+  BjbEditorToolbarPrivate *priv = self->priv;
+
+  link = gtk_text_view_get_selection(priv->editor);
+
+  if (link == NULL )
+    return;
+
+  base = BJB_WINDOW_BASE (bjb_note_view_get_base_window (priv->view));
+
+  book = bjb_window_base_get_book(base);
+  folder = g_strdup_printf("%s/bijiben",g_get_user_data_dir());
+  result = biji_note_get_new_from_string(link,folder);
+  g_free(folder);
+
+  note_book_append_new_note(book,result);
+  create_new_window_for_note(bjb_window_base_get_app(base), result);
 }
 
 static void
 bjb_editor_toolbar_constructed(GObject *obj)
 {
-  ClutterConstraint *constraint ;
-  BjbEditorToolbar *self = BJB_EDITOR_TOOLBAR(obj);
+  BjbEditorToolbar        *self = BJB_EDITOR_TOOLBAR(obj);
   BjbEditorToolbarPrivate *priv = self->priv ;
-  
+  ClutterConstraint       *constraint ;
+  GtkTextView             *view;
+
+
   G_OBJECT_CLASS (bjb_editor_toolbar_parent_class)->constructed (obj);
 
   /* text selected --> fade in */
@@ -591,11 +382,34 @@ bjb_editor_toolbar_constructed(GObject *obj)
   g_signal_connect(priv->editor,"no-more-selection",
                    G_CALLBACK(on_text_not_selected),self);
 
-/*  g_signal_connect(priv->toolbar_trash,"clicked",
-                   G_CALLBACK(action_delete_selected_notes),priv->view); */
+  /* buttons */
+  view = GTK_TEXT_VIEW (priv->editor);
+  
+  g_signal_connect (priv->toolbar_cut,"clicked",
+                    G_CALLBACK(on_cut_clicked), view);
 
-  priv->width_constraint = clutter_bind_constraint_new (priv->parent_actor, CLUTTER_BIND_WIDTH, -300.0); 
-  clutter_actor_add_constraint (priv->actor, priv->width_constraint);
+  g_signal_connect (priv->toolbar_copy,"clicked",
+                    G_CALLBACK(on_copy_clicked), view);
+
+  g_signal_connect (priv->toolbar_paste,"clicked",
+                    G_CALLBACK(on_paste_clicked), view);
+
+  g_signal_connect (priv->toolbar_bold,"clicked",
+                    G_CALLBACK(bold_button_callback), view);
+
+  g_signal_connect (priv->toolbar_italic,"clicked",
+                    G_CALLBACK(italic_button_callback), view);
+
+  g_signal_connect (priv->toolbar_strike,"clicked",
+                    G_CALLBACK(strike_button_callback), view);
+
+  g_signal_connect (priv->toolbar_link,"clicked",
+                    G_CALLBACK(link_callback), self);
+
+/*
+clutter_bind_constraint_new (priv->parent_actor,
+*                      CLUTTER_BIND_WIDTH, -300.0); 
+*/
   
   g_signal_connect (priv->actor,
                     "notify::width",
@@ -614,7 +428,6 @@ bjb_editor_toolbar_class_init (BjbEditorToolbarClass *class)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (class);
 
-  object_class->dispose = bjb_editor_toolbar_dispose;
   object_class->get_property = bjb_editor_toolbar_get_property ;
   object_class->set_property = bjb_editor_toolbar_set_property ;
   object_class->constructed = bjb_editor_toolbar_constructed ;

@@ -198,20 +198,23 @@ BjbSettings * bjb_app_get_settings(gpointer application)
   return BIJIBEN_APPLICATION(application)->priv->settings ;
 }
 
-/////////////////////////////////////
-
+/* Create the window with its controller. Then switches to note view.
+ * This should be fixed we rather want an independant window
+ * with its controller but without any frame */
 void
 create_new_window_for_note(gpointer app , BijiNoteObj *note)
 {
-  g_return_if_fail(G_IS_APPLICATION(app));
-	
-  GtkWindow *win = bjb_window_base_new(app);
-  //main_window_set_frame((gpointer)win,
-  //                  GTK_CONTAINER(bjb_note_view_new(GTK_WIDGET(win),note,FALSE)));
-  //gtk_window_set_title(GTK_WINDOW(win),biji_note_get_title (note));
+  GtkWidget     *win;
+  BjbWindowBase *base;
+  BjbMainView   *main;
 
-  switch_to_note_view(BJB_MAIN_VIEW(bjb_window_base_get_frame(BJB_WINDOW_BASE(win))),
-                                    note);
+  g_return_if_fail (G_IS_APPLICATION (app));
+
+  win = bjb_window_base_new (app);
+  base = BJB_WINDOW_BASE (win);
+
+  main = BJB_MAIN_VIEW (bjb_window_base_get_main_view (win));
+  switch_to_note_view (main,note);
 }
 
 // return pointer to BJB main window

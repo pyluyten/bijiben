@@ -383,54 +383,44 @@ action_rename_note_callback (GtkWidget *item, gpointer user_data)
   title = note_title_dialog(GTK_WINDOW(priv->window),"Rename Note",
                             biji_note_get_title(priv->current_note));
 
-  if ( !title)
-  {
-    g_message("No title set");
+  if (!title)
     return ;
-  }
-
-  else
-  {
-    g_message("renaming note");
-  }
 
   set_note_title (priv->current_note,title);
   gtk_window_set_title (GTK_WINDOW(priv->window),title);
 }
 
-static void
+/* TODO :
+ * better move to bjb-editor-toolbar
+ * LIBBIJI : BijiNote * bjb_notebook_note_new (notebook,string);
+ * and toggle button                                             */
+/*static void
 link_callback(GtkButton *item,BjbNoteView *view)
 {
-  gchar *link = gtk_text_view_get_selection(view->priv->view);
+  gchar *link, *folder ;
+  BijiNoteObj *result;
+  BijiNoteBook *book;
 
-  // Actually that's critical, button should be toggled.
+  link = gtk_text_view_get_selection(view->priv->view);
+
   if (link == NULL )
-  {
-    g_message("NO SELECTION, CANNOT LINK");
-  }
-
-  g_message("selection is %s",link);
+    return;
  
-  // else, create it
-  BijiNoteObj *result ;
-  BijiNoteBook *book = bjb_window_base_get_book(view->priv->window);
-  gchar *folder = g_strdup_printf("%s/bijiben",g_get_user_data_dir());
+  book = bjb_window_base_get_book(view->priv->window);
+  folder = g_strdup_printf("%s/bijiben",g_get_user_data_dir());
   result = biji_note_get_new_from_string(link,folder);
   g_free(folder);
-  //g_free(link); FIXME libbiji note get new from string should 
-  // allocate it's own strings for notes title...
-    
-  note_book_append_new_note(book,result);
-  create_new_window_for_note(bjb_window_base_get_app(view->priv->window) , result) ;
-  
-}
 
-static void
+  note_book_append_new_note(book,result);
+  create_new_window_for_note(bjb_window_base_get_app(view->priv->window) , result);
+}*/
+
+/*static void
 on_info_bar_callback(GtkWidget *infobar,gint response, BjbNoteView *view)
 {
   gtk_widget_destroy (infobar );
   show_tags_dialog(view);
-}
+}*/
 
 static void
 delete_item_callback (GtkWidget *item, gpointer user_data)
@@ -445,48 +435,23 @@ delete_item_callback (GtkWidget *item, gpointer user_data)
                              view->priv->current_note);
 }
 
-static void
-bold_button_callback(GtkWidget *button,GtkTextView *view)
-{
-  biji_toggle_bold_tag(view);
-}
-
-static void
-italic_button_callback(GtkWidget *button,GtkTextView *view)
-{
-  biji_toggle_italic_tag(view);
-}
-
-static void
-strike_button_callback(GtkWidget *button,GtkTextView *view)
-{
-  biji_toggle_strike_tag(view);
-}
-
-static void
+/*static void
 action_view_note_in_another_win_callback(GtkAction *action, BjbNoteView *view)
 {
   BijiNoteObj *note = view->priv->current_note ;
   GtkWidget *window = view->priv->window ;
 
-  // /* Before rewrite 
+  // Before rewrite 
   // Switch current window to notes list ?or not ?
   save_then_switch_to_notes_view(view);
   // Pop up a new window 
-  create_new_window_for_note(bjb_window_base_get_app(window) ,note ) ; // */
+  create_new_window_for_note (bjb_window_base_get_app (window),note );
 
-}
-
-static void
-debug_note_view(GtkButton *button,BjbNoteView *view)
-{
-  biji_print_note( view->priv->buffer) ;
-}
+}*/
 
 static void
 set_editor_color(BjbNoteView *v, GdkRGBA *to_be)
 {
-  g_message("set editor color");
   gtk_widget_override_background_color(GTK_WIDGET(v->priv->view),
                                        GTK_STATE_FLAG_NORMAL,to_be);
 }
@@ -664,99 +629,6 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
 }
 
 static gboolean
-on_cut_clicked ( GtkWidget *button, GtkTextView *view)
-{
-  g_signal_emit_by_name (view,"cut-clipboard");
-  return TRUE ;
-}
-
-static gboolean
-on_copy_clicked ( GtkWidget *button, GtkTextView *view)
-{
-  g_signal_emit_by_name (view,"copy-clipboard");
-  return TRUE ;
-}
-
-static gboolean
-on_paste_clicked ( GtkWidget *button, GtkTextView *view)
-{
-  g_signal_emit_by_name (view,"paste-clipboard");
-  return TRUE ;
-}
-
-static GtkWidget *
-create_edit_bar (BjbNoteView *parent)
-{
-  GtkTextView *view = parent->priv->view ;
-    
-  GtkToolItem *iter ;
-  GtkWidget *result = gtk_toolbar_new();
-  GtkToolbar *bar = GTK_TOOLBAR(result) ;
-
-  /* First space to center buttons */
-  iter = gtk_separator_tool_item_new(); 
-  gtk_separator_tool_item_set_draw(GTK_SEPARATOR_TOOL_ITEM(iter),FALSE);
-  gtk_tool_item_set_expand(iter,TRUE);
-  gtk_toolbar_insert (bar,iter,-1);
-
-  /* Cut */
-  iter = gtk_tool_button_new(gtk_label_new("Cut"),NULL);
-  g_signal_connect(iter,"clicked",G_CALLBACK(on_cut_clicked),view);
-  gtk_toolbar_insert (bar,iter,-1); 
-
-  /* Copy */
-  iter = gtk_tool_button_new(gtk_label_new("Copy"),NULL);
-  g_signal_connect(iter,"clicked",G_CALLBACK(on_copy_clicked),view);
-  gtk_toolbar_insert (bar,iter,-1); 
-
-  /* Paste */
-  iter = gtk_tool_button_new(gtk_label_new("Paste"),NULL);
-  g_signal_connect(iter,"clicked",G_CALLBACK(on_paste_clicked),view);
-  gtk_toolbar_insert (bar,iter,-1); 
-
-  /* Bold */
-  iter = gtk_toggle_tool_button_new_from_stock(GTK_STOCK_BOLD);
-  if ( gtk_text_view_selection_has_tag(view,"bold") )
-    gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(iter),TRUE);
-
-  g_signal_connect(iter,"clicked",
-                 G_CALLBACK(bold_button_callback),view);
-  gtk_toolbar_insert (bar,iter,-1);
-
-  /* Italic */
-  iter = gtk_toggle_tool_button_new_from_stock(GTK_STOCK_ITALIC);
-  if ( gtk_text_view_selection_has_tag(view,"italic") )
-    gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(iter),TRUE);
-    
-  g_signal_connect(iter,"clicked",
-                   G_CALLBACK(italic_button_callback),view);
-  gtk_toolbar_insert (bar,iter,-1);
-
-  /* Strike */
-  iter = gtk_toggle_tool_button_new_from_stock(GTK_STOCK_STRIKETHROUGH);
-  if ( gtk_text_view_selection_has_tag(view,"strikethrough") )
-    gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(iter),TRUE);
-  g_signal_connect(iter,"clicked",
-                 G_CALLBACK(strike_button_callback),view);
-  gtk_toolbar_insert (bar,iter,-1);
-
-  /* Link */
-  iter = gtk_tool_button_new(get_icon("go-jump-symbolic"),NULL);
-  g_signal_connect(iter,"clicked",
-                   G_CALLBACK(link_callback),parent);
-  gtk_toolbar_insert (bar,iter,-1);
-
-  /* second space */
-  iter = gtk_separator_tool_item_new(); 
-  gtk_separator_tool_item_set_draw(GTK_SEPARATOR_TOOL_ITEM(iter),FALSE);
-  gtk_tool_item_set_expand(iter,TRUE);
-  gtk_toolbar_insert (bar,iter,-1);
-
-  gtk_widget_show_all(result);
-  return result ;
-}
-
-static gboolean
 on_note_renamed(BijiNoteObj *note, GtkWidget *win)
 {
   gtk_window_set_title(GTK_WINDOW(win),biji_note_get_title(note));
@@ -917,4 +789,10 @@ ClutterActor *
 bjb_note_view_get_actor ( BjbNoteView *v)
 {
   return v->priv->embed ;
+}
+
+GtkWidget *
+bjb_note_view_get_base_window (BjbNoteView *v)
+{
+  return v->priv->window;
 }

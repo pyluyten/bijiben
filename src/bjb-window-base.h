@@ -78,6 +78,9 @@ void bjb_window_base_delete_entry(GtkWidget *win);
 
 gchar * bjb_window_base_get_entry(GtkWidget *win) ;
 
+gpointer bjb_window_base_get_main_view (BjbWindowBase *self);
+
+
 // DEBUG 
 void biji_application_print_note_id(GtkWindow* win);
 
