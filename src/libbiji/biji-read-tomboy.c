@@ -619,41 +619,34 @@ note_buffer_deserialize(GtkTextBuffer *buffer,const gchar *xml_string)
 static void
 processNode(xmlTextReaderPtr r, BijiNoteObj * n) 
 {
-  xmlChar *name;
-  name = xmlTextReaderName(r);
+  xmlChar   *name;
+  GdkRGBA   *color;
+  gchar     *tag;
+  GString   *norm;
 
-  if ( g_strcmp0((gchar*)name,"title") == 0 )  
-  {
+  name = xmlTextReaderName (r);
+
+  if ( g_strcmp0((gchar*)name,"title") == 0 )
     set_note_title(n, (gchar*) xmlTextReaderReadString(r));
-  }
 
-  if ( g_strcmp0((gchar*)name,"text") == 0 )  
-  {
+  if ( g_strcmp0((gchar*)name,"text") == 0 )
     biji_note_set_content(n, (gchar*)xmlTextReaderReadInnerXml(r));
-  }
 
-  if ( g_strcmp0((gchar*)name,"last-change-date") == 0 )  
-  {
-    set_note_last_change_date (n,(gchar*) xmlTextReaderReadString(r)) ;  
-  }
+  if ( g_strcmp0((gchar*)name,"last-change-date") == 0)
+    set_note_last_change_date (n,(gchar*) xmlTextReaderReadString(r));  
 
-  if ( g_strcmp0((gchar*)name,"last-metadata-change-date") == 0 )  
-  {
-    set_note_last_metadata_change_date(n,(gchar*) xmlTextReaderReadString(r)) ;
-  }
+  if ( g_strcmp0((gchar*)name,"last-metadata-change-date") == 0)
+    set_note_last_metadata_change_date(n,(gchar*) xmlTextReaderReadString(r));
 
-  if ( g_strcmp0((gchar*)name,"create-date") == 0 )  
-  {
+  if ( g_strcmp0((gchar*)name,"create-date") == 0)
     set_note_create_date (n,(gchar*) xmlTextReaderReadString(r));
-  }
 
   if ( g_strcmp0((gchar*)name,"color") == 0 )  
   {
-    GdkRGBA * color = g_new(GdkRGBA, 1) ;
+    GdkRGBA * color = g_new (GdkRGBA,1);
       
     if ( gdk_rgba_parse( color,(gchar*) xmlTextReaderReadString(r)))
     {
-        g_message("serialize : %s",gdk_rgba_to_string (color));
         biji_note_obj_set_rgba ( n, color) ;
     }
 
@@ -661,7 +654,7 @@ processNode(xmlTextReaderPtr r, BijiNoteObj * n)
 
   if ( g_strcmp0((gchar*)name,"tag") == 0 )  
   {
-    gchar * tag = (gchar*) xmlTextReaderReadString(r);
+    tag = (gchar*) xmlTextReaderReadString(r);
 
     if (g_str_has_prefix (tag,"system:template"))
     {
@@ -670,10 +663,10 @@ processNode(xmlTextReaderPtr r, BijiNoteObj * n)
 
     else if (g_str_has_prefix (tag,"system:notebook:"))
     {
-      GString * norm = g_string_new(tag);
-      g_string_erase(norm,0,16);
-      tag = g_string_free(norm,FALSE);
-      _biji_note_obj_set_tags(n,g_list_append((GList*)_biji_note_obj_get_tags(n),
+      norm = g_string_new (tag);
+      g_string_erase (norm,0,16);
+      tag = g_string_free (norm,FALSE);
+      _biji_note_obj_set_tags (n,g_list_append((GList*)_biji_note_obj_get_tags(n),
                                             (gpointer)tag));
     }
   }
