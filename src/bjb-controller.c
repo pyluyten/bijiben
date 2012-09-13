@@ -22,13 +22,6 @@ bijiben is free software: you can redistribute it and/or modify it
 #include "bjb-window-base.h"
 #include "widgets/gd-main-view.h"
 
-/* Pango rendering for Notes pixbuf */
-#define ICON_WIDTH 200
-#define ICON_HEIGHT 260
-#define PANGO_WIDTH 180000
-#define ICON_FONT "Purusa 10"
-
-
 /* Gobject */
 
 struct _BjbControllerPrivate
@@ -37,13 +30,10 @@ struct _BjbControllerPrivate
   gchar         * needle ;
   GtkTreeModel  * model ;
   GtkTreeModel  * completion;
-	
+
   /*  Private  */
-	
   GList     * notes_to_show ;
 };
-
-
 
 enum {
   PROP_0,
@@ -164,72 +154,6 @@ bjb_controller_set_property (GObject  *object,
 
 /* Implement model */
 
-GdkPixbuf *
-get_pixbuf_for_note ( BijiNoteObj *note )
-{
-  GdkPixbuf *ret = NULL ;
-  cairo_surface_t *surface = NULL ;
-  cairo_t *c;
-  PangoLayout *layout;
-  PangoFontDescription *desc;
-  GdkRGBA *note_color;
-
-  gchar *text = biji_note_get_raw_text(note) ;
-
-  /* Create & Draw surface */ 
-  surface = cairo_image_surface_create ( CAIRO_FORMAT_ARGB32 , 
-	                                     ICON_WIDTH,
-	                                     ICON_HEIGHT) ;
-  c=cairo_create(surface);
-
-  /* Background */
-  cairo_rectangle(c, 0.5, 0.5, ICON_WIDTH, ICON_HEIGHT);
-  note_color = biji_note_obj_get_rgba(note) ;
-
-  if ( note_color )
-    gdk_cairo_set_source_rgba (c,note_color);
-		
-  cairo_fill(c);
-  
-  /* Borders */
-  cairo_set_source_rgba(c, 0.3, 0.3, 0.3,0.5);
-  cairo_set_line_width (c,0.6);
-  cairo_move_to (c, 0, 0);
-  cairo_line_to (c, 0, ICON_HEIGHT);
-  cairo_move_to (c, ICON_WIDTH, 0);
-  cairo_line_to (c, ICON_WIDTH, ICON_HEIGHT); 
-  cairo_stroke(c);
-  cairo_set_line_width (c,3.0);
-  cairo_move_to (c, 0, ICON_HEIGHT);
-  cairo_line_to (c, ICON_WIDTH, ICON_HEIGHT);
-  cairo_stroke(c);
-
-  /* Text */
-  cairo_translate(c, 10, 10);
-  layout = pango_cairo_create_layout(c);
-
-  pango_layout_set_width(layout, 180000 );
-  pango_layout_set_wrap(layout,PANGO_WRAP_WORD_CHAR);
-  pango_layout_set_height ( layout, 180000 ) ;
-	
-  pango_layout_set_text(layout,text, -1);
-  desc = pango_font_description_from_string(ICON_FONT);
-  pango_layout_set_font_description(layout, desc);
-  pango_font_description_free(desc);
-
-  cairo_set_source_rgb(c, 0.0, 0.0, 0.0);
-  pango_cairo_update_layout(c, layout);
-  pango_cairo_show_layout(c, layout);
-
-  g_object_unref(layout);
-
-  ret = gdk_pixbuf_get_from_surface (surface,
-                     0,0,
-                     ICON_WIDTH,ICON_HEIGHT);
-
-  return ret ;
-} 
-
 static void
 bjb_controller_add_note ( BijiNoteObj *note, BjbController *self )
 {
@@ -237,29 +161,26 @@ bjb_controller_add_note ( BijiNoteObj *note, BjbController *self )
   GtkTreeIter  iter ;
   GdkPixbuf    *pix;
 
-  store = GTK_LIST_STORE(self->priv->model) ;
+  store = GTK_LIST_STORE(self->priv->model);
 
-	
-  if ( biji_note_obj_is_template(note) == FALSE )
+
+  if ( biji_note_obj_is_template (note) == FALSE)
   {
-	pix = get_pixbuf_for_note(note);
-	  
-    gtk_list_store_append(store,&iter);
-    gtk_list_store_set(store, 
-                       &iter,
-                       COL_URN,    note_obj_get_path(note),
-                       COL_URI,    note_obj_get_path(note),
-                       COL_NAME,   biji_note_get_title(note),
-                       COL_AUTHOR,   NULL,
-                       COL_IMAGE,  pix,
-                       COL_MTIME,  biji_note_obj_get_last_change_date_sec(note),
-                       COL_SELECTED, FALSE,
-                       -1);
-                       
-    g_object_unref(pix);
+    pix = biji_note_obj_get_icon (note);
+
+    gtk_list_store_append (store,&iter);
+    gtk_list_store_set (store, 
+                        &iter,
+                        COL_URN,    note_obj_get_path(note),
+                        COL_URI,    note_obj_get_path(note),
+                        COL_NAME,   biji_note_get_title(note),
+                        COL_AUTHOR,   NULL,
+                        COL_IMAGE,  pix,
+                        COL_MTIME,  biji_note_obj_get_last_change_date_sec(note),
+                        COL_SELECTED, FALSE,
+                        -1);
   }
 }
-
 
 static void
 update_view (BjbController *self)
@@ -267,7 +188,7 @@ update_view (BjbController *self)
   GList *notes ;
 
   notes = self->priv->notes_to_show ;
-	
+
   free_notes_store(self);
   g_list_foreach (notes,(GFunc)bjb_controller_add_note,self) ;	
 }

@@ -15,25 +15,39 @@
 /* Default color (X11 rgb.txt)  */ 
 #define DEFAULT_NOTE_COLOR "rgb(233,235,191)"
 
+/* Icon */
+#define ICON_WIDTH 200
+#define ICON_HEIGHT 260
+#define ICON_FONT "Purusa 10"
+
 struct _BijiNoteObjPrivate
 {
-  BijiNoteBook *book ; // the book the note belongs to, may be NULL.
-  BijiNoteID *id; // Metadata : title, date...
-  GtkTextTagTable *gtk_tags ;// the common tags with notebook.
+  /* Notebook might be null. Shared GtkTextTagTable */
+  BijiNoteBook          *book;
+  GtkTextTagTable       *gtk_tags;
 
-  /* EDITION */
-  gchar *content ; // XML content of the buffer
-  BijiNoteBuffer *buffer; // the GtkTextBuffer might be null
-  gint changes_to_save ;
+  /* Metadata */
+  BijiNoteID            *id;
 
-  // TAGS may be notebooks. Templates are just "system:notebook:" tags.
-  GList *tags ;
-  gboolean is_template ;
-  gint is_opened ; // use it to keep track of opened notes
+  /* XML Content */
+  gchar                 *content;
 
-  // Settings? TODO Generaly BijiNoteBook settings are used ?
-  gint left_margin ;
-  GdkRGBA *color ;     /* Not tomboy compliant */
+  /* Buffer might be null */
+  BijiNoteBuffer        *buffer;
+  gint                  changes_to_save ;
+
+  /* TAGS may be notebooks. */
+  GList                 *tags ;
+
+  /* Templates are just "system:notebook:" tags. */
+  gboolean              is_template ;
+  gint                  is_opened;
+
+  gint                  left_margin;
+  GdkRGBA               *color;
+
+  /* Might be null. triggered by get_icon */
+  GdkPixbuf             *icon;
 
   /* Signals */
   gulong note_renamed;
@@ -48,8 +62,7 @@ biji_note_obj_init (BijiNoteObj *self)
 {
   BijiNoteObjPrivate *priv ;
     
-  priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BIJI_TYPE_NOTE_OBJ,
-	                                          BijiNoteObjPrivate);
+  priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BIJI_TYPE_NOTE_OBJ, BijiNoteObjPrivate);
 
   self->priv = priv ;
 
@@ -65,6 +78,9 @@ biji_note_obj_init (BijiNoteObj *self)
   priv->is_opened = 0;
   priv->left_margin = 6 ; // defautl left margin.
 
+  /* Icon is only computed when necessary */
+  priv->icon = NULL;
+
   priv->color = g_new(GdkRGBA,1) ;
   gdk_rgba_parse ( priv->color , DEFAULT_NOTE_COLOR ) ; 
 }
@@ -72,7 +88,8 @@ biji_note_obj_init (BijiNoteObj *self)
 static void
 biji_note_obj_finalize (GObject *object)
 {    
-  BijiNoteObj *note = BIJI_NOTE_OBJ(object);
+  BijiNoteObj        *self = BIJI_NOTE_OBJ(object);
+  BijiNoteObjPrivate *priv = self->priv;
     
   // Finalize id
   //biji_note_id_finalize(object);
@@ -84,7 +101,9 @@ biji_note_obj_finalize (GObject *object)
   // free content
 
   // tags
-  g_list_free(note->priv->tags);
+  g_list_free (priv->tags);
+
+  g_object_unref (priv->icon);
 
   G_OBJECT_CLASS (biji_note_obj_parent_class)->finalize (object);
 }
@@ -297,7 +316,7 @@ biji_note_obj_set_rgba(BijiNoteObj *n,GdkRGBA *rgba)
   {    
     n->priv->color = rgba ;
     _biji_note_id_set_metadata_change_now(n->priv->id);
-    _biji_note_obj_propose_saving ( n) ;
+    _biji_note_obj_propose_saving (n);
     g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
     return ;
   }
@@ -307,7 +326,7 @@ biji_note_obj_set_rgba(BijiNoteObj *n,GdkRGBA *rgba)
     g_free(n->priv->color);
     n->priv->color = rgba ;
     _biji_note_id_set_metadata_change_now(n->priv->id);
-    _biji_note_obj_propose_saving ( n) ;
+    _biji_note_obj_propose_saving (n) ;
     g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
   }  
 }
@@ -521,8 +540,14 @@ note_obj_save_note_using_buffer(gpointer note_obj)
   // Work on the content. this func also updates note_obj->priv->content.
   buf = note_obj_serialize(note_obj,3);
   result = g_file_set_contents (biji_note_id_get_path(id),
-	                            (gchar*)buf->content,-1,NULL);
-	                            
+                                (gchar*) buf->content,-1,NULL);
+
+  /* Update the icon */
+  g_object_unref (note->priv->icon);
+  note->priv->icon = NULL ;
+  biji_note_obj_get_icon (note);
+
+  /* Alert */
   g_signal_emit ( G_OBJECT (note_obj), 
                   biji_obj_signals[NOTE_CHANGED],
                   0);
@@ -577,3 +602,75 @@ _biji_note_obj_mark_as_need_save(gpointer note_obj)
 {
   BIJI_NOTE_OBJ(note_obj)->priv->changes_to_save ++ ;
 }
+
+GdkPixbuf *
+biji_note_obj_get_icon (BijiNoteObj *note)
+{
+  GdkRGBA               *note_color;
+  gchar                 *text;
+  cairo_t               *c;
+  PangoLayout           *layout;
+  PangoFontDescription  *desc;
+  GdkPixbuf             *ret = NULL;
+  cairo_surface_t       *surface = NULL;
+
+  if (note->priv->icon)
+    return note->priv->icon;
+
+  text = biji_note_get_raw_text (note);
+
+  /* Create & Draw surface */ 
+  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32 , 
+                                        ICON_WIDTH,
+                                        ICON_HEIGHT) ;
+  c = cairo_create (surface);
+
+  /* Background */
+  cairo_rectangle (c, 0.5, 0.5, ICON_WIDTH, ICON_HEIGHT);
+  note_color = biji_note_obj_get_rgba (note) ;
+
+  if ( note_color )
+    gdk_cairo_set_source_rgba (c,note_color);
+
+  cairo_fill (c);
+  
+  /* FIXME : borders */
+  cairo_set_source_rgba (c, 0.3, 0.3, 0.3,0.5);
+  cairo_set_line_width (c,0.6);
+  cairo_move_to (c, 0, 0);
+  cairo_line_to (c, 0, ICON_HEIGHT);
+  cairo_move_to (c, ICON_WIDTH, 0);
+  cairo_line_to (c, ICON_WIDTH, ICON_HEIGHT); 
+  cairo_stroke (c);
+  cairo_set_line_width (c,3.0);
+  cairo_move_to (c, 0, ICON_HEIGHT);
+  cairo_line_to (c, ICON_WIDTH, ICON_HEIGHT);
+  cairo_stroke (c);
+
+  /* Text */
+  cairo_translate (c, 10, 10);
+  layout = pango_cairo_create_layout (c);
+
+  pango_layout_set_width (layout, 180000 );
+  pango_layout_set_wrap (layout,PANGO_WRAP_WORD_CHAR);
+  pango_layout_set_height (layout, 180000 ) ;
+
+  pango_layout_set_text (layout,text, -1);
+  desc = pango_font_description_from_string (ICON_FONT);
+  pango_layout_set_font_description (layout, desc);
+  pango_font_description_free (desc);
+
+  cairo_set_source_rgb (c, 0.0, 0.0, 0.0);
+  pango_cairo_update_layout (c, layout);
+  pango_cairo_show_layout (c, layout);
+
+  g_object_unref (layout);
+
+  ret = gdk_pixbuf_get_from_surface (surface,
+                                     0,0,
+                                     ICON_WIDTH,
+                                     ICON_HEIGHT);
+  note->priv->icon = ret;
+
+  return ret ;
+} 

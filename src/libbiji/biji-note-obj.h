@@ -102,6 +102,8 @@ void _biji_note_obj_propose_saving(gpointer note_obj);
 void _biji_note_obj_close_note(gpointer note_obj);
 void _biji_note_obj_mark_as_need_save(gpointer note_obj);
 
+GdkPixbuf * biji_note_obj_get_icon (BijiNoteObj *note);
+
 G_END_DECLS
 
 #endif /* _BIJI_NOTE_OBJ_H_ */
