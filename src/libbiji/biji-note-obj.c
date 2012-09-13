@@ -603,12 +603,133 @@ _biji_note_obj_mark_as_need_save(gpointer note_obj)
   BIJI_NOTE_OBJ(note_obj)->priv->changes_to_save ++ ;
 }
 
+/* Borders are just temp before libiji includes
+ * some hardcoded frame svg */
+static GdkPixbuf *
+biji_note_icon_add_frame (GdkPixbuf *pixbuf)
+{
+  gint                   height, width;
+  gint                   border = 10;
+  cairo_pattern_t       *pattern;
+  cairo_t               *cr;
+  cairo_surface_t       *surface = NULL;
+  GdkPixbuf *framed;
+
+  width = gdk_pixbuf_get_width (pixbuf) + 2*border;
+  height = gdk_pixbuf_get_height (pixbuf) + 2*border;
+
+  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width, height);
+  cr = cairo_create (surface);
+
+  /* Draw the left-shadow. */
+  cairo_save(cr);
+  pattern = cairo_pattern_create_linear (border, border, 0, border);
+  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0, 0.5);
+  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
+  cairo_rectangle (cr, 0, border, border, height - 2*border);
+  cairo_clip (cr);
+  cairo_set_source (cr, pattern);
+  cairo_mask (cr, pattern);
+  cairo_pattern_destroy (pattern);
+  cairo_restore (cr);
+
+  /* Draw the up-left quarter-circle. */
+  cairo_save(cr);
+  pattern = cairo_pattern_create_radial (border, border, 0, border, border, border);
+  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0,  0.5);
+  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
+  cairo_rectangle (cr, 0, 0, border, border);
+  cairo_clip (cr);
+  cairo_set_source (cr, pattern);
+  cairo_mask (cr, pattern);
+  cairo_pattern_destroy (pattern);
+  cairo_restore(cr);
+
+  cairo_save(cr);
+  pattern = cairo_pattern_create_linear (border, border, border, 0);
+  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0, 0.5);
+  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
+  cairo_rectangle (cr, border, 0, width - 2*border, border);
+  cairo_clip (cr);
+  cairo_set_source (cr, pattern);
+  cairo_mask (cr, pattern);
+  cairo_pattern_destroy (pattern);
+  cairo_restore (cr);
+
+  cairo_save(cr);
+  pattern = cairo_pattern_create_radial (width - border, border, 0, width - border, border, border);
+  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0,  0.5);
+  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
+  cairo_rectangle (cr, width - border, 0, border, border);
+  cairo_clip (cr);
+  cairo_set_source (cr, pattern);
+  cairo_mask (cr, pattern);
+  cairo_pattern_destroy (pattern);
+  cairo_restore(cr);
+
+  cairo_save(cr);
+  pattern = cairo_pattern_create_linear (width - border, border, width, border);
+  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0, 0.5);
+  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
+  cairo_rectangle (cr, width - border, border, width, height - 2*border);
+  cairo_clip (cr);
+  cairo_set_source (cr, pattern);
+  cairo_mask (cr, pattern);
+  cairo_pattern_destroy (pattern);
+  cairo_restore (cr);
+
+  cairo_save(cr);
+  pattern = cairo_pattern_create_radial (border, height - border, 0, border, height - border, border);
+  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0,  0.5);
+  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
+  cairo_rectangle (cr, 0, height - border, border, border);
+  cairo_clip (cr);
+  cairo_set_source (cr, pattern);
+  cairo_mask (cr, pattern);
+  cairo_pattern_destroy (pattern);
+  cairo_restore(cr);
+
+  cairo_save(cr);
+  pattern = cairo_pattern_create_linear (border, height - border, border, height);
+  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0, 0.5);
+  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
+  cairo_rectangle (cr, border, height - border, width - 2*border, border);
+  cairo_clip (cr);
+  cairo_set_source (cr, pattern);
+  cairo_mask (cr, pattern);
+  cairo_pattern_destroy (pattern);
+  cairo_restore (cr);
+
+  cairo_save(cr);
+  pattern = cairo_pattern_create_radial (width - border, height - border, 0, width - border, height - border, border);
+  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0,  0.5);
+  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
+  cairo_rectangle (cr, width - border, height - border, border, border);
+  cairo_clip (cr);
+  cairo_set_source (cr, pattern);
+  cairo_mask (cr, pattern);
+  cairo_pattern_destroy (pattern);
+  cairo_restore(cr);
+
+  gdk_cairo_set_source_pixbuf (cr, pixbuf, border, border);
+  cairo_rectangle (cr, border, border, width - 2*border, height - 2*border);
+  cairo_clip(cr);
+  cairo_paint (cr);
+
+  framed = gdk_pixbuf_get_from_surface (surface, 0, 0, width, height);
+
+  cairo_destroy (cr);
+  cairo_surface_destroy (surface);
+
+  return framed;
+}
+
 GdkPixbuf *
 biji_note_obj_get_icon (BijiNoteObj *note)
 {
   GdkRGBA               *note_color;
   gchar                 *text;
-  cairo_t               *c;
+  cairo_t               *cr;
   PangoLayout           *layout;
   PangoFontDescription  *desc;
   GdkPixbuf             *ret = NULL;
@@ -623,33 +744,20 @@ biji_note_obj_get_icon (BijiNoteObj *note)
   surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32 , 
                                         ICON_WIDTH,
                                         ICON_HEIGHT) ;
-  c = cairo_create (surface);
+  cr = cairo_create (surface);
 
   /* Background */
-  cairo_rectangle (c, 0.5, 0.5, ICON_WIDTH, ICON_HEIGHT);
+  cairo_rectangle (cr, 0.5, 0.5, ICON_WIDTH, ICON_HEIGHT);
   note_color = biji_note_obj_get_rgba (note) ;
 
   if ( note_color )
-    gdk_cairo_set_source_rgba (c,note_color);
+    gdk_cairo_set_source_rgba (cr,note_color);
 
-  cairo_fill (c);
-  
-  /* FIXME : borders */
-  cairo_set_source_rgba (c, 0.3, 0.3, 0.3,0.5);
-  cairo_set_line_width (c,0.6);
-  cairo_move_to (c, 0, 0);
-  cairo_line_to (c, 0, ICON_HEIGHT);
-  cairo_move_to (c, ICON_WIDTH, 0);
-  cairo_line_to (c, ICON_WIDTH, ICON_HEIGHT); 
-  cairo_stroke (c);
-  cairo_set_line_width (c,3.0);
-  cairo_move_to (c, 0, ICON_HEIGHT);
-  cairo_line_to (c, ICON_WIDTH, ICON_HEIGHT);
-  cairo_stroke (c);
+  cairo_fill (cr);
 
   /* Text */
-  cairo_translate (c, 10, 10);
-  layout = pango_cairo_create_layout (c);
+  cairo_translate (cr, 10, 10);
+  layout = pango_cairo_create_layout (cr);
 
   pango_layout_set_width (layout, 180000 );
   pango_layout_set_wrap (layout,PANGO_WRAP_WORD_CHAR);
@@ -660,9 +768,9 @@ biji_note_obj_get_icon (BijiNoteObj *note)
   pango_layout_set_font_description (layout, desc);
   pango_font_description_free (desc);
 
-  cairo_set_source_rgb (c, 0.0, 0.0, 0.0);
-  pango_cairo_update_layout (c, layout);
-  pango_cairo_show_layout (c, layout);
+  cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
+  pango_cairo_update_layout (cr, layout);
+  pango_cairo_show_layout (cr, layout);
 
   g_object_unref (layout);
 
@@ -670,7 +778,8 @@ biji_note_obj_get_icon (BijiNoteObj *note)
                                      0,0,
                                      ICON_WIDTH,
                                      ICON_HEIGHT);
-  note->priv->icon = ret;
 
-  return ret ;
+  note->priv->icon = biji_note_icon_add_frame(ret);
+
+  return note->priv->icon ;
 } 
