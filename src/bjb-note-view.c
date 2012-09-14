@@ -35,7 +35,7 @@ G_DEFINE_TYPE (BjbNoteView, bjb_note_view, CLUTTER_TYPE_ACTOR)
 struct _BjbNoteViewPrivate {
   /* Data */
   GtkWidget         *window ;
-  BijiNoteObj       *current_note ;
+  BijiNoteObj       *note ;
   GtkTextBuffer     *buffer ;
 
   /* UI */
@@ -70,9 +70,9 @@ bjb_note_view_finalize(GObject *object)
   BjbNoteView *view = BJB_NOTE_VIEW(object) ;
 
   /* Don't unref buffer. Biji Does it when we close note. */
-  g_signal_handler_disconnect(view->priv->current_note,view->priv->renamed);
+  g_signal_handler_disconnect(view->priv->note,view->priv->renamed);
   g_signal_handler_disconnect(view->priv->window,view->priv->destroy);
-  g_signal_handler_disconnect(view->priv->current_note,view->priv->deleted);
+  g_signal_handler_disconnect(view->priv->note,view->priv->deleted);
 
   /* TODO */
 
@@ -93,7 +93,7 @@ bjb_note_view_get_property (GObject      *object,
       g_value_set_object (value, self->priv->window);
       break;
     case PROP_NOTE:
-      g_value_set_object (value, self->priv->current_note);
+      g_value_set_object (value, self->priv->note);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -115,7 +115,7 @@ bjb_note_view_set_property ( GObject        *object,
       self->priv->window = g_value_get_object(value);
       break;
     case PROP_NOTE:
-      self->priv->current_note = g_value_get_object(value);
+      self->priv->note = g_value_get_object(value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -129,15 +129,7 @@ bjb_note_view_init (BjbNoteView *self)
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BJB_TYPE_NOTE_VIEW,
                                             BjbNoteViewPrivate);
 
-  self->priv->window = NULL ;
-  self->priv->view = NULL ;
-  self->priv->current_note = NULL ;
-  self->priv->toolbars_box = NULL ;
-  self->priv->buffer = NULL ;
-  self->priv->model  = NULL ;
-  self->priv->edit_bar_is_sticky = FALSE ;
-  self->priv->to_be_saved = TRUE ;
-  self->priv->tags_dialog = NULL ;
+  self->priv->embed = clutter_actor_new ();
 }
 
 // Handlers for GtkTreeView of tags
@@ -179,7 +171,7 @@ create_tags_model (BjbNoteView *view)
     gtk_tree_store_set (model, &iter,
                         TAG_NAME_COLUMN,tag,
                         TAG_CHECK_COLUMN,
-                        biji_note_obj_has_tag(view->priv->current_note,tag),
+                        biji_note_obj_has_tag(view->priv->note,tag),
                         VISIBLE_COLUMN,TRUE,
                         SELECT_COLUMN,TRUE,
                         -1);
@@ -207,9 +199,9 @@ tag_toggled (GtkCellRendererToggle *cell,gchar *path_str,BjbNoteView *view)
   if ( toggle_item == FALSE )
   {
     // add into libbiji then tracker.
-    biji_note_obj_add_tag(view->priv->current_note,tag);
-    note_obj_save_note_using_buffer(view->priv->current_note);
-    push_existing_tag_to_note(tag,view->priv->current_note);
+    biji_note_obj_add_tag(view->priv->note,tag);
+    note_obj_save_note_using_buffer(view->priv->note);
+    push_existing_tag_to_note(tag,view->priv->note);
                           
     // and update the cell
     toggle_item = TRUE ;
@@ -217,9 +209,9 @@ tag_toggled (GtkCellRendererToggle *cell,gchar *path_str,BjbNoteView *view)
   else
   {
     // Remove the tag as in libiji, also remove tracker tag
-    biji_note_obj_remove_tag(view->priv->current_note,tag);
-    note_obj_save_note_using_buffer(view->priv->current_note);
-    remove_tag_from_note(tag,view->priv->current_note);
+    biji_note_obj_remove_tag (view->priv->note,tag);
+    note_obj_save_note_using_buffer (view->priv->note);
+    remove_tag_from_note (tag,view->priv->note);
 
     // and update the cell
     toggle_item = FALSE ;
@@ -300,7 +292,7 @@ show_tags_dialog(BjbNoteView *view)
   GtkWindow *win;
 
   // First, push the note to tracker if it's new.
-  bijiben_push_note_to_tracker(view->priv->current_note);
+  bijiben_push_note_to_tracker(view->priv->note);
     
   win = GTK_WINDOW(view->priv->window);
     
@@ -397,8 +389,8 @@ just_switch_to_main_view(BjbNoteView *self)
 static void
 save_then_switch_to_notes_view(BjbNoteView *view)
 {
-  bijiben_push_note_to_tracker(view->priv->current_note);
-  bjb_close_note(view->priv->current_note);
+  bijiben_push_note_to_tracker(view->priv->note);
+  bjb_close_note(view->priv->note);
   just_switch_to_main_view(view);
 }
 
@@ -425,73 +417,27 @@ action_rename_note_callback (GtkWidget *item, gpointer user_data)
   priv = view->priv;
 
   title = note_title_dialog(GTK_WINDOW(priv->window),"Rename Note",
-                            biji_note_get_title(priv->current_note));
+                            biji_note_get_title(priv->note));
 
   if (!title)
     return ;
 
-  set_note_title (priv->current_note,title);
+  set_note_title (priv->note,title);
   gtk_window_set_title (GTK_WINDOW(priv->window),title);
 }
-
-/* TODO :
- * better move to bjb-editor-toolbar
- * LIBBIJI : BijiNote * bjb_notebook_note_new (notebook,string);
- * and toggle button                                             */
-/*static void
-link_callback(GtkButton *item,BjbNoteView *view)
-{
-  gchar *link, *folder ;
-  BijiNoteObj *result;
-  BijiNoteBook *book;
-
-  link = gtk_text_view_get_selection(view->priv->view);
-
-  if (link == NULL )
-    return;
- 
-  book = bjb_window_base_get_book(view->priv->window);
-  folder = g_strdup_printf("%s/bijiben",g_get_user_data_dir());
-  result = biji_note_get_new_from_string(link,folder);
-  g_free(folder);
-
-  note_book_append_new_note(book,result);
-  create_new_window_for_note(bjb_window_base_get_app(view->priv->window) , result);
-}*/
-
-/*static void
-on_info_bar_callback(GtkWidget *infobar,gint response, BjbNoteView *view)
-{
-  gtk_widget_destroy (infobar );
-  show_tags_dialog(view);
-}*/
 
 static void
 delete_item_callback (GtkWidget *item, gpointer user_data)
 {
   BjbNoteView *view = BJB_NOTE_VIEW (user_data);
 
-  biji_note_delete_from_tracker(view->priv->current_note);
+  biji_note_delete_from_tracker(view->priv->note);
 
   /* Delete the note from collection
    * The deleted note will emit a signal. */
   biji_note_book_remove_note(bjb_window_base_get_book(view->priv->window),
-                             view->priv->current_note);
+                             view->priv->note);
 }
-
-/*static void
-action_view_note_in_another_win_callback(GtkAction *action, BjbNoteView *view)
-{
-  BijiNoteObj *note = view->priv->current_note ;
-  GtkWidget *window = view->priv->window ;
-
-  // Before rewrite 
-  // Switch current window to notes list ?or not ?
-  save_then_switch_to_notes_view(view);
-  // Pop up a new window 
-  create_new_window_for_note (bjb_window_base_get_app (window),note );
-
-}*/
 
 static void
 set_editor_color(BjbNoteView *v, GdkRGBA *to_be)
@@ -511,8 +457,8 @@ on_color_choosed(  GtkDialog *dialog,
 
   if (response_id == GTK_RESPONSE_OK)
   {
-    set_editor_color(view,color);
-    biji_note_obj_set_rgba(view->priv->current_note,color) ;
+    set_editor_color (view,color);
+    biji_note_obj_set_rgba (view->priv->note,color) ;
   }
 
   gtk_widget_destroy (GTK_WIDGET (dialog));
@@ -686,11 +632,12 @@ on_note_deleted(BijiNoteObj *note, BjbNoteView *view)
   return TRUE;
 }
 
-BjbNoteView *
-bjb_note_view_new (GtkWidget *win,BijiNoteObj* note)
+static void
+bjb_note_view_constructed (GObject *obj)
 {
-  BjbNoteView            *self;
-  BjbNoteViewPrivate     *priv;
+  BjbNoteView            *self = BJB_NOTE_VIEW (obj);
+  BjbNoteViewPrivate     *priv = self->priv;
+  BijiNoteEditor         *editor ;
   BjbSettings            *settings;
   GtkWidget              *scroll;
   ClutterActor           *stage, *vbox;
@@ -698,40 +645,33 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note)
   ClutterLayoutManager   *full, *box, *bin;
   gchar                  *font;
 
-  self = g_object_new (BJB_TYPE_NOTE_VIEW,
-                       "window",win,
-                       "note",note,
-                       NULL);
-  priv = self->priv ;
-
   /* view new from note deserializes the note-content. */
-  priv->view = biji_text_view_new_from_note(note);
-  priv->buffer = gtk_text_view_get_buffer(priv->view);
+  priv->view = biji_text_view_new_from_note (priv->note);
+  priv->buffer = gtk_text_view_get_buffer (priv->view);
 
   settings = bjb_window_base_get_settings(priv->window);
     
-  BijiNoteEditor *editor = BIJI_NOTE_EDITOR(priv->view);
+  editor = BIJI_NOTE_EDITOR (priv->view);
 
-  priv->renamed = g_signal_connect(note,"renamed",
+  priv->renamed = g_signal_connect(priv->note,"renamed",
                                    G_CALLBACK(on_note_renamed),
                                    priv->window);
     
-  priv->deleted = g_signal_connect(note,"deleted",
+  priv->deleted = g_signal_connect(priv->note,"deleted",
                                    G_CALLBACK(on_note_deleted),self);
 
-  priv->destroy = g_signal_connect(win,"destroy",
+  priv->destroy = g_signal_connect(priv->window,"destroy",
                                    G_CALLBACK(on_window_closed),
-                                   priv->current_note);
+                                   priv->note);
 
   /* Start packing ui */
-  stage = bjb_window_base_get_stage(BJB_WINDOW_BASE(priv->window));
+  stage = bjb_window_base_get_stage (BJB_WINDOW_BASE (priv->window));
 
-  priv->embed = clutter_actor_new();
   full = clutter_bin_layout_new (CLUTTER_BIN_ALIGNMENT_CENTER,
                                  CLUTTER_BIN_ALIGNMENT_CENTER);
 
-  clutter_actor_set_layout_manager(priv->embed,full);
-  clutter_actor_add_child(stage,priv->embed);
+  clutter_actor_set_layout_manager (priv->embed,full);
+  clutter_actor_add_child (stage,priv->embed);
 
   constraint = clutter_bind_constraint_new (stage, CLUTTER_BIND_SIZE, 0.0);
   clutter_actor_add_constraint (priv->embed, constraint);
@@ -741,21 +681,21 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note)
   clutter_box_layout_set_orientation(CLUTTER_BOX_LAYOUT(box),
                                      CLUTTER_ORIENTATION_VERTICAL);
 
-  clutter_actor_set_layout_manager(vbox,box);
-  clutter_actor_add_child(priv->embed,vbox);
+  clutter_actor_set_layout_manager (vbox,box);
+  clutter_actor_add_child (priv->embed,vbox);
 
   /* Main Toolbar  */
-  bjb_note_main_toolbar_new(self,vbox,note);
+  bjb_note_main_toolbar_new (self, vbox, priv->note);
 
   /* Overlay contains Text and EditToolbar */
-  ClutterActor *overlay = clutter_actor_new();
+  ClutterActor *overlay = clutter_actor_new ();
   bin = clutter_bin_layout_new (CLUTTER_BIN_ALIGNMENT_CENTER,
                                 CLUTTER_BIN_ALIGNMENT_CENTER);
 
-  clutter_actor_set_layout_manager(overlay,bin);
-  clutter_actor_add_child(vbox,overlay);
-  clutter_actor_set_x_expand(overlay,TRUE);
-  clutter_actor_set_y_expand(overlay,TRUE);
+  clutter_actor_set_layout_manager (overlay,bin);
+  clutter_actor_add_child (vbox,overlay);
+  clutter_actor_set_x_expand (overlay,TRUE);
+  clutter_actor_set_y_expand (overlay,TRUE);
 
   /* GtkTextView */
   scroll = gtk_scrolled_window_new (NULL,NULL);
@@ -792,31 +732,35 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note)
 
   /* User defined color */
   GdkRGBA *color = NULL ;
-  color = biji_note_obj_get_rgba(priv->current_note) ;
+  color = biji_note_obj_get_rgba(priv->note) ;
     
   if ( !color )
   {
-    gdk_rgba_parse(color, DEFAULT_NOTE_COLOR);
-    biji_note_obj_set_rgba(priv->current_note,color);
+    gdk_rgba_parse (color, DEFAULT_NOTE_COLOR);
+    biji_note_obj_set_rgba (priv->note,color);
   }
 
   self->priv->color = color ;
-  set_editor_color(self,priv->color);
+  set_editor_color (self,priv->color);
 
   /* Edition Toolbar */
   priv->edit_bar = bjb_editor_toolbar_new (overlay, self, editor);
   priv->edit_bar_actor = bjb_editor_toolbar_get_actor (priv->edit_bar);
   clutter_actor_add_child (priv->embed, priv->edit_bar_actor);
 
-  gtk_widget_show_all(priv->window);
-  
-  gtk_window_set_title(GTK_WINDOW(priv->window),
-                       biji_note_get_title(note)); 
+  gtk_widget_show_all (priv->window);
 
   // Zeitgeist.
-  insert_zeitgeist(note,ZEITGEIST_ZG_ACCESS_EVENT) ;
+  insert_zeitgeist (priv->note,ZEITGEIST_ZG_ACCESS_EVENT) ;
+}
 
-  return self ;
+BjbNoteView *
+bjb_note_view_new (GtkWidget *win, BijiNoteObj* note)
+{
+  return g_object_new (BJB_TYPE_NOTE_VIEW,
+                       "window",win,
+                       "note",note,
+                       NULL);
 }
 
 static void
@@ -825,6 +769,7 @@ bjb_note_view_class_init (BjbNoteViewClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
     
   object_class->finalize = bjb_note_view_finalize;
+  object_class->constructed = bjb_note_view_constructed;
   object_class->get_property = bjb_note_view_get_property;
   object_class->set_property = bjb_note_view_set_property;
 
