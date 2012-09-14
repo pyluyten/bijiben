@@ -283,7 +283,7 @@ bjb_main_view_constructed(GObject *o)
   stage = bjb_window_base_get_stage (BJB_WINDOW_BASE(priv->window));
 
   priv->view = gd_main_view_new (DEFAULT_VIEW);
-  bjb_controller_set_main_view (priv->controller, view);
+  bjb_controller_set_main_view (priv->controller, priv->view);
 
   /* Probably move this to window_base or delete this */
   filler = clutter_bin_layout_new (CLUTTER_BIN_ALIGNMENT_CENTER,
