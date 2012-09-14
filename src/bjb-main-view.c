@@ -59,7 +59,6 @@ struct _BjbMainViewPriv {
 
   /* signals */
   gulong            notes_changed ;
-  gulong            click_signal ;      /*        Signal to delete (icon view)   */
 };
 
 G_DEFINE_TYPE (BjbMainView, bjb_main_view, CLUTTER_TYPE_ACTOR);
