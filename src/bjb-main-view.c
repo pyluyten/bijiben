@@ -157,7 +157,7 @@ switch_to_note_view(BjbMainView *self,BijiNoteObj *note)
   GtkWidget *window = self->priv->window;
 
   g_object_unref (self);
-  bjb_note_view_new (window,note,TRUE);
+  bjb_note_view_new (window,note);
 }
 
 static void

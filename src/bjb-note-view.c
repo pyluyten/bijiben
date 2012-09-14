@@ -27,7 +27,6 @@ struct _BjbNoteViewPrivate {
   GtkWidget         *window ;
   BijiNoteObj       *current_note ;
   GtkTextBuffer     *buffer ;
-  gboolean           is_main_window ;
 
   /* UI */
   ClutterActor      *embed;
@@ -638,22 +637,12 @@ on_note_renamed(BijiNoteObj *note, GtkWidget *win)
 static gboolean
 on_note_deleted(BijiNoteObj *note, BjbNoteView *view)
 {
-  // if this is the main window, show main view
-  if ( view->priv->is_main_window )
-  {
-    just_switch_to_main_view(view);
-    return TRUE ;
-  }
-
-  // else we close the window, but first remove connection to "close note"...
-  // FIXME maybe, but why ?
-  // g_signal_handler_disconnect(view->priv->window,view->priv->destroy);
-  gtk_widget_destroy(view->priv->window);
-  return TRUE ;
+  just_switch_to_main_view (view);
+  return TRUE;
 }
 
 BjbNoteView *
-bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
+bjb_note_view_new (GtkWidget *win,BijiNoteObj* note)
 {
   BjbNoteView            *self;
   BjbNoteViewPrivate     *priv;
@@ -670,7 +659,6 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note, gboolean is_main_window)
   /* view new from note deserializes the note-content. */
   priv->window = win ;
   priv->current_note = note ;
-  priv->is_main_window = is_main_window ;
   priv->view = biji_text_view_new_from_note(note);
   priv->buffer = gtk_text_view_get_buffer(priv->view);
 

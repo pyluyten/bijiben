@@ -74,7 +74,7 @@ bijiben_new_window (GApplication *app,GFile *file)
     GtkWindow *win = bjb_window_base_new(GTK_APPLICATION(app));
 
     bjb_window_base_set_frame(BJB_WINDOW_BASE(win),
-                              bjb_note_view_new(GTK_WIDGET(win),cur,TRUE));
+                              bjb_note_view_new(GTK_WIDGET(win),cur));
   
     gtk_window_set_title(GTK_WINDOW(win),biji_note_get_title (cur));
   }
