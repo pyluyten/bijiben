@@ -17,6 +17,16 @@
 /* Default color (X11 rgb.txt) - maybe gsettings instead */ 
 #define DEFAULT_NOTE_COLOR "LightGoldenrodYellow"
 
+enum
+{
+  PROP_0,
+  PROP_WINDOW,
+  PROP_NOTE,
+  NUM_PROPERTIES
+};
+
+static GParamSpec *properties[NUM_PROPERTIES] = { NULL, };
+
 G_DEFINE_TYPE (BjbNoteView, bjb_note_view, CLUTTER_TYPE_ACTOR)
 
 #define GET_PRIVATE(o) \
@@ -70,12 +80,47 @@ bjb_note_view_finalize(GObject *object)
 }
 
 static void
-bjb_note_view_class_init (BjbNoteViewClass *klass)
+bjb_note_view_get_property (GObject      *object,
+                            guint        prop_id,
+                            GValue       *value,
+                            GParamSpec   *pspec)
 {
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-    
-  object_class->finalize = bjb_note_view_finalize;
-  g_type_class_add_private (klass, sizeof (BjbNoteViewPrivate));
+  BjbNoteView *self = BJB_NOTE_VIEW (object);
+
+  switch (prop_id)
+  {
+    case PROP_WINDOW:
+      g_value_set_object (value, self->priv->window);
+      break;
+    case PROP_NOTE:
+      g_value_set_object (value, self->priv->current_note);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+  }
+}
+
+static void
+bjb_note_view_set_property ( GObject        *object,
+                             guint          prop_id,
+                             const GValue   *value,
+                             GParamSpec     *pspec)
+{
+  BjbNoteView *self = BJB_NOTE_VIEW (object);
+
+  switch (prop_id)
+  {
+    case PROP_WINDOW:
+      self->priv->window = g_value_get_object(value);
+      break;
+    case PROP_NOTE:
+      self->priv->current_note = g_value_get_object(value);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+  }
 }
 
 static void
@@ -653,12 +698,13 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note)
   ClutterLayoutManager   *full, *box, *bin;
   gchar                  *font;
 
-  self = g_object_new (BJB_TYPE_NOTE_VIEW, NULL);
+  self = g_object_new (BJB_TYPE_NOTE_VIEW,
+                       "window",win,
+                       "note",note,
+                       NULL);
   priv = self->priv ;
 
   /* view new from note deserializes the note-content. */
-  priv->window = win ;
-  priv->current_note = note ;
   priv->view = biji_text_view_new_from_note(note);
   priv->buffer = gtk_text_view_get_buffer(priv->view);
 
@@ -771,6 +817,38 @@ bjb_note_view_new (GtkWidget *win,BijiNoteObj* note)
   insert_zeitgeist(note,ZEITGEIST_ZG_ACCESS_EVENT) ;
 
   return self ;
+}
+
+static void
+bjb_note_view_class_init (BjbNoteViewClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+    
+  object_class->finalize = bjb_note_view_finalize;
+  object_class->get_property = bjb_note_view_get_property;
+  object_class->set_property = bjb_note_view_set_property;
+
+  g_type_class_add_private (klass, sizeof (BjbNoteViewPrivate));
+
+  properties[PROP_WINDOW] = g_param_spec_object ("window",
+                                                 "Window",
+                                                 "Parent Window",
+                                                 GTK_TYPE_WIDGET,
+                                                 G_PARAM_READWRITE |
+                                                 G_PARAM_CONSTRUCT |
+                                                 G_PARAM_STATIC_STRINGS);
+                                                 
+  g_object_class_install_property (object_class,PROP_WINDOW,properties[PROP_WINDOW]);
+
+  properties[PROP_NOTE] = g_param_spec_object ("note",
+                                               "Note",
+                                               "Note",
+                                               BIJI_TYPE_NOTE_OBJ,
+                                               G_PARAM_READWRITE |
+                                               G_PARAM_CONSTRUCT |
+                                               G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_property (object_class,PROP_NOTE,properties[PROP_NOTE]);
 }
 
 ClutterActor *
