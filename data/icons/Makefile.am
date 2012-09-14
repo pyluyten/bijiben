@@ -13,8 +13,10 @@ public_icons = \
 	$(NULL)
 
 private_icons = \
-  hicolor_actions_48x48_note.png \
-  hicolor_actions_scalable_note.svg \
+	hicolor_actions_16x16_note.png \
+	hicolor_actions_24x24_note.png \
+	hicolor_actions_48x48_note.png \
+	hicolor_actions_scalable_note.svg \
 	$(NULL)
 
 noinst_DATA = \

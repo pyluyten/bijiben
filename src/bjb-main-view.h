@@ -51,6 +51,8 @@ void update_notes_with_string_search(BjbMainView *view, gchar *needle);
 
 void switch_to_note_view(BjbMainView *view,BijiNoteObj *note) ;
 
+void bjb_main_view_update_model (BjbMainView *view);
+
 G_END_DECLS
 
 #endif /* _MAIN_VIEW_H_ */

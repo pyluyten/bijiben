@@ -283,7 +283,8 @@ bjb_main_view_constructed(GObject *o)
   priv = self->priv ;
   stage = bjb_window_base_get_stage (BJB_WINDOW_BASE(priv->window));
 
-  priv->view = gd_main_view_new(DEFAULT_VIEW);
+  priv->view = gd_main_view_new (DEFAULT_VIEW);
+  bjb_controller_set_main_view (priv->controller, view);
 
   /* Probably move this to window_base or delete this */
   filler = clutter_bin_layout_new (CLUTTER_BIN_ALIGNMENT_CENTER,
@@ -418,4 +419,14 @@ GtkWidget *
 bjb_main_view_get_window(BjbMainView *view)
 {
   return view->priv->window ;
+}
+
+void
+bjb_main_view_update_model (BjbMainView *self)
+{
+  g_warning ("bjb mainv iew update model");
+  BjbMainViewPriv *priv = self->priv;
+  
+  bjb_controller_set_main_view (priv->controller,priv->view);
+  gd_main_view_set_model(priv->view,bjb_controller_get_model(priv->controller));
 }

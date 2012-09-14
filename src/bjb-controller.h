@@ -82,6 +82,8 @@ GtkTreeModel * bjb_controller_get_model  (BjbController *self) ;
 
 GtkTreeModel * bjb_controller_get_completion(BjbController *self);
 
+void bjb_controller_set_main_view (BjbController *self, GdMainView *current);
+
 G_END_DECLS
 
 #endif /* _BJB_CONTROLLER_H_ */

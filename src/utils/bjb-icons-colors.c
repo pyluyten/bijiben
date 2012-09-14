@@ -1,3 +1,4 @@
+#include "bjb-bijiben.h"
 #include "bjb-icons-colors.h"
 
 GtkWidget *get_icon (gchar *icon)
@@ -33,4 +34,40 @@ get_gdk_color (gchar *color)
   g_message("critical : get gdk color");
   return NULL ;
   
+}
+
+/* TODO
+ * this func will probably disappear but otherwise it has
+ * to handle size & directories */
+GdkPixbuf *
+get_note_pixbuf()
+{
+  GdkPixbuf *note_pixbuf ;
+  GError *error = NULL ;
+
+  const gchar * icons_path = bijiben_get_bijiben_dir (); 
+
+  gchar * full_path = g_strdup_printf ("%s/bijiben/icons/hicolor/16x16/actions/note.png",
+                                       icons_path);
+
+  note_pixbuf = gdk_pixbuf_new_from_file_at_size(full_path,
+                                                 16,
+                                                 16,
+                                                 &error);
+  g_free(full_path);
+  
+  if (error)
+  {
+    g_message("Error is %s",error->message);
+    g_error_free (error);
+    return NULL ;
+  }
+  
+  if (!note_pixbuf)
+  {
+    g_message("Notes pixbuf error.");
+    return NULL ;
+  }
+
+  return note_pixbuf ;  
 }

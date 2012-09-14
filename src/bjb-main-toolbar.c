@@ -151,8 +151,10 @@ on_view_mode_clicked (GtkWidget *button, BjbMainToolbar *self)
       gd_main_view_set_view_type ( view ,GD_MAIN_VIEW_ICON );
   }
 
-  populate_main_toolbar(self);
-  return FALSE ;
+  bjb_main_view_update_model (self->priv->parent);
+  populate_main_toolbar (self);
+  //return FALSE ;
+  return TRUE;
 }
 
 static gboolean

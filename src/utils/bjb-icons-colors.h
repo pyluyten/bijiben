@@ -3,10 +3,12 @@
 
 #include <gtk/gtk.h>
 
-GtkWidget * get_icon (gchar *icon) ;
+GtkWidget * get_icon (gchar *icon);
 
-GdkRGBA * get_color(gchar *color) ;
+GdkRGBA * get_color(gchar *color);
 
-GdkColor * get_gdk_color (gchar *color) ;
+GdkColor * get_gdk_color (gchar *color);
+
+GdkPixbuf * get_note_pixbuf();
 
 #endif
