@@ -17,6 +17,13 @@
  * 02110-1301, USA.
  */
 
+/* Offset for toolbar related to cursor.
+ * (Pixels)
+ *
+ * X offset might be replaced by something like -(toolbar size/2)
+ * Y offset might not be replaced                    */
+#define EDITOR_TOOLBAR_X_OFFSET -120;
+#define EDITOR_TOOLBAR_Y_OFFSET   30;
 
 #include "config.h"
 
@@ -243,38 +250,46 @@ bjb_editor_toolbar_set_property (GObject  *object,
 }
 
 static void
-bjb_editor_toolbar_notify_width (GObject *object,
-                                 GParamSpec *pspec,
-                                 gpointer user_data)
-{
-  BjbEditorToolbar *self = BJB_EDITOR_TOOLBAR (user_data);
-  BjbEditorToolbarPrivate *priv = self->priv;
-  
-  gfloat offset = 300.0;
-  gfloat width;
-
-  width = clutter_actor_get_width (priv->parent_actor);
-  if (width > 1000)
-    offset += (width - 1000);
-  else if (width < 600)
-    offset -= (600 - width);
-
-  clutter_bind_constraint_set_offset (CLUTTER_BIND_CONSTRAINT (priv->width_constraint), -1 * offset);
-}
-
-static void
 show_edit_bar(BjbEditorToolbar *self, gboolean sticky)
 {
-//  BjbEditorToolbarPrivate *priv = self->priv;
+  BjbEditorToolbarPrivate *priv = self->priv;
+  GtkTextIter              iter;
+  GdkRectangle             iter_rect, win_rect;
+  gint                     toolbar_size, x_alignment, y_alignment;
+  GtkTextView             *view;
+  GtkTextBuffer           *buf;
+  ClutterConstraint       *constraint;
 
+  /* we do align the editor toolbar few pixels below the cursor
+   * (we have to remove the invisible part of textView
+   * x : we do align middle of bar to iter    */
+  view = GTK_TEXT_VIEW (priv->editor);
+  buf = gtk_text_view_get_buffer (view);
+  gtk_text_buffer_get_iter_at_mark (buf,
+                                    &iter,
+                                    gtk_text_buffer_get_insert (buf));
+  
+  gtk_text_view_get_iter_location (view, &iter, &iter_rect);
+  gtk_text_view_get_visible_rect (view, &win_rect);
+
+  y_alignment = iter_rect.y - win_rect.y + EDITOR_TOOLBAR_Y_OFFSET;
+  x_alignment = iter_rect.x + EDITOR_TOOLBAR_X_OFFSET ;
+
+  if ( x_alignment < 0)
+    x_alignment = 0;
+
+  constraint = clutter_bind_constraint_new (priv->parent_actor,
+                                            CLUTTER_BIND_Y,
+                                            y_alignment);
+  clutter_actor_add_constraint (priv->actor, constraint);
+
+  constraint = clutter_bind_constraint_new (priv->parent_actor,
+                                            CLUTTER_BIND_X,
+                                            x_alignment);   
+  clutter_actor_add_constraint (priv->actor, constraint);
+
+  /* Show */
   bjb_editor_toolbar_fade_in (self);
-
-  /* TODO */
-  /*
-  gtk_text_view_scroll_mark_onscreen(priv->view, 
-                              gtk_text_buffer_get_insert(
-                                       gtk_text_view_get_buffer(
-                                                          priv->view))); */
 }
 
 static void
@@ -295,7 +310,6 @@ on_button_pressed (GtkWidget *widget,GdkEvent  *event,BjbEditorToolbar *self)
   /* If right click, show toolbar and that's all */
   show_edit_bar(self,TRUE);
   return TRUE ;
-  
 }
 
 static void
@@ -381,7 +395,6 @@ bjb_editor_toolbar_constructed(GObject *obj)
 {
   BjbEditorToolbar        *self = BJB_EDITOR_TOOLBAR(obj);
   BjbEditorToolbarPrivate *priv = self->priv ;
-  ClutterConstraint       *constraint ;
   GtkTextView             *view;
 
 
@@ -423,22 +436,6 @@ bjb_editor_toolbar_constructed(GObject *obj)
 
   g_signal_connect (priv->toolbar_link,"clicked",
                     G_CALLBACK(link_callback), self);
-
-/*
-clutter_bind_constraint_new (priv->parent_actor,
-*                      CLUTTER_BIND_WIDTH, -300.0); 
-*/
-  
-  g_signal_connect (priv->actor,
-                    "notify::width",
-                    G_CALLBACK (bjb_editor_toolbar_notify_width),
-                    self);
-
-  constraint = clutter_align_constraint_new (priv->parent_actor, CLUTTER_ALIGN_X_AXIS, 0.50);
-  clutter_actor_add_constraint (priv->actor, constraint);
-
-  constraint = clutter_align_constraint_new (priv->parent_actor, CLUTTER_ALIGN_Y_AXIS, 0.95);
-  clutter_actor_add_constraint (priv->actor, constraint);
 }
 
 static void
