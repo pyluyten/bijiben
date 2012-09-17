@@ -452,6 +452,7 @@ void
 bjb_controller_set_main_view (BjbController *self, GdMainView *current)
 {
   self->priv->cur = current;
+  g_object_ref (current);
 
   /* Refresh the model */
   update_view(self);
