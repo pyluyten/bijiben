@@ -56,8 +56,11 @@ struct _BjbEditorToolbarPrivate
   ClutterActor       *parent_actor;
   ClutterConstraint  *width_constraint;
 
-  /* TODO
-   * If text is cut/clipped we should have the toolbar remain visible */
+  /* If text is cut/clipped we should have the toolbar remain visible
+   * Currently only shows the editor toolbar when text selected
+   * from note itself.
+   * Another way would be: any bjb selection
+   * Yet another way : any text selected. */
   gboolean           *clipboard;
 
   /* BUTTONS */
@@ -81,7 +84,7 @@ bjb_editor_toolbar_fade_in (BjbEditorToolbar *self)
   guint8 opacity;
 
   opacity = clutter_actor_get_opacity (priv->actor);
-  
+
   if (opacity != 0)
     return;
 
@@ -250,7 +253,7 @@ bjb_editor_toolbar_set_property (GObject  *object,
 }
 
 static void
-show_edit_bar(BjbEditorToolbar *self, gboolean sticky)
+editor_toolbar_align (BjbEditorToolbar *self)
 {
   BjbEditorToolbarPrivate *priv = self->priv;
   GtkTextIter              iter;
@@ -287,8 +290,12 @@ show_edit_bar(BjbEditorToolbar *self, gboolean sticky)
                                             CLUTTER_BIND_X,
                                             x_alignment);   
   clutter_actor_add_constraint (priv->actor, constraint);
+}
 
-  /* Show */
+static void
+show_edit_bar(BjbEditorToolbar *self, gboolean sticky)
+{
+  editor_toolbar_align (self);
   bjb_editor_toolbar_fade_in (self);
 }
 
@@ -315,27 +322,42 @@ on_button_pressed (GtkWidget *widget,GdkEvent  *event,BjbEditorToolbar *self)
 static void
 on_text_not_selected(GObject *toto,BjbEditorToolbar *self)
 {
-  /* TODO : check if (private?) clipboard first */
-  bjb_editor_toolbar_fade_out (self);
+  if ( self->priv->clipboard == FALSE )
+    bjb_editor_toolbar_fade_out (self);
+
+  else
+    editor_toolbar_align (self);
 }
 
 static gboolean
-on_cut_clicked (GtkWidget *button, GtkTextView *view)
+on_cut_clicked (GtkWidget *button, BjbEditorToolbar *self)
 {
+  GtkTextView *view = GTK_TEXT_VIEW (self->priv->editor);
+
+  self->priv->clipboard = TRUE;
+
   g_signal_emit_by_name (view,"cut-clipboard");
   return TRUE ;
 }
 
 static gboolean
-on_copy_clicked (GtkWidget *button, GtkTextView *view)
+on_copy_clicked (GtkWidget *button, BjbEditorToolbar *self)
 {
+  GtkTextView *view = GTK_TEXT_VIEW (self->priv->editor);
+
+  self->priv->clipboard = TRUE;
+
   g_signal_emit_by_name (view,"copy-clipboard");
   return TRUE ;
 }
 
 static gboolean
-on_paste_clicked (GtkWidget *button, GtkTextView *view)
+on_paste_clicked (GtkWidget *button, BjbEditorToolbar *self)
 {
+  GtkTextView *view = GTK_TEXT_VIEW (self->priv->editor);
+
+  self->priv->clipboard = FALSE;
+
   g_signal_emit_by_name (view,"paste-clipboard");
   return TRUE ;
 }
@@ -417,13 +439,13 @@ bjb_editor_toolbar_constructed(GObject *obj)
   view = GTK_TEXT_VIEW (priv->editor);
   
   g_signal_connect (priv->toolbar_cut,"clicked",
-                    G_CALLBACK(on_cut_clicked), view);
+                    G_CALLBACK(on_cut_clicked), self);
 
   g_signal_connect (priv->toolbar_copy,"clicked",
-                    G_CALLBACK(on_copy_clicked), view);
+                    G_CALLBACK(on_copy_clicked), self);
 
   g_signal_connect (priv->toolbar_paste,"clicked",
-                    G_CALLBACK(on_paste_clicked), view);
+                    G_CALLBACK(on_paste_clicked), self);
 
   g_signal_connect (priv->toolbar_bold,"clicked",
                     G_CALLBACK(bold_button_callback), view);
