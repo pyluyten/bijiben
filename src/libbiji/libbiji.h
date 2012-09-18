@@ -1,18 +1,24 @@
-/* Libbiji comes from file(s) to note(s) (or notebook)
- * Notes (or books) allows to show a gtkview to edit them, autosave
- * and make coffee.
- *
- * All public func for libbiji are there.DO NOT USE FUNCT FROM OTHER PARTS.
+/* libiji.h
+ * Copyright (C) Pierre-Yves LUYTEN 2011 <py@luyten.fr>
  * 
- * A NoteObj is a note, containing : NoteID, gboolean "opened"...Undoer
- * NoteID are : title, (absolute) path, tags, content
+ * bijiben is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  * 
- * A NoteBook is a collection of notes.    
- *
+ * bijiben is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef _LIB_BIJI_H
 #define _LIB_BIJI_H
+
+#define _LIBBIJI_INSIDE_H
 
 #include <gtk/gtk.h>
 
@@ -130,5 +136,7 @@ void biji_augment_depth(GtkTextView *editor);
 void biji_decrease_depth(GtkTextView *editor);
 
 G_END_DECLS
+
+#undef _LIBBIJI_INSIDE_H
 
 #endif /*_LIB_BIJI_H*/
