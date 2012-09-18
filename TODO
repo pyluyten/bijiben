@@ -1,21 +1,18 @@
    UI ENHANCEMENT
- * show notes on main view (instead simple icons)
- * show lines for note editor 
- * replace bottom toolbar with proper right click menu on note editor
- * show last update on note bottom
+ * show lines for note editor
+ * color chooser dialog
 
    IMPORTANT BUGS
- * opening note is more or less broken
- * search takes either tags or notes, not both
- * tags window is complety broken and  outside of scope.
+ * closing a "new window" makes bijien crash
 
    MINOR BUGS
- * gnome-activity-journal cannot open notes.
- * only changing color won't make note saved.
+ * gnome-activity-journal cannot open notes
 
    ROADMAP
- * gnome online account
- * export to "memo" (vjournal). maybe work with eds-data-server
+ * gnome online account / snowy
+ * probably "collections" (instead current tag chooser dialog)
+ * being able to integrate vjournal, plain txt, html notes, html text
 
-   MINOR UPDATES
- * GtkMenuButton
+   INTERNAL TODO
+ * delete widgets for libgd
+ * probably use WebKitWebView
