@@ -1,3 +1,4 @@
+#include "biji-date-time.h"
 #include "biji-note-id.h"
 #include "biji-note-book.h"
 #include "biji-note-buffer.h"
@@ -280,6 +281,13 @@ glong
 biji_note_obj_get_last_change_date_sec ( BijiNoteObj *n )
 {
     return biji_note_id_get_last_change_date_sec(note_get_id(n)); 
+}
+
+gchar *
+biji_note_obj_get_last_change_date_string (BijiNoteObj *self)
+{
+  return biji_get_time_diff_with_time (
+             biji_note_id_get_last_change_date_sec(note_get_id(self)));
 }
 
 int

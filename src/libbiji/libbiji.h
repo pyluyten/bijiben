@@ -15,6 +15,8 @@
 #define _LIB_BIJI_H
 
 #include <gtk/gtk.h>
+
+#include "biji-date-time.h"
 #include "biji-note-book.h"
 #include "biji-note-editor.h"
 

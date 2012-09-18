@@ -84,6 +84,8 @@ lib_LIBRARIES =  \
 libbiji_a_SOURCES =  \
 	libbiji/libbiji.h \
 	libbiji/libbiji.c \
+	libbiji/biji-date-time.c \
+	libbiji/biji-date-time.h \
 	libbiji/biji-note-id.c \
 	libbiji/biji-note-id.h \
 	libbiji/biji-note-tag.h \

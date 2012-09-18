@@ -633,12 +633,16 @@ on_note_deleted(BijiNoteObj *note, BjbNoteView *view)
   return TRUE;
 }
 
+/* Number of days since last updated
+ * Instead we might want to play with a func to have a date
+ * Also this might be integrated in text view */
 ClutterActor *
 bjb_note_view_last_updated_actor_new (BjbNoteView *self)
 {
   ClutterActor *result, *last, *value;
   ClutterLayoutManager *layout;
   ClutterColor last_up_col = {122,122,122,255};
+  gchar *last_updated_str;
 
   result = clutter_actor_new ();
   layout = clutter_box_layout_new ();
@@ -651,7 +655,9 @@ bjb_note_view_last_updated_actor_new (BjbNoteView *self)
   clutter_actor_add_child (result, last);
 
   value = clutter_text_new ();
-  clutter_text_set_text (CLUTTER_TEXT (value), " Today");
+  last_updated_str = biji_note_obj_get_last_change_date_string (
+                                                      self->priv->note);
+  clutter_text_set_text (CLUTTER_TEXT (value), last_updated_str);
   clutter_text_set_font_name (CLUTTER_TEXT (value), "Arial 9px");
   clutter_actor_add_child (result, value);
 
