@@ -4,6 +4,8 @@
 #include <glib-object.h>
 #include <gtk/gtk.h>
 
+#include "biji-note-obj.h"
+
 G_BEGIN_DECLS
 
 #define BIJI_TYPE_NOTE_BUFFER             (biji_note_buffer_get_type ())
@@ -64,6 +66,43 @@ void note_buffer_check_selection(BijiNoteBuffer *buffer,gpointer biji_note_edito
 
 // temp debug
 void gtk_note_buffer_debug_xml(GtkTextBuffer *buffer) ;
+
+/* Public methods
+ * TODO : implement an interface*/
+
+GtkTextView *biji_text_view_new_from_note(BijiNoteObj *note);
+
+gboolean biji_note_obj_is_opened(BijiNoteObj *note);
+
+void biji_note_close(BijiNoteObj *note) ; 
+
+gchar *gtk_text_view_get_selection(GtkTextView *editor);
+
+gboolean gtk_text_view_selection_has_tag(GtkTextView *editor, gchar *name);
+
+void biji_toggle_tag_by_name(GtkTextView *editor,gchar *name);
+
+void biji_toggle_bold_tag(GtkTextView *editor);
+
+void biji_toggle_italic_tag(GtkTextView *editor);
+
+void biji_toggle_strike_tag(GtkTextView *editor);
+
+void biji_toggle_underline_tag(GtkTextView *editor);
+
+void biji_toggle_highlight_tag(GtkTextView *editor);
+
+void biji_toggle_monospace_tag(GtkTextView *editor);
+
+void biji_remove_all_format(GtkTextView *editor);
+
+gboolean biji_augment_font_size(GtkTextView *editor);
+
+gboolean biji_decrease_font_size(GtkTextView *editor);
+
+void biji_augment_depth(GtkTextView *editor);
+
+void biji_decrease_depth(GtkTextView *editor);
 
 G_END_DECLS
 

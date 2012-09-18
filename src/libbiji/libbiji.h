@@ -99,42 +99,6 @@ gboolean biji_note_obj_remove_tag(BijiNoteObj *note,gchar *tag);
 gchar *biji_note_obj_get_last_change_date(BijiNoteObj *note);
 gchar *biji_note_obj_get_create_date(BijiNoteObj *note);
 
-/****************** STEP THREE : EDIT DATA         ****************************/
-
-// 1. An idea would be to provide a frame containing this text view  to keep 
-//    GtkTextView (and buffer) private.but that's not a good idea.
-//    
-// 2. When you do get a new tet view, then close note.
-GtkTextView *biji_text_view_new_from_note(BijiNoteObj *note);
-
-gboolean biji_note_obj_is_opened(BijiNoteObj *note);
-
-// This saves the note and might watch how many view are opened.
-void biji_note_close(BijiNoteObj *note) ; 
-
-// Free the gchar value unless NULL
-gchar *gtk_text_view_get_selection(GtkTextView *editor);
-
-// Get the list of strings , gs_list_free_full it with gfree each name.
-gboolean gtk_text_view_selection_has_tag(GtkTextView *editor, gchar *name);
-
-void biji_toggle_tag_by_name(GtkTextView *editor,gchar *name);
-void biji_toggle_bold_tag(GtkTextView *editor);
-void biji_toggle_italic_tag(GtkTextView *editor);
-void biji_toggle_strike_tag(GtkTextView *editor);
-void biji_toggle_underline_tag(GtkTextView *editor);
-void biji_toggle_highlight_tag(GtkTextView *editor);
-void biji_toggle_monospace_tag(GtkTextView *editor);
-void biji_remove_all_format(GtkTextView *editor);
-
-
-// Return True if the size was changed, False is nothing done.
-gboolean biji_augment_font_size(GtkTextView *editor);
-gboolean biji_decrease_font_size(GtkTextView *editor);
-
-void biji_augment_depth(GtkTextView *editor);
-void biji_decrease_depth(GtkTextView *editor);
-
 G_END_DECLS
 
 #undef _LIBBIJI_INSIDE_H

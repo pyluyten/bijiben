@@ -1177,3 +1177,131 @@ void gtk_note_buffer_debug_xml(GtkTextBuffer *buffer)
   note_buffer_debug_xml(BIJI_NOTE_BUFFER(buffer));
 }
 
+/* Note Editor */
+GtkTextView *
+biji_text_view_new_from_note(BijiNoteObj *note)
+{
+  g_return_val_if_fail(BIJI_IS_NOTE_OBJ(note),NULL);
+  return biji_gtk_view_new((gpointer)note);
+}
+
+gboolean 
+biji_note_obj_is_opened(BijiNoteObj *note)
+{
+  return _biji_note_obj_is_opened(note) ;
+}
+
+void
+biji_note_close(BijiNoteObj *note)
+{
+  _biji_note_obj_close_note(note);
+}
+
+gchar *
+gtk_text_view_get_selection(GtkTextView *editor)
+{
+  GtkTextIter start;
+  GtkTextIter end;
+
+  GtkTextBuffer *buffer = gtk_text_view_get_buffer(editor);
+  g_return_val_if_fail(GTK_IS_TEXT_BUFFER(buffer),NULL);
+
+  if (gtk_text_buffer_get_selection_bounds(buffer, &start, &end))
+    return gtk_text_buffer_get_text(buffer,&start,&end,FALSE); 
+
+  return NULL ;
+}
+
+
+// SOIT ON TROUVE LE TAG PAR SON NOM
+// SOIT ON RETRIEVE TOUS LES TAG, CHERCHE LES NOMS ET COMPARE...
+gboolean
+gtk_text_view_selection_has_tag(GtkTextView *editor, gchar *name)
+{
+  GtkTextIter start,end;
+  GtkTextBuffer *buffer = gtk_text_view_get_buffer(editor);
+  GtkTextTag *tag = gtk_text_tag_table_lookup(gtk_text_buffer_get_tag_table(buffer) ,
+                                              name) ;
+    
+  if ( gtk_text_buffer_get_selection_bounds(buffer,&start,&end) )
+  {
+    if ( gtk_text_iter_has_tag(&start,tag) || gtk_text_iter_has_tag(&start,tag))
+    {
+      return TRUE ;
+    }
+    return FALSE ;
+  }
+  return FALSE ;
+}
+
+void
+biji_toggle_bold_tag(GtkTextView *editor)
+{
+  buffer_selection_toggle_tag_by_name (gtk_text_view_get_buffer(editor),"bold");
+}
+
+void
+biji_toggle_italic_tag(GtkTextView *editor)
+{
+  buffer_selection_toggle_tag_by_name (gtk_text_view_get_buffer(editor),"italic");
+}
+
+void
+biji_toggle_underline_tag(GtkTextView *editor)
+{
+  buffer_selection_toggle_tag_by_name (gtk_text_view_get_buffer(editor),"underline");
+}
+
+void
+biji_toggle_strike_tag(GtkTextView *editor)
+{
+  buffer_selection_toggle_tag_by_name (gtk_text_view_get_buffer(editor),"strikethrough");
+}
+
+void
+biji_toggle_monospace_tag(GtkTextView *editor)
+{
+  buffer_selection_toggle_tag_by_name (gtk_text_view_get_buffer(editor),"monospace");
+}
+
+void
+biji_toggle_highlight_tag(GtkTextView *editor)
+{
+  buffer_selection_toggle_tag_by_name (gtk_text_view_get_buffer(editor),"highlight");
+}
+
+void biji_toggle_tag_by_name(GtkTextView *editor,gchar *name)
+{
+  buffer_selection_toggle_tag_by_name(gtk_text_view_get_buffer(editor),
+                                      name);
+}
+
+void 
+biji_remove_all_format(GtkTextView *editor)
+{
+  note_buffer_remove_tags(gtk_text_view_get_buffer(editor));
+}
+
+gboolean
+biji_augment_font_size(GtkTextView *editor)
+{
+  return augment_font_size(gtk_text_view_get_buffer(editor));
+}
+
+gboolean 
+biji_decrease_font_size(GtkTextView *editor)
+{
+  return decrease_font_size(gtk_text_view_get_buffer(editor));
+}
+
+void biji_augment_depth(GtkTextView *editor)
+{
+  GtkTextBuffer *buf = gtk_text_view_get_buffer(editor);
+  augment_depth(BIJI_NOTE_BUFFER(buf));
+}
+
+void biji_decrease_depth(GtkTextView *editor)
+{
+  GtkTextBuffer *buf = gtk_text_view_get_buffer(editor);
+  decrease_depth(BIJI_NOTE_BUFFER(buf));
+}
