@@ -54,6 +54,37 @@ gint _biji_book_get_number(BijiNoteBook *book);
 // This func should be erased later on.
 BijiNoteObj * _biji_book_get_nth(BijiNoteBook *book,int i);
 
+// Collection accessors & signals
+void note_book_append_new_note(BijiNoteBook *book,BijiNoteObj *note);
+gboolean biji_note_book_remove_note(BijiNoteBook *book,BijiNoteObj *note);
+
+// Best: use path (unique). Title is supposed to be unique too.
+// note_book_get_nth should be deprecated ASAP.
+
+// Return the list of notes. Free this list. Do not free the note.
+GList * biji_note_book_get_notes(BijiNoteBook *book);
+
+int note_book_get_notes_number(BijiNoteBook *book);
+
+BijiNoteObj * note_book_get_note_at_path(BijiNoteBook *book,gchar *path);
+
+BijiNoteObj * note_book_get_nth_data(BijiNoteBook *book,int nth);
+
+BijiNoteObj * note_book_get_note(BijiNoteBook *book,gchar *title);
+
+// Return the list of notes. Free this list. Do not free the note.
+GList * biji_note_book_get_notes_with_tag(BijiNoteBook *book,gchar* tag);
+
+// Return the list of notes. Free this list. Do not free the note.
+GList * biji_note_book_get_notes_with_tag_prefix(BijiNoteBook *book,gchar* tag);
+
+// Return the list of notes. Free this list. Do not free the note.
+GList * biji_note_book_get_no_tag_notes(BijiNoteBook *book);
+
+void biji_note_book_remove_tag(BijiNoteBook *book,gchar *tag);
+
+BijiNoteObj * biji_note_book_get_tag_template(BijiNoteBook *book, gchar *tag);
+
 G_END_DECLS
 
 #endif /* _BIJI_NOTE_BOOK_H_ */

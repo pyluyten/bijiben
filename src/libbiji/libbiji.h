@@ -24,6 +24,7 @@
 
 #include "biji-date-time.h"
 #include "biji-note-book.h"
+#include "biji-note-buffer.h"
 #include "biji-note-editor.h"
 #include "biji-note-obj.h"
 
@@ -31,8 +32,6 @@ G_BEGIN_DECLS
 
 #define BIJI_DEBUG(msg)   g_log(G_LOG_DOMAIN,G_LOG_LEVEL_DEBUG,msg);
 #define BIJI_WARNING(msg) g_log(G_LOG_DOMAIN,G_LOG_LEVEL_WARNING,msg);
-
-/**************** STEP ONE : gather the data **********************************/
 
 /* Get a collection of notes from tomboy format files */
 BijiNoteBook *biji_book_new_from_dir(gchar *tomboy_format_folder);
@@ -48,43 +47,6 @@ BijiNoteBook *note_book_new_from_tomboy_dir();
 
 /* Get all the Gnote notes */
 GList* biji_collection_get_gnote_notes(); // FIXME
-
-//TODO NoteBook *note_book_add_PIM_notes(NoteBook *book,gchar* vcf_file);
-//TODO NoteBook *note_book_add_text_file_as_note(NoteBook *book,gchar* content);
-
-
-/******************** STEP TWO : access the data ******************************/
-
-// Collection accessors & signals
-void note_book_append_new_note(BijiNoteBook *book,BijiNoteObj *note);
-gboolean biji_note_book_remove_note(BijiNoteBook *book,BijiNoteObj *note);
-
-// Best: use path (unique). Title is supposed to be unique too.
-// note_book_get_nth should be deprecated ASAP.
-
-// Return the list of notes. Free this list. Do not free the note.
-GList * biji_note_book_get_notes(BijiNoteBook *book);
-
-int note_book_get_notes_number(BijiNoteBook *book);
-
-BijiNoteObj * note_book_get_note_at_path(BijiNoteBook *book,gchar *path);
-
-BijiNoteObj * note_book_get_nth_data(BijiNoteBook *book,int nth);
-
-BijiNoteObj * note_book_get_note(BijiNoteBook *book,gchar *title);
-
-// Return the list of notes. Free this list. Do not free the note.
-GList * biji_note_book_get_notes_with_tag(BijiNoteBook *book,gchar* tag);
-
-// Return the list of notes. Free this list. Do not free the note.
-GList * biji_note_book_get_notes_with_tag_prefix(BijiNoteBook *book,gchar* tag);
-
-// Return the list of notes. Free this list. Do not free the note.
-GList * biji_note_book_get_no_tag_notes(BijiNoteBook *book);
-
-void biji_note_book_remove_tag(BijiNoteBook *book,gchar *tag);
-
-BijiNoteObj * biji_note_book_get_tag_template(BijiNoteBook *book, gchar *tag);
 
 G_END_DECLS
 
