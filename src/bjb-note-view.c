@@ -46,6 +46,7 @@ struct _BjbNoteViewPrivate {
   BjbEditorToolbar  *edit_bar;
   ClutterActor      *edit_bar_actor;
   gboolean           edit_bar_is_sticky ;
+  ClutterActor      *last_update;
 
   /* Manage tags dialog */
   GtkWidget         *tags_dialog;
@@ -632,6 +633,32 @@ on_note_deleted(BijiNoteObj *note, BjbNoteView *view)
   return TRUE;
 }
 
+ClutterActor *
+bjb_note_view_last_updated_actor_new (BjbNoteView *self)
+{
+  ClutterActor *result, *last, *value;
+  ClutterLayoutManager *layout;
+  ClutterColor last_up_col = {122,122,122,255};
+
+  result = clutter_actor_new ();
+  layout = clutter_box_layout_new ();
+  clutter_actor_set_layout_manager (result, layout);
+
+  last = clutter_text_new ();
+  clutter_text_set_text (CLUTTER_TEXT (last), "Last updated ");
+  clutter_text_set_font_name (CLUTTER_TEXT (last), "Arial 9px");
+  clutter_text_set_color (CLUTTER_TEXT (last), &last_up_col );
+  clutter_actor_add_child (result, last);
+
+  value = clutter_text_new ();
+  clutter_text_set_text (CLUTTER_TEXT (value), " Today");
+  clutter_text_set_font_name (CLUTTER_TEXT (value), "Arial 9px");
+  clutter_actor_add_child (result, value);
+
+  clutter_actor_show (result);
+  return result ;
+}
+
 static void
 bjb_note_view_constructed (GObject *obj)
 {
@@ -748,6 +775,17 @@ bjb_note_view_constructed (GObject *obj)
   priv->edit_bar_actor = bjb_editor_toolbar_get_actor (priv->edit_bar);
   clutter_actor_add_child (priv->embed, priv->edit_bar_actor);
 
+  /* Last updated row */
+  priv->last_update = bjb_note_view_last_updated_actor_new (self);
+  clutter_actor_add_child (priv->embed,priv->last_update);
+                           
+  constraint = clutter_align_constraint_new (priv->embed,CLUTTER_ALIGN_X_AXIS,0.05);
+  clutter_actor_add_constraint (priv->last_update, constraint);
+
+  constraint = clutter_align_constraint_new (priv->embed,CLUTTER_ALIGN_Y_AXIS,0.95);
+  clutter_actor_add_constraint (priv->last_update, constraint);
+
+  /* Show & let's go */
   gtk_widget_show_all (priv->window);
 
   // Zeitgeist.
