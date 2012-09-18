@@ -107,6 +107,30 @@ void _biji_note_obj_mark_as_need_save(gpointer note_obj);
 
 GdkPixbuf * biji_note_obj_get_icon (BijiNoteObj *note);
 
+gchar *biji_note_get_title(BijiNoteObj* note_obj_ptr);
+
+gchar *biji_note_get_raw_text(BijiNoteObj *note);
+
+int set_note_title(BijiNoteObj* note_obj_ptr,gchar* title) ;
+
+gchar * biji_note_get_content(BijiNoteObj* note_obj_ptr);
+
+gboolean biji_note_obj_is_template(BijiNoteObj *note);
+
+gchar *note_obj_get_path(BijiNoteObj *note);
+
+gboolean biji_note_obj_has_tag(BijiNoteObj *note,gchar *tag);
+
+GList *biji_note_obj_get_tags(BijiNoteObj *note);
+
+gboolean biji_note_obj_add_tag(BijiNoteObj *note, gchar *tag);
+
+gboolean biji_note_obj_remove_tag(BijiNoteObj *note,gchar *tag);
+
+gchar *biji_note_obj_get_last_change_date(BijiNoteObj *note);
+
+gchar *biji_note_obj_get_create_date(BijiNoteObj *note);
+
 G_END_DECLS
 
 #endif /* _BIJI_NOTE_OBJ_H_ */

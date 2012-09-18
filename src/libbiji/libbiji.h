@@ -25,6 +25,7 @@
 #include "biji-date-time.h"
 #include "biji-note-book.h"
 #include "biji-note-editor.h"
+#include "biji-note-obj.h"
 
 G_BEGIN_DECLS
 
@@ -84,20 +85,6 @@ GList * biji_note_book_get_no_tag_notes(BijiNoteBook *book);
 void biji_note_book_remove_tag(BijiNoteBook *book,gchar *tag);
 
 BijiNoteObj * biji_note_book_get_tag_template(BijiNoteBook *book, gchar *tag);
-
-// Single note accessor & signals
-gchar *biji_note_get_title(BijiNoteObj* note_obj_ptr);
-gchar *biji_note_get_raw_text(BijiNoteObj *note);
-int set_note_title(BijiNoteObj* note_obj_ptr,gchar* title) ;
-gchar * biji_note_get_content(BijiNoteObj* note_obj_ptr);
-gboolean biji_note_obj_is_template(BijiNoteObj *note);
-gchar *note_obj_get_path(BijiNoteObj *note);
-gboolean biji_note_obj_has_tag(BijiNoteObj *note,gchar *tag);
-GList *biji_note_obj_get_tags(BijiNoteObj *note);
-gboolean biji_note_obj_add_tag(BijiNoteObj *note, gchar *tag);
-gboolean biji_note_obj_remove_tag(BijiNoteObj *note,gchar *tag);
-gchar *biji_note_obj_get_last_change_date(BijiNoteObj *note);
-gchar *biji_note_obj_get_create_date(BijiNoteObj *note);
 
 G_END_DECLS
 
