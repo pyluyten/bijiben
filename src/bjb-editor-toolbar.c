@@ -32,6 +32,7 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
+#include "bjb-bijiben.h"
 #include "bjb-editor-toolbar.h"
 #include "bjb-window-base.h"
 
@@ -61,7 +62,7 @@ struct _BjbEditorToolbarPrivate
    * from note itself.
    * Another way would be: any bjb selection
    * Yet another way : any text selected. */
-  gboolean           *clipboard;
+  gboolean           clipboard;
 
   /* BUTTONS */
   GtkToolItem        *group;
@@ -88,22 +89,16 @@ bjb_editor_toolbar_fade_in (BjbEditorToolbar *self)
   if (opacity != 0)
     return;
 
-  clutter_actor_show (priv->actor);
-  clutter_actor_animate (priv->actor,
-                         CLUTTER_EASE_OUT_QUAD,300,
-                         "opacity",255,
-                         NULL);
+  clutter_actor_set_opacity (priv->actor, 255);
 }
 
 
 static void
 bjb_editor_toolbar_fade_out (BjbEditorToolbar *self)
 {
-  ClutterAnimation *animation;
   BjbEditorToolbarPrivate *priv = self->priv;
 
-  animation = clutter_actor_animate (priv->actor, CLUTTER_EASE_OUT_QUAD, 300, "opacity", 0, NULL);
-  g_signal_connect_swapped (animation, "completed", G_CALLBACK (clutter_actor_hide), priv->actor);
+  clutter_actor_set_opacity (priv->actor, 0);
 }
 
 static void
@@ -112,9 +107,12 @@ bjb_editor_toolbar_init (BjbEditorToolbar *self)
   BjbEditorToolbarPrivate   *priv;
   GtkWidget                 *bin;
   GtkWidget                 *image;
+  GdkPixbuf                 *pixbuf;
   GtkStyleContext           *context;
   GdkRGBA                    transparent = {0.0, 0.0, 0.0, 0.0};
   GdkRGBA                    black = {0.0, 0.0, 0.0, 0.6};
+  gchar                     *icons_path, *full_path;
+  GError                    *error = NULL;
 
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BJB_TYPE_EDITOR_TOOLBAR, BjbEditorToolbarPrivate);
   priv = self->priv;
@@ -128,6 +126,12 @@ bjb_editor_toolbar_init (BjbEditorToolbar *self)
   clutter_actor_set_opacity (priv->actor, 0);
   g_object_set (priv->actor, "show-on-set-parent", FALSE, NULL);
 
+  clutter_actor_set_easing_mode (priv->actor, CLUTTER_EASE_IN_QUAD);
+  clutter_actor_set_easing_duration (priv->actor, 300.0);
+
+  clutter_actor_set_easing_mode (priv->actor, CLUTTER_EASE_OUT_QUAD);
+  clutter_actor_set_easing_duration (priv->actor, 200.0);
+
   bin = gtk_clutter_actor_get_widget (GTK_CLUTTER_ACTOR (priv->actor));
   gtk_widget_override_background_color (bin,
                                         GTK_STATE_FLAG_NORMAL,
@@ -136,7 +140,7 @@ bjb_editor_toolbar_init (BjbEditorToolbar *self)
   priv->box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
   priv->group = gtk_tool_item_new ();
   gtk_container_add (GTK_CONTAINER (priv->group), priv->box);
-  gtk_container_add (GTK_CONTAINER (priv->widget), priv->group);
+  gtk_container_add (GTK_CONTAINER (priv->widget), GTK_WIDGET(priv->group));
   gtk_widget_show_all (GTK_WIDGET (priv->group));
 
   /* Cut */
@@ -195,16 +199,26 @@ bjb_editor_toolbar_init (BjbEditorToolbar *self)
 
   /* GtkWidget          *toolbar_link; */
   priv->toolbar_link = gtk_button_new ();
-  image = gtk_image_new_from_icon_name ("emblem-symbolic-link", GTK_ICON_SIZE_INVALID);
+
+  icons_path = (gchar*) bijiben_get_bijiben_dir ();
+  full_path = g_strdup_printf ("%s/bijiben/icons/hicolor/scalable/actions/link.svg", icons_path);
+  pixbuf = gdk_pixbuf_new_from_file (full_path, &error);
+  g_free (full_path);
+
+  if (error)
+    g_warning ("error loading link icon : %s",error->message);
+
+  image = gtk_image_new_from_pixbuf (pixbuf);
   gtk_image_set_pixel_size (GTK_IMAGE (image), 24);
+
   gtk_container_add (GTK_CONTAINER (priv->toolbar_link), image);
-  gtk_widget_set_tooltip_text (GTK_WIDGET (priv->toolbar_link), _("Strike"));
+  gtk_widget_set_tooltip_text (GTK_WIDGET (priv->toolbar_link), _("Link"));
   gtk_container_add (GTK_CONTAINER (priv->box), priv->toolbar_link);
   gtk_widget_override_background_color (priv->toolbar_link,
                                         GTK_STATE_FLAG_NORMAL,
                                         &black);
 
-  gtk_widget_show_all (priv->group);
+  gtk_widget_show_all (GTK_WIDGET(priv->group));
   clutter_actor_show (priv->actor);
 }
 
@@ -258,7 +272,7 @@ editor_toolbar_align (BjbEditorToolbar *self)
   BjbEditorToolbarPrivate *priv = self->priv;
   GtkTextIter              iter;
   GdkRectangle             iter_rect, win_rect;
-  gint                     toolbar_size, x_alignment, y_alignment;
+  gint                     x_alignment, y_alignment;
   GtkTextView             *view;
   GtkTextBuffer           *buf;
   ClutterConstraint       *constraint;
@@ -393,23 +407,22 @@ link_callback (GtkWidget *button, BjbEditorToolbar *self)
   GtkWidget               *window;
   BijiNoteObj             *result;
   BijiNoteBook            *book;
-  BjbWindowBase           *base;
   BjbEditorToolbarPrivate *priv = self->priv;
 
-  link = gtk_text_view_get_selection(priv->editor);
+  link = gtk_text_view_get_selection( GTK_TEXT_VIEW (priv->editor));
 
   if (link == NULL )
     return;
 
-  base = BJB_WINDOW_BASE (bjb_note_view_get_base_window (priv->view));
+  window = bjb_note_view_get_base_window (priv->view);
 
-  book = bjb_window_base_get_book(base);
+  book = bjb_window_base_get_book(window);
   folder = g_strdup_printf("%s/bijiben",g_get_user_data_dir());
   result = biji_note_get_new_from_string(link,folder);
   g_free(folder);
 
   note_book_append_new_note(book,result);
-  create_new_window_for_note(bjb_window_base_get_app(base), result);
+  create_new_window_for_note(bjb_window_base_get_app(window), result);
 }
 
 static void

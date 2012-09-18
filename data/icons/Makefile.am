@@ -1,6 +1,7 @@
 NULL =
 
 public_icons_themes = \
+	hicolor \
 	$(NULL)
 
 public_icons = \
@@ -17,6 +18,7 @@ private_icons = \
 	hicolor_actions_24x24_note.png \
 	hicolor_actions_48x48_note.png \
 	hicolor_actions_scalable_note.svg \
+	hicolor_actions_scalable_link.svg \
 	$(NULL)
 
 noinst_DATA = \

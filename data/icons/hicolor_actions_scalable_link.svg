@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg id="svg4975" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="16px" width="16px" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <metadata id="metadata4980">
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g id="layer1">
+  <g id="g12185" transform="matrix(1.0001141,0,0,0.99886317,-101.01172,-804.07576)">
+   <rect id="rect12143" style="color:#bebebe;" height="16" width="15.998" y="806.96" x="101" fill="none"/>
+   <path id="path12155" d="m110.8,812a0.93579,1.0111,0,0,0,0.18511,2h4.9362a0.93579,1.0111,0,1,0,0,-2h-4.9362a0.93579,1.0111,0,0,0,-0.18511,0z" style="baseline-shift:baseline;block-progression:tb;color:#000000;direction:ltr;text-indent:0;text-align:start;enable-background:accumulate;text-transform:none;" fill="#bebebe"/>
+   <path id="path12167" style="baseline-shift:baseline;block-progression:tb;color:#000000;direction:ltr;text-indent:0;text-align:start;enable-background:accumulate;text-transform:none;" fill="#bebebe" d="m101.81,812c-0.44985,0.10239-0.78907,0.59963-0.74331,1.0896,0.0458,0.48995,0.47023,0.90543,0.93011,0.91042h4.9156c0.53517,0.0855,1.0838-0.42067,1.0838-1s-0.54859-1.0855-1.0838-1h-4.9156c-0.0621-0.007-0.12474-0.007-0.1868,0z"/>
+   <path id="path16654" style="baseline-shift:baseline;block-progression:tb;color:#000000;direction:ltr;text-indent:0;text-align:start;enable-background:new;text-transform:none;" fill="#bebebe" d="m107.06,809c-0.85408,0.12968-1.5684,0.69541-1.906,1.4704-0.071,0.1629-0.11819,0.3458-0.15623,0.53185h8.0029c-0.0261-0.12526-0.0535-0.26278-0.0937-0.37542-0.34642-0.96865-1.2692-1.6268-2.3435-1.6268h-3.1284c-0.12695,0-0.25295-0.0185-0.37495,0zm-2.0623,6.0068c0.23528,1.1332,1.2397,2.0023,2.4372,2.0023h3.1284c1.1975,0,2.202-0.86903,2.4372-2.0023z"/>
+  </g>
+ </g>
+</svg>
