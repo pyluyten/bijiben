@@ -129,9 +129,6 @@ gboolean biji_decrease_font_size(GtkTextView *editor);
 void biji_augment_depth(GtkTextView *editor);
 void biji_decrease_depth(GtkTextView *editor);
 
-// DEBUG BLOCK
-void biji_print_note(GtkTextBuffer *buf);
-
 G_END_DECLS
 
 #endif /*_LIB_BIJI_H*/

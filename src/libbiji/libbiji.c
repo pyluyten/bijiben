@@ -453,7 +453,3 @@ void biji_decrease_depth(GtkTextView *editor)
   decrease_depth(BIJI_NOTE_BUFFER(buf));
 }
 
-void biji_print_note(GtkTextBuffer *buf)
-{
-  gtk_note_buffer_debug_xml(buf) ;
-}
