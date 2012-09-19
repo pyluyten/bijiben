@@ -1,6 +1,6 @@
-ACLOCAL_AMFLAGS = -I m4
+ACLOCAL_AMFLAGS = -I m4 -I libgd ${ACLOCAL_FLAGS}
 
-SUBDIRS = src data po help
+SUBDIRS = libgd src data po help
 
 bijibendocdir = ${prefix}/doc/bijiben
 bijibendoc_DATA = \

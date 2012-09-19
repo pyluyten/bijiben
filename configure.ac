@@ -42,8 +42,15 @@ PKG_CHECK_MODULES(BIJIBEN, tracker-sparql-0.14 clutter-gtk-1.0
 
 GLIB_GSETTINGS
 
-AC_OUTPUT([
+LIBGD_INIT([
+  gtk-hacks
+  main-view
+  main-toolbar
+])
+
+AC_CONFIG_FILES([
 Makefile
+libgd/Makefile
 data/Makefile
 data/bijiben.desktop.in
 data/icons/Makefile
@@ -52,6 +59,8 @@ po/Makefile.in
 src/libbiji/Makefile
 src/Makefile
 ])
+
+AC_OUTPUT
 
 echo "	Version:	$VERSION
 
