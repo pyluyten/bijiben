@@ -22,10 +22,9 @@ bijiben is free software: you can redistribute it and/or modify it
 #include <glib-object.h>
 #include <gtk/gtk.h>
 #include <clutter-gtk/clutter-gtk.h>
+#include <libgd/gd.h>
 
 #include "bjb-main-view.h"
-#include "widgets/gd-main-toolbar.h"
-#include "widgets/gd-main-view.h"
 
 G_BEGIN_DECLS
 

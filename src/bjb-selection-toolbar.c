@@ -24,6 +24,7 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
+#include <libgd/gd.h>
 
 #include "bjb-main-view.h"
 #include "bjb-selection-toolbar.h"

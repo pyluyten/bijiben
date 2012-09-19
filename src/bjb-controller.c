@@ -17,11 +17,13 @@ bijiben is free software: you can redistribute it and/or modify it
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <libgd/gd.h>
+
 #include "bjb-controller.h"
 #include "bjb-main-view.h"
 #include "bjb-window-base.h"
 #include "utils/bjb-icons-colors.h"
-#include "widgets/gd-main-view.h"
+
 
 /* Gobject */
 

@@ -22,8 +22,7 @@
 #define BJB_SELECTION_TOOLBAR_H
 
 #include <clutter/clutter.h>
-
-#include "widgets/gd-main-view.h"
+#include <libgd/gd.h>
 
 G_BEGIN_DECLS
 

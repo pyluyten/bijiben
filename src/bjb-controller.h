@@ -22,8 +22,7 @@ bijiben is free software: you can redistribute it and/or modify it
 
 #include <glib-object.h>
 #include <libbiji/libbiji.h>
-
-#include "widgets/gd-main-view.h"
+#include <libgd/gd-main-view.h>
 
 
 G_BEGIN_DECLS

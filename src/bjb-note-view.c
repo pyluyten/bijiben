@@ -1,8 +1,8 @@
 #include <gtk/gtk.h>
 #include <libbiji/libbiji.h>
+#include <libgd/gd.h>
 
 #include "utils/bjb-icons-colors.h"
-#include "widgets/gd-main-toolbar.h"
 
 #include "bjb-bijiben.h"
 #include "bjb-editor-toolbar.h"

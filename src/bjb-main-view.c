@@ -1,11 +1,8 @@
 #include <glib/gprintf.h>
 #include <libbiji/libbiji.h>
+#include <libgd/gd-main-view.h>
 
 #include "utils/bjb-icons-colors.h"
-#include "widgets/gd-main-toolbar.h"
-#include "widgets/gd-main-icon-view.h"
-#include "widgets/gd-main-view.h"
-#include "widgets/gd-main-view-generic.h"
 
 #include "bjb-app-menu.h"
 #include "bjb-bijiben.h"

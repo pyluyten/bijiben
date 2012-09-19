@@ -8,6 +8,7 @@ AM_CPPFLAGS = \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	-DPACKAGE_SRC_DIR=\""$(srcdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
+	-I$(top_srcdir)/libgd \
 	$(BIJIBEN_CFLAGS)
 
 AM_CFLAGS =\
@@ -54,20 +55,6 @@ bijiben_SOURCES = \
 	bjb-window-base.h \
 	bjb-zeitgeist-dataprovider.c \
 	bjb-zeitgeist-dataprovider.h \
-	widgets/gd-main-icon-view.c \
-	widgets/gd-main-icon-view.h \
-	widgets/gd-main-toolbar.c \
-	widgets/gd-main-toolbar.h \
-	widgets/gd-main-list-view.c \
-	widgets/gd-main-list-view.h \
-	widgets/gd-main-view.c \
-	widgets/gd-main-view.h \
-	widgets/gd-main-view-generic.c \
-	widgets/gd-main-view-generic.h \
-	widgets/gd-toggle-pixbuf-renderer.c \
-	widgets/gd-toggle-pixbuf-renderer.h \
-	widgets/gd-two-lines-renderer.c \
-	widgets/gd-two-lines-renderer.h \
 	utils/bjb-icons-colors.c \
 	utils/bjb-icons-colors.h
 
@@ -75,7 +62,8 @@ bijiben_LDFLAGS = \
 	-Wl,--export-dynamic
 
 bijiben_LDADD = libbiji.a \
-  -lm \
+	-lm \
+	$(top_builddir)/libgd/libgd.la \
 	$(BIJIBEN_LIBS)
 
 lib_LIBRARIES =  \
@@ -103,3 +91,4 @@ libbiji_a_SOURCES =  \
 	libbiji/biji-read-tomboy.h \
 	libbiji/biji-serialize.c \
 	libbiji/biji-serialize.h
+
