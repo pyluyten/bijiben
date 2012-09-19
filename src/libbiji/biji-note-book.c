@@ -490,3 +490,55 @@ biji_note_book_get_tag_template(BijiNoteBook *book, gchar *tag)
 
   return NULL ;
 }
+
+/* Todo : check file type */
+BijiNoteObj*
+biji_note_get_new_from_file (gchar* path)
+{
+  BijiNoteObj* ret ;
+
+  ret = g_object_new(BIJI_TYPE_NOTE_OBJ,NULL);
+  set_note_id_path(note_get_id(ret),path);
+
+  load_tomboy_note((gpointer)ret);
+  return ret ;
+}
+
+BijiNoteObj*
+biji_note_get_new_from_string (gchar* title, gchar *folder)
+{
+  BijiNoteObj *ret;
+  BijiNoteID *id;
+  GRand *random;
+  gint suffix;
+
+  ret = g_object_new(BIJI_TYPE_NOTE_OBJ,NULL);
+  id = note_get_id(ret);
+  _biji_note_obj_set_title(ret,title);
+
+  random = g_rand_new();
+  suffix = g_rand_int(random);
+  g_rand_free (random);
+  set_note_id_path(id,g_strdup_printf ("%s/%i.note",folder,suffix));
+
+  return ret ;
+}
+
+BijiNoteBook *
+biji_book_new_from_dir(gchar *tomboy_format_folder)
+{
+  if (tomboy_format_folder != NULL)
+  {
+    return _biji_note_book_get_new_from_dir(tomboy_format_folder);
+  }
+  return NULL ;
+}
+
+BijiNoteBook *
+note_book_new_from_tomboy_dir()
+{
+    gchar *tomboy_dir ;
+    tomboy_dir = g_strdup_printf("%s/tomboy",g_get_user_data_dir());
+    return _biji_note_book_get_new_from_dir(tomboy_dir);
+}
+

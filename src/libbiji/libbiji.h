@@ -20,33 +20,11 @@
 
 #define _LIBBIJI_INSIDE_H
 
-#include <gtk/gtk.h>
-
 #include "biji-date-time.h"
 #include "biji-note-book.h"
 #include "biji-note-buffer.h"
 #include "biji-note-editor.h"
 #include "biji-note-obj.h"
 
-G_BEGIN_DECLS
-
-#define BIJI_DEBUG(msg)   g_log(G_LOG_DOMAIN,G_LOG_LEVEL_DEBUG,msg);
-#define BIJI_WARNING(msg) g_log(G_LOG_DOMAIN,G_LOG_LEVEL_WARNING,msg);
-
-/* Get a collection of notes from tomboy format files */
-BijiNoteBook *biji_book_new_from_dir(gchar *tomboy_format_folder);
-
-// Create a Note from a tomboy.note file
-BijiNoteObj* biji_note_get_new_from_file (gchar* path);
-
-/* Get a blanck new note FIXME set path, dates, content */
-BijiNoteObj* biji_note_get_new_from_string (gchar* title,gchar *folder);
-
-/* Get all the tomboy notes */
-BijiNoteBook *note_book_new_from_tomboy_dir();
-
-G_END_DECLS
-
 #undef _LIBBIJI_INSIDE_H
-
 #endif /*_LIB_BIJI_H*/
