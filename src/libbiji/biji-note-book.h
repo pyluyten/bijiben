@@ -49,8 +49,6 @@ GList * _biji_note_book_get_no_tag_notes(BijiNoteBook *book);
 // This GLIST should be free but not the notes
 GList * _biji_note_book_get_notes_with_tag_prefix(BijiNoteBook *book,gchar *tag);
 
-gint _biji_book_get_number(BijiNoteBook *book);
-
 // This func should be erased later on.
 BijiNoteObj * _biji_book_get_nth(BijiNoteBook *book,int i);
 
@@ -58,13 +56,8 @@ BijiNoteObj * _biji_book_get_nth(BijiNoteBook *book,int i);
 void note_book_append_new_note(BijiNoteBook *book,BijiNoteObj *note);
 gboolean biji_note_book_remove_note(BijiNoteBook *book,BijiNoteObj *note);
 
-// Best: use path (unique). Title is supposed to be unique too.
-// note_book_get_nth should be deprecated ASAP.
-
 // Return the list of notes. Free this list. Do not free the note.
 GList * biji_note_book_get_notes(BijiNoteBook *book);
-
-int note_book_get_notes_number(BijiNoteBook *book);
 
 BijiNoteObj * note_book_get_note_at_path(BijiNoteBook *book,gchar *path);
 

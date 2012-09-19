@@ -1,19 +1,4 @@
-/* libiji.h
- * Copyright (C) Pierre-Yves LUYTEN 2011 <py@luyten.fr>
- * 
- * bijiben is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * bijiben is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+/* This file to be deleted soon */
 
 #include "libbiji.h"
 #include "biji-note-buffer.h"
@@ -22,38 +7,37 @@
 #include "biji-note-tag.h"
 #include "biji-read-tomboy.h"
 
-
+/* Todo : check file type */
 BijiNoteObj*
 biji_note_get_new_from_file (gchar* path)
 {
-  BijiNoteObj* ret =  g_object_new(BIJI_TYPE_NOTE_OBJ,NULL);
+  BijiNoteObj* ret ;
+
+  ret = g_object_new(BIJI_TYPE_NOTE_OBJ,NULL);
   set_note_id_path(note_get_id(ret),path);
 
-	// TODO : check file type. if tomboy implement below. 
-	// Else use another module
-  //set_note_status(ret,load_tomboy_note((gpointer)ret));
-	load_tomboy_note((gpointer)ret);
-  //g_message("status is %d",get_note_status(ret)) ;
-  //if (get_note_status(ret))
-	//{
-	//	print_note_id(note_get_id(ret));
-	//}
+  load_tomboy_note((gpointer)ret);
   return ret ;
 }
 
 BijiNoteObj*
 biji_note_get_new_from_string (gchar* title, gchar *folder)
 {
-    BijiNoteObj *ret = g_object_new(BIJI_TYPE_NOTE_OBJ,NULL);
-		BijiNoteID *id = note_get_id(ret);
-    _biji_note_obj_set_title(ret,title);
+  BijiNoteObj *ret;
+  BijiNoteID *id;
+  GRand *random;
+  gint suffix;
 
-		GRand *random = g_rand_new();
-	  gint suffix = g_rand_int(random);
-	  g_rand_free (random);
-		set_note_id_path(id,g_strdup_printf ("%s/%i.note",folder,suffix));
-		
-    return ret ;
+  ret = g_object_new(BIJI_TYPE_NOTE_OBJ,NULL);
+  id = note_get_id(ret);
+  _biji_note_obj_set_title(ret,title);
+
+  random = g_rand_new();
+  suffix = g_rand_int(random);
+  g_rand_free (random);
+  set_note_id_path(id,g_strdup_printf ("%s/%i.note",folder,suffix));
+
+  return ret ;
 }
 
 BijiNoteBook *
@@ -74,6 +58,7 @@ note_book_new_from_tomboy_dir()
     return _biji_note_book_get_new_from_dir(tomboy_dir);
 }
 
+/*
 int note_book_get_notes_number(BijiNoteBook *book)
 {
   if (BIJI_IS_NOTE_BOOK(book))
@@ -82,3 +67,4 @@ int note_book_get_notes_number(BijiNoteBook *book)
   }
   else return 0 ;
 }
+*/

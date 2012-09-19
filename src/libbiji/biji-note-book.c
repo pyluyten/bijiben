@@ -355,11 +355,6 @@ _biji_note_book_get_no_tag_notes(BijiNoteBook *book)
   return notes ;
 }
 
-gint _biji_book_get_number(BijiNoteBook *book)
-{
-  return book->priv->length ;
-}
-
 BijiNoteObj * 
 _biji_book_get_nth(BijiNoteBook *book,int i)
 {
@@ -414,7 +409,7 @@ BijiNoteObj *
 note_book_get_note_at_path(BijiNoteBook *book,gchar *path)
 {
   gint i,len;
-  len = note_book_get_notes_number (book);
+  len = book->priv->length ;
 
   for (i=0 ; i<len; i++)
   {
@@ -434,7 +429,7 @@ BijiNoteObj *
 note_book_get_note(BijiNoteBook *book,gchar *title)
 {
   gint i,len;
-  len = note_book_get_notes_number (book);
+  len = book->priv->length;
 
   for (i=0 ; i<len; i++)
   {

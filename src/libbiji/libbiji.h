@@ -37,16 +37,13 @@ G_BEGIN_DECLS
 BijiNoteBook *biji_book_new_from_dir(gchar *tomboy_format_folder);
 
 // Create a Note from a tomboy.note file
-BijiNoteObj* biji_note_get_new_from_file (gchar* path); // delete
+BijiNoteObj* biji_note_get_new_from_file (gchar* path);
 
 /* Get a blanck new note FIXME set path, dates, content */
 BijiNoteObj* biji_note_get_new_from_string (gchar* title,gchar *folder);
 
 /* Get all the tomboy notes */
 BijiNoteBook *note_book_new_from_tomboy_dir();
-
-/* Get all the Gnote notes */
-GList* biji_collection_get_gnote_notes(); // FIXME
 
 G_END_DECLS
 
