@@ -43,16 +43,12 @@ struct _BjbMainToolbarPrivate
   /* Standard mode buttons */
   GtkWidget      *new;  
   GtkWidget      *list;
-  //gulong         list_sig;
   
   GtkWidget      *grid;
-  //gulong         grid_sig;
   
   GtkWidget      *select;
-  //gulong         select_sig;
 
   /* Select mode buttons */
-  //GtkWidget      *finish;
   gulong         finish_sig;
   gulong         update_selection;
 };
@@ -87,7 +83,6 @@ on_new_note_clicked (GtkWidget *but, BjbMainView *view)
 
   if ( !title)
   {
-    g_message("No title set");
     return ;
   }
 
@@ -147,13 +142,12 @@ on_view_mode_clicked (GtkWidget *button, BjbMainToolbar *self)
       gd_main_view_set_view_type ( view ,GD_MAIN_VIEW_ICON );
       break ;
     default:
-      g_warning ("No view displayed yet. Displaying default icon.");
       gd_main_view_set_view_type ( view ,GD_MAIN_VIEW_ICON );
   }
 
   bjb_main_view_update_model (self->priv->parent);
   populate_main_toolbar (self);
-  //return FALSE ;
+
   return TRUE;
 }
 
@@ -311,10 +305,6 @@ static void
 bjb_main_toolbar_constructed (GObject *obj)
 {
   G_OBJECT_CLASS(bjb_main_toolbar_parent_class)->constructed(obj);
-
-  //BjbMainToolbar * self = BJB_MAIN_TOOLBAR(obj);
-  /*g_signal_connect(priv->view,"view-selection-changed",
-                   G_CALLBACK(update_selection_label),self);*/
 }
 
 static void
@@ -330,13 +320,6 @@ bjb_main_toolbar_init (BjbMainToolbar *self)
   priv->actor = gtk_clutter_actor_new_with_contents(GTK_WIDGET(priv->toolbar));
 
   clutter_actor_show(priv->actor);
-
-/*
-  priv->new_sig    = 0 ;
-  priv->list_sig   = 0 ;
-  priv->grid_sig   = 0 ;
-  priv->select_sig = 0 ;
-  priv->finish_sig = 0 ; */
 }
 
 static void
@@ -442,13 +425,9 @@ bjb_main_toolbar_new (GdMainView *view, BjbMainView *parent)
 void
 bjb_main_toolbar_set_view (BjbMainToolbar *self, GdMainView *view)
 {
-  g_warning("set view");
-
   /* populate the toolbar */
   self->priv->view = view ;
   populate_main_toolbar(self);
-  
-  /* TODO Connect for change */
 }
 
 ClutterActor *
