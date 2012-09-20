@@ -42,14 +42,14 @@ static GParamSpec *properties[NUM_PROPERTIES] = { NULL, };
 
 struct _BjbSelectionToolbarPrivate
 {
-  /* check */
+  /* check 
   GHashTable         *item_listeners;
   GtkWidget          *toolbar_collection;
   GtkWidget          *toolbar_favorite;
   GtkWidget          *toolbar_open;
-  GtkWidget          *toolbar_print;
+  GtkWidget          *toolbar_print; */
   GtkWidget          *toolbar_trash;
-  gboolean           inside_refresh;
+//  gboolean           inside_refresh;
 
   /* sure */
   BjbMainView        *view ;
@@ -72,32 +72,22 @@ G_DEFINE_TYPE (BjbSelectionToolbar, bjb_selection_toolbar, G_TYPE_OBJECT);
 static void
 bjb_selection_toolbar_fade_in (BjbSelectionToolbar *self)
 {
-  g_message("bjb selection toolbar fade in");
-
   BjbSelectionToolbarPrivate *priv = self->priv;
   guint8 opacity;
 
   opacity = clutter_actor_get_opacity (priv->actor);
-  
+
   if (opacity != 0)
     return;
 
-  clutter_actor_show (priv->actor);
-  clutter_actor_animate (priv->actor,
-                         CLUTTER_EASE_OUT_QUAD,300,
-                         "opacity",255,
-                         NULL);
+  clutter_actor_set_opacity (priv->actor, 255);
 }
 
 
 static void
 bjb_selection_toolbar_fade_out (BjbSelectionToolbar *self)
 {
-  ClutterAnimation *animation;
-  BjbSelectionToolbarPrivate *priv = self->priv;
-
-  animation = clutter_actor_animate (priv->actor, CLUTTER_EASE_OUT_QUAD, 300, "opacity", 0, NULL);
-  g_signal_connect_swapped (animation, "completed", G_CALLBACK (clutter_actor_hide), priv->actor);
+  clutter_actor_set_opacity (self->priv->actor, 0);
 }
 
 
@@ -153,124 +143,9 @@ static void
 bjb_selection_toolbar_set_item_visibility (BjbSelectionToolbar *self)
 {
   BjbSelectionToolbarPrivate *priv = self->priv;
-  GList *apps = NULL;
-  GList *l;
-  GList *selection;
-  gboolean show_favorite = TRUE;
-  gboolean show_open = TRUE;
-  gboolean show_print = TRUE;
-  gboolean show_trash = TRUE;
-  gchar *open_label;
-  guint fav_count = 0;
-  guint apps_length;
-  guint sel_length;
 
-  g_warning ("bjb selection toolbar set item visibility");
-
-  priv->inside_refresh = TRUE;
-
-  //selection = bjb_selection_controller_get_selection (priv->sel_cntrlr);
-  //for (l = g_list_first (selection); l != NULL; l = g_list_next (l))
-  //  {
-      /*PhotosBaseItem *item;
-      const gchar *default_app_name;
-      const gchar *urn = (gchar *) l->data;
-
-      item = PHOTOS_BASE_ITEM (photos_base_manager_get_object_by_id (priv->item_mngr, urn));
-
-      if (photos_base_item_is_favorite (item))
-        fav_count++;
-
-      default_app_name = photos_base_item_get_default_app_name (item);
-      if (default_app_name != NULL && g_list_find (apps, default_app_name) == NULL)
-        apps = g_list_prepend (apps, (gpointer) g_strdup (default_app_name));
-
-      show_trash = show_trash && photos_base_item_can_trash (item);
-      show_print = show_print && !photos_base_item_is_collection (item);*/
-      show_trash = TRUE ;
-      show_print = TRUE ;
-   // }
-
-  //sel_length = g_list_length (selection);
-  //show_favorite = show_favorite && ((fav_count == 0) || (fav_count == sel_length));
-
-  //apps_length = g_list_length (apps);
-  //show_open = (apps_length > 0);
-  show_open = TRUE ;
-
-  /*if (sel_length > 1)
-    show_print = FALSE; */
-
-  if (apps_length == 1)
-    /* Translators: this is the Open action in a context menu */
-    open_label = g_strdup_printf (_("Open with %s"), (gchar *) apps->data);
-  else
-    /* Translators: this is the Open action in a context menu */
-    open_label = g_strdup (_("Open"));
-
-  gtk_widget_set_tooltip_text (priv->toolbar_open, open_label);
-  g_free (open_label);
-  g_list_free_full (apps, g_free);
-
-  if (show_favorite)
-    {
-      GtkStyleContext *context;
-      gchar *favorite_label;
-
-      context = gtk_widget_get_style_context (priv->toolbar_favorite);
-
-      if (fav_count == sel_length)
-        {
-          favorite_label = g_strdup (_("Remove from favorites"));
-          gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->toolbar_favorite), TRUE);
-          gtk_style_context_add_class (context, "documents-favorite");
-        }
-      else
-        {
-          favorite_label = g_strdup (_("Add to favorites"));
-          gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->toolbar_favorite), FALSE);
-          gtk_style_context_remove_class (context, "documents-favorite");
-        }
-
-      gtk_widget_reset_style (priv->toolbar_favorite);
-      gtk_widget_set_tooltip_text (priv->toolbar_favorite, favorite_label);
-      g_free (favorite_label);
-    }
-
-//  gtk_widget_set_visible (priv->toolbar_print, show_print);
-  gtk_widget_set_visible (priv->toolbar_trash, show_trash);
-//  gtk_widget_set_visible (priv->toolbar_open, show_open);
-//  gtk_widget_set_visible (priv->toolbar_favorite, show_favorite);
-
-  priv->inside_refresh = FALSE; 
+  gtk_widget_set_visible (priv->toolbar_trash, TRUE);
 }
-
-
-static void
-bjb_selection_toolbar_set_item_listeners (BjbSelectionToolbar *self, GList *selection)
-{
-/*
-  BjbSelectionToolbarPrivate *priv = self->priv;
-  GList *l;
-
-  g_hash_table_foreach_remove (priv->item_listeners, bjb_selection_toolbar_disconnect_listeners_foreach, NULL);
-
-  for (l = g_list_first (selection); l != NULL; l = g_list_next (l))
-    {
-      GObject *object;
-      gchar *urn = (gchar *) l->data;
-      gulong id;
-
-      object = photos_base_manager_get_object_by_id (priv->item_mngr, urn);
-      id = g_signal_connect_swapped (object,
-                                     "info-updated",
-                                     G_CALLBACK (bjb_selection_toolbar_set_item_visibility),
-                                     self);
-      g_hash_table_insert (priv->item_listeners, GUINT_TO_POINTER (id), g_object_ref (object));
-    }
-*/
-}
-
 
 static void
 bjb_selection_toolbar_selection_changed (GdMainView *view, gpointer user_data)
@@ -278,16 +153,9 @@ bjb_selection_toolbar_selection_changed (GdMainView *view, gpointer user_data)
   
   BjbSelectionToolbar *self = BJB_SELECTION_TOOLBAR (user_data);
   BjbSelectionToolbarPrivate *priv = self->priv;
-
   GList *selection;
 
-/*
-  if (!bjb_selection_controller_get_selection_mode (priv->sel_cntrlr))
-    return;
-*/
-
   selection = gd_main_view_get_selection(view);
-  //bjb_selection_toolbar_set_item_listeners (self, selection);
 
   if (g_list_length (selection) > 0)
   {
@@ -299,43 +167,9 @@ bjb_selection_toolbar_selection_changed (GdMainView *view, gpointer user_data)
     bjb_selection_toolbar_fade_out (self);
 }
 
-
-/*
-static void
-bjb_selection_toolbar_selection_mode_changed (PhotosSelectionController *sel_cntrlr,
-                                                 gboolean mode,
-                                                 gpointer user_data)
-{
-  BjbSelectionToolbar *self = BJB_SELECTION_TOOLBAR (user_data);
-
-  if (mode)
-    bjb_selection_toolbar_selection_changed (sel_cntrlr, self);
-  else
-    bjb_selection_toolbar_fade_out (self);
-}*/
-
-
 static void
 bjb_selection_toolbar_dispose (GObject *object)
 {
-  BjbSelectionToolbar *self = BJB_SELECTION_TOOLBAR (object);
-  BjbSelectionToolbarPrivate *priv = self->priv;
-
-  if (priv->item_listeners != NULL)
-    {
-      g_hash_table_unref (priv->item_listeners);
-      priv->item_listeners = NULL;
-    }
-
-  /*g_clear_object (&priv->item_mngr);
-
-  if (priv->sel_cntrlr != NULL)
-    {
-      g_object_unref (priv->sel_cntrlr);
-      priv->sel_cntrlr = NULL;
-    }
-  */
-
   G_OBJECT_CLASS (bjb_selection_toolbar_parent_class)->dispose (object);
 }
 
@@ -362,6 +196,12 @@ bjb_selection_toolbar_init (BjbSelectionToolbar *self)
   clutter_actor_set_opacity (priv->actor, 0);
   g_object_set (priv->actor, "show-on-set-parent", FALSE, NULL);
 
+  clutter_actor_set_easing_mode (priv->actor, CLUTTER_EASE_IN_QUAD);
+  clutter_actor_set_easing_duration (priv->actor, 300.0);
+
+  clutter_actor_set_easing_mode (priv->actor, CLUTTER_EASE_OUT_QUAD);
+  clutter_actor_set_easing_duration (priv->actor, 300.0);
+
   bin = gtk_clutter_actor_get_widget (GTK_CLUTTER_ACTOR (priv->actor));
   gtk_widget_override_background_color (bin,
                                         GTK_STATE_FLAG_NORMAL,
@@ -372,31 +212,6 @@ bjb_selection_toolbar_init (BjbSelectionToolbar *self)
   gtk_container_add (GTK_CONTAINER (priv->left_group), priv->left_box);
   gtk_toolbar_insert (GTK_TOOLBAR (priv->widget), priv->left_group, -1);
   gtk_widget_show_all (GTK_WIDGET (priv->left_group));
-
-/*
-  priv->toolbar_favorite = gtk_toggle_button_new ();
-  image = gtk_image_new_from_icon_name ("emblem-favorite-symbolic", GTK_ICON_SIZE_INVALID);
-  gtk_image_set_pixel_size (GTK_IMAGE (image), 32);
-  gtk_container_add (GTK_CONTAINER (priv->toolbar_favorite), image);
-  gtk_container_add (GTK_CONTAINER (priv->left_box), priv->toolbar_favorite);
-  g_signal_connect (priv->toolbar_favorite,
-                    "clicked",
-                    G_CALLBACK (bjb_selection_toolbar_favorite_clicked),
-                    self);
-*/
-
-/*
-  priv->toolbar_print = gtk_button_new ();
-  image = gtk_image_new_from_icon_name ("printer-symbolic", GTK_ICON_SIZE_INVALID);
-  gtk_image_set_pixel_size (GTK_IMAGE (image), 32);
-  gtk_container_add (GTK_CONTAINER (priv->toolbar_print), image);
-  gtk_widget_set_tooltip_text (GTK_WIDGET (priv->toolbar_print), _("Print"));
-  gtk_container_add (GTK_CONTAINER (priv->left_box), priv->toolbar_print);
-  g_signal_connect (priv->toolbar_print,
-                    "clicked",
-                    G_CALLBACK (bjb_selection_toolbar_print_clicked),
-                    self);
-*/
 
   priv->separator = gtk_separator_tool_item_new ();
   gtk_separator_tool_item_set_draw (GTK_SEPARATOR_TOOL_ITEM (priv->separator), FALSE);
@@ -410,19 +225,6 @@ bjb_selection_toolbar_init (BjbSelectionToolbar *self)
   gtk_toolbar_insert (GTK_TOOLBAR (priv->widget), priv->right_group, -1);
   gtk_widget_show_all (GTK_WIDGET (priv->right_group));
 
-/*
-  priv->toolbar_collection = gtk_button_new ();
-  image = gtk_image_new_from_icon_name ("list-add-symbolic", GTK_ICON_SIZE_INVALID);
-  gtk_image_set_pixel_size (GTK_IMAGE (image), 32);
-  gtk_container_add (GTK_CONTAINER (priv->toolbar_collection), image);
-  gtk_widget_set_tooltip_text (GTK_WIDGET (priv->toolbar_collection), _("Organize"));
-  gtk_container_add (GTK_CONTAINER (priv->right_box), priv->toolbar_collection);
-  g_signal_connect (priv->toolbar_collection,
-                    "clicked",
-                    G_CALLBACK (bjb_selection_toolbar_collection_clicked),
-                    self);
-*/
-
   priv->toolbar_trash = gtk_button_new ();
   image = gtk_image_new_from_icon_name ("user-trash-symbolic", GTK_ICON_SIZE_INVALID);
   gtk_image_set_pixel_size (GTK_IMAGE (image), 32);
@@ -430,36 +232,7 @@ bjb_selection_toolbar_init (BjbSelectionToolbar *self)
   gtk_widget_set_tooltip_text (GTK_WIDGET (priv->toolbar_trash), _("Delete"));
   gtk_container_add (GTK_CONTAINER (priv->right_box), priv->toolbar_trash);
 
-
-/*
-  priv->toolbar_open = gtk_button_new ();
-  image = gtk_image_new_from_icon_name ("document-open-symbolic", GTK_ICON_SIZE_INVALID);
-  gtk_image_set_pixel_size (GTK_IMAGE (image), 32);
-  gtk_container_add (GTK_CONTAINER (priv->toolbar_open), image);
-  gtk_container_add (GTK_CONTAINER (priv->right_box), priv->toolbar_open);
-  g_signal_connect (priv->toolbar_open,
-                    "clicked",
-                    G_CALLBACK (bjb_selection_toolbar_open_clicked),
-                    self);
-*/
-
   gtk_widget_show_all (priv->widget);
-
-  //priv->item_mngr = photos_item_manager_new ();
-
-  /*priv->sel_cntrlr = bjb_selection_controller_new ();
-  g_signal_connect (priv->sel_cntrlr,
-                    "selection-changed",
-                    G_CALLBACK (bjb_selection_toolbar_selection_changed),
-                    self);
-
-  
-
-  g_signal_connect (priv->sel_cntrlr,
-                    "selection-mode-changed",
-                    G_CALLBACK (bjb_selection_toolbar_selection_mode_changed),
-                    self);*/
-
   clutter_actor_show(priv->actor);
 }
 

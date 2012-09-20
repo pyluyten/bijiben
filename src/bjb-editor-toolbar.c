@@ -396,10 +396,7 @@ strike_button_callback (GtkWidget *button,GtkTextView *view)
 
 /* TODO : Libiji : BijiNote * bjb_notebook_note_new (notebook,string);
  *
- * Toggle button
- *
- * Also, this is unstable since as soon as the parent win is
- * destroyed, the child crashes. */
+ * Toggle button */
 static void
 link_callback (GtkWidget *button, BjbEditorToolbar *self)
 {
