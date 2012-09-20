@@ -57,14 +57,13 @@ struct _BjbEditorToolbarPrivate
   ClutterActor       *parent_actor;
   ClutterConstraint  *width_constraint;
 
-  /* If text is cut/clipped we should have the toolbar remain visible
-   * Currently only shows the editor toolbar when text selected
-   * from note itself.
-   * Another way would be: any bjb selection
-   * Yet another way : any text selected. */
-  gboolean           clipboard;
+  /* If user rigth-clicks we want to keep the toolbar visible
+   * untill user changes his mind */
+  gboolean           glued;
 
-  /* BUTTONS */
+  /* Do not use toggle buttons. uggly there.
+   * Paste : the user might want to paste overriding selected text.
+   * Other : when no selection the user won't try to bold "null".*/
   GtkToolItem        *group;
   GtkWidget          *box;
   GtkWidget          *toolbar_cut;
@@ -158,7 +157,7 @@ bjb_editor_toolbar_init (BjbEditorToolbar *self)
                                         &black);
 
   /* 'n paste */
-  priv->toolbar_paste = gtk_button_new_with_label ("Paste");
+  priv->toolbar_paste = gtk_toggle_button_new_with_label ("Paste");
   gtk_container_add (GTK_CONTAINER (priv->box), priv->toolbar_paste);
   gtk_widget_override_background_color (priv->toolbar_paste,
                                         GTK_STATE_FLAG_NORMAL,
@@ -218,6 +217,7 @@ bjb_editor_toolbar_init (BjbEditorToolbar *self)
                                         GTK_STATE_FLAG_NORMAL,
                                         &black);
 
+  priv->glued = FALSE;
   gtk_widget_show_all (GTK_WIDGET(priv->group));
   clutter_actor_show (priv->actor);
 }
@@ -316,6 +316,7 @@ show_edit_bar(BjbEditorToolbar *self, gboolean sticky)
 static void
 on_text_selected(GObject *toto,BjbEditorToolbar *self)
 {
+  self->priv->glued = FALSE;
   show_edit_bar(self,FALSE);
 }
 
@@ -329,26 +330,31 @@ on_button_pressed (GtkWidget *widget,GdkEvent  *event,BjbEditorToolbar *self)
   }
 
   /* If right click, show toolbar and that's all */
+  self->priv->glued = TRUE;
   show_edit_bar(self,TRUE);
   return TRUE ;
 }
 
+/* only keep visible if the user wants to paste with right-click */
 static void
 on_text_not_selected(GObject *toto,BjbEditorToolbar *self)
 {
-  if ( self->priv->clipboard == FALSE )
+  if ( self->priv->glued == FALSE )
+  {
     bjb_editor_toolbar_fade_out (self);
+  }
 
   else
+  {
     editor_toolbar_align (self);
+    self->priv->glued = FALSE;
+  }
 }
 
 static gboolean
 on_cut_clicked (GtkWidget *button, BjbEditorToolbar *self)
 {
   GtkTextView *view = GTK_TEXT_VIEW (self->priv->editor);
-
-  self->priv->clipboard = TRUE;
 
   g_signal_emit_by_name (view,"cut-clipboard");
   return TRUE ;
@@ -359,8 +365,6 @@ on_copy_clicked (GtkWidget *button, BjbEditorToolbar *self)
 {
   GtkTextView *view = GTK_TEXT_VIEW (self->priv->editor);
 
-  self->priv->clipboard = TRUE;
-
   g_signal_emit_by_name (view,"copy-clipboard");
   return TRUE ;
 }
@@ -369,8 +373,6 @@ static gboolean
 on_paste_clicked (GtkWidget *button, BjbEditorToolbar *self)
 {
   GtkTextView *view = GTK_TEXT_VIEW (self->priv->editor);
-
-  self->priv->clipboard = FALSE;
 
   g_signal_emit_by_name (view,"paste-clipboard");
   return TRUE ;
@@ -394,9 +396,7 @@ strike_button_callback (GtkWidget *button,GtkTextView *view)
   biji_toggle_strike_tag (view);
 }
 
-/* TODO : Libiji : BijiNote * bjb_notebook_note_new (notebook,string);
- *
- * Toggle button */
+/* TODO : Libiji : BijiNote * bjb_notebook_note_new (notebook,string); */
 static void
 link_callback (GtkWidget *button, BjbEditorToolbar *self)
 {
