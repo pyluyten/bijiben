@@ -60,8 +60,6 @@ ClutterActor * bjb_window_base_get_stage(BjbWindowBase *bwb);
 
 gpointer bjb_window_base_get_app(GtkWidget *win);
 
-void bjb_window_base_set_application ( BjbWindowBase *self, GtkApplication *app);
-
 BjbSettings *bjb_window_base_get_settings(GtkWidget *win);
 
 BijiNoteBook * bjb_window_base_get_book(GtkWidget * win);
