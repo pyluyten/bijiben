@@ -53,7 +53,7 @@ bijiben_new_window (GApplication *app,GFile *file)
   /* Sanitize dir, load book . but should be a thread */
   bijiben_path =  g_strdup_printf("%s/bijiben",g_get_user_data_dir());
   folder= g_file_new_for_path (bijiben_path);
-  g_file_make_directory(folder, NULL, NULL)
+  g_file_make_directory(folder, NULL, NULL);
   g_object_unref(folder);
   book = biji_book_new_from_dir (bijiben_path);
   g_free(bijiben_path);
