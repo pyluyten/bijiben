@@ -43,31 +43,36 @@ struct _BijibenPriv
 
 G_DEFINE_TYPE (Bijiben, bijiben, GTK_TYPE_APPLICATION);
 
-// Create a new window loading a file
 static void
 bijiben_new_window (GApplication *app,GFile *file)
 {
-  // LOAD THE NOTE BOOK
-  gchar *bijiben_folder =  g_strdup_printf("%s/bijiben",g_get_user_data_dir());
-  BijiNoteBook *book = biji_book_new_from_dir(bijiben_folder);
-  BIJIBEN_APPLICATION(app)->priv->book = book ;
+  gchar *bijiben_path;
+  GFile *folder;
+  BijiNoteBook *book;
+  
+  /* Sanitize dir, load book . but should be a thread */
+  bijiben_path =  g_strdup_printf("%s/bijiben",g_get_user_data_dir());
+  folder= g_file_new_for_path (bijiben_path);
+  g_file_make_directory(folder, NULL, NULL)
+  g_object_unref(folder);
+  book = biji_book_new_from_dir (bijiben_path);
+  g_free(bijiben_path);
+  BIJIBEN_APPLICATION (app)->priv->book = book ;
 
-  g_free(bijiben_folder);
-
-  // TODO If no note, we should show propose importing or looking with tracker 
+  /* we should show propose importing or looking with tracker */
   if ( book == NULL )
   {
-    g_message("notebook null");
+    g_warning("notebook null");
     return ;
   }
 
-  // No file : show main window
+  /* No file : show main window */
   if (file == NULL)
   {
     bjb_window_base_new( GTK_APPLICATION(app));
   }
 
-  // show main window, then switch to note. maybe FIXME if external note.
+  /* File : show main window, then switch to note. */
   else
   {
     BijiNoteObj* cur= biji_note_get_new_from_file(g_file_get_path(file));
