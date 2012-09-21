@@ -75,7 +75,7 @@ bjb_window_base_constructor (GType                  gtype,
 static void
 bjb_window_base_finalize (GObject *object)
 {
-  /* TODO */
+  G_OBJECT_CLASS (bjb_window_base_parent_class)->finalize (object);
 }
 
 static void
@@ -128,7 +128,7 @@ bjb_window_base_class_init (BjbWindowBaseClass *klass)
 
   g_object_class_install_property (gobject_class,PROP_GTK_APP,
                                    g_param_spec_object ("gtk-application",
-                                                        "Gtk-Application",
+                                                        "Gtk Application",
                                                         "Gtk Application",
                                                         GTK_TYPE_APPLICATION,
                                                         G_PARAM_READWRITE));
@@ -145,47 +145,47 @@ bjb_window_base_destroy (gpointer a, BjbWindowBase * self)
 static void 
 bjb_window_base_init (BjbWindowBase *self) 
 {
-    const gchar *icons_path;
-    gchar *full_path;
-    GList *icons = NULL;
-    GdkPixbuf *bjb ;
-    GError *error = NULL ;
+  const gchar *icons_path;
+  gchar *full_path;
+  GList *icons = NULL;
+  GdkPixbuf *bjb ;
+  GError *error = NULL ;
     
-    self->priv = G_TYPE_INSTANCE_GET_PRIVATE(self,
-                                             BJB_TYPE_WINDOW_BASE,
-                                             BjbWindowBasePriv);
+  self->priv = G_TYPE_INSTANCE_GET_PRIVATE(self,
+                                           BJB_TYPE_WINDOW_BASE,
+                                           BjbWindowBasePriv);
     
-    /* Title is set by frame. icon is app wide. */
-    gtk_widget_set_size_request (GTK_WIDGET (self), 300, 150 );
-    gtk_window_set_default_size (GTK_WINDOW(self),  BJB_WIDTH, BJB_HEIGHT );
-    gtk_window_set_position(GTK_WINDOW(self),GTK_WIN_POS_CENTER);
+  /* Title is set by frame. icon is app wide. */
+  gtk_widget_set_size_request (GTK_WIDGET (self), 300, 150 );
+  gtk_window_set_default_size (GTK_WINDOW(self),  BJB_WIDTH, BJB_HEIGHT );
+  gtk_window_set_position(GTK_WINDOW(self),GTK_WIN_POS_CENTER);
 
-    /* Icon for window. TODO - Should be BjbApp */
-    icons_path = bijiben_get_bijiben_dir ();
-    full_path = g_strdup_printf ("%s/icons/hicolor/48x48/apps/bijiben.png", icons_path);
-    bjb = gdk_pixbuf_new_from_file (full_path, &error);
-    g_free (full_path);
+  /* Icon for window. TODO - Should be BjbApp */
+  icons_path = bijiben_get_bijiben_dir ();
+  full_path = g_strdup_printf ("%s/icons/hicolor/48x48/apps/bijiben.png", icons_path);
+  bjb = gdk_pixbuf_new_from_file (full_path, &error);
+  g_free (full_path);
     
-    if ( error )
-    {
-        g_message("%s", error->message);
-        g_error_free(error);
-    }
+  if ( error )
+  {
+    g_message("%s", error->message);
+    g_error_free(error);
+  }
     
-    icons = g_list_prepend(icons,bjb);
-    gtk_window_set_default_icon_list(icons);
-    g_list_foreach (icons, (GFunc) g_object_unref, NULL);
-    g_list_free (icons);
+  icons = g_list_prepend(icons,bjb);
+  gtk_window_set_default_icon_list(icons);
+  g_list_foreach (icons, (GFunc) g_object_unref, NULL);
+  g_list_free (icons);
 
-    /*  We probably want to offer a no entry window at first (startup) */
-    self->priv->entry = NULL ;
+  /*  We probably want to offer a no entry window at first (startup) */
+  self->priv->entry = NULL ;
 
-    self->priv->tags = get_all_tracker_tags();
-    self->priv->font = pango_font_description_from_string (BJB_DEFAULT_FONT);
+  self->priv->tags = get_all_tracker_tags();
+  self->priv->font = pango_font_description_from_string (BJB_DEFAULT_FONT);
     
-    /* Signals */
-    g_signal_connect(GTK_WIDGET(self),"destroy",
-                     G_CALLBACK(bjb_window_base_destroy),self);
+  /* Signals */
+  g_signal_connect(GTK_WIDGET(self),"destroy",
+                   G_CALLBACK(bjb_window_base_destroy),self);
 }
 
 GtkWindow *
@@ -198,15 +198,16 @@ bjb_window_base_new(GtkApplication *app)
   GtkWidget         *embed ;
   ClutterActor      *frame;
 
-  self = g_object_new(BJB_TYPE_WINDOW_BASE,"gtk-application",app,NULL);
-  priv = self->priv ;
-  
-  priv->app = app ;
+  self = g_object_new(BJB_TYPE_WINDOW_BASE,
+                      "application", app,
+                      "hide-titlebar-when-maximized", TRUE,
+                      NULL);
 
+  priv = self->priv ;
+  priv->app = app ;
   win = GTK_WINDOW(self);
   
-  gtk_window_set_application (win, GTK_APPLICATION (app));
-  gtk_window_set_hide_titlebar_when_maximized(win,TRUE);
+//  gtk_window_set_application (win, GTK_APPLICATION (app));
 
   embed = gtk_clutter_embed_new();
   gtk_clutter_embed_set_use_layout_size(embed,TRUE);
@@ -282,10 +283,12 @@ BijiNoteBook *
 bjb_window_base_get_book(GtkWidget * win)
 {
    BjbWindowBase *b = BJB_WINDOW_BASE(win);
+
    if ( b->priv )
    {
       return bijiben_get_book(b->priv->app) ;
    }
+
    else
    {
        g_message("Can't get notes");
@@ -297,28 +300,24 @@ void
 bjb_window_base_set_book(GtkWidget *win, BijiNoteBook *notes)
 {
   BjbWindowBase *b = BJB_WINDOW_BASE(win);
+
   if (b->priv)
-  {
     bijiben_set_book(b->priv->app,notes) ;
-  }
+
   else
-  {
-    g_message("Cannot set notes collection.");
-  }
+    g_warning ("Cannot set notes collection.");
 }
 
 GList *
 bjb_window_base_get_tags(GtkWidget * win)
 {
     BjbWindowBase *b = BJB_WINDOW_BASE(win);
-    if ( b->priv )
-    {
-       return b->priv->tags ;
-    }
-    else
-    {
-        return NULL ;
-    }
+
+  if ( b->priv )
+    return b->priv->tags ;
+
+  else
+    return NULL ;
 }
 
 void 
@@ -327,9 +326,7 @@ bjb_window_base_set_tags(GtkWidget * win, GList * tags)
   BjbWindowBase *b = BJB_WINDOW_BASE(win);
   
   if ( b->priv->tags != NULL )
-  {
     g_list_free_full (b->priv->tags,(GDestroyNotify) g_free);
-  }
   
   b->priv->tags = tags ;
 }
@@ -357,7 +354,7 @@ bjb_window_base_get_entry(GtkWidget *win)
 void
 bjb_window_base_set_application ( BjbWindowBase *self, GtkApplication *app)
 {
-    self->priv->app = app ;
+  self->priv->app = app ;
 }
 
 gpointer
