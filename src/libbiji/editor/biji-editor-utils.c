@@ -25,66 +25,66 @@
 
 WebKitDOMElement *
 e_editor_dom_node_find_parent_element (WebKitDOMNode *node,
-				       const gchar *tagname)
+                                       const gchar *tagname)
 {
-	gint taglen = strlen (tagname);
+  gint taglen = strlen (tagname);
 
-	while (node) {
+  while (node) {
 
-		if (WEBKIT_DOM_IS_ELEMENT (node)) {
-			gchar *node_tagname;
+    if (WEBKIT_DOM_IS_ELEMENT (node)) {
+      gchar *node_tagname;
 
-			node_tagname = webkit_dom_element_get_tag_name (
-						WEBKIT_DOM_ELEMENT (node));
+      node_tagname = webkit_dom_element_get_tag_name (
+                                             WEBKIT_DOM_ELEMENT (node));
 
-			if (node_tagname &&
-			    (strlen (node_tagname) == taglen) &&
-			    (g_ascii_strncasecmp (node_tagname, tagname, taglen) == 0)) {
-				g_free (node_tagname);
-				return (WebKitDOMElement *) node;
-			}
+      if (node_tagname &&
+          (strlen (node_tagname) == taglen) &&
+          (g_ascii_strncasecmp (node_tagname, tagname, taglen) == 0)) {
+        g_free (node_tagname);
+        return (WebKitDOMElement *) node;
+      }
 
-			g_free (node_tagname);
-		}
+      g_free (node_tagname);
+    }
 
-		node = (WebKitDOMNode *) webkit_dom_node_get_parent_element (node);
-	}
+    node = (WebKitDOMNode *) webkit_dom_node_get_parent_element (node);
+  }
 
-	return NULL;
+  return NULL;
 }
 
 WebKitDOMElement *
 e_editor_dom_node_find_child_element (WebKitDOMNode *node,
-				      const gchar *tagname)
+              const gchar *tagname)
 {
-	WebKitDOMNode *start_node = node;
-	gint taglen = strlen (tagname);
+  WebKitDOMNode *start_node = node;
+  gint taglen = strlen (tagname);
 
-	do {
-		if (WEBKIT_DOM_IS_ELEMENT (node)) {
-			gchar *node_tagname;
+  do {
+    if (WEBKIT_DOM_IS_ELEMENT (node)) {
+      gchar *node_tagname;
 
-			node_tagname = webkit_dom_element_get_tag_name (
-					WEBKIT_DOM_ELEMENT (node));
+      node_tagname = webkit_dom_element_get_tag_name (
+          WEBKIT_DOM_ELEMENT (node));
 
-			if (node_tagname &&
-			    (strlen (node_tagname) == taglen) &&
-			    (g_ascii_strncasecmp (node_tagname, tagname, taglen) == 0)) {
-				g_free (node_tagname);
-				return (WebKitDOMElement *) node;
-			}
+      if (node_tagname &&
+          (strlen (node_tagname) == taglen) &&
+          (g_ascii_strncasecmp (node_tagname, tagname, taglen) == 0)) {
+        g_free (node_tagname);
+        return (WebKitDOMElement *) node;
+      }
 
-			g_free (node_tagname);
-		}
+      g_free (node_tagname);
+    }
 
-		if (webkit_dom_node_has_child_nodes (node)) {
-			node = webkit_dom_node_get_first_child (node);
-		} else if (webkit_dom_node_get_next_sibling (node)) {
-			node = webkit_dom_node_get_next_sibling (node);
-		} else {
-			node = webkit_dom_node_get_parent_node (node);
-		}
-	} while (!webkit_dom_node_is_same_node (node, start_node));
+    if (webkit_dom_node_has_child_nodes (node)) {
+      node = webkit_dom_node_get_first_child (node);
+    } else if (webkit_dom_node_get_next_sibling (node)) {
+      node = webkit_dom_node_get_next_sibling (node);
+    } else {
+      node = webkit_dom_node_get_parent_node (node);
+    }
+  } while (!webkit_dom_node_is_same_node (node, start_node));
 
-	return NULL;
+  return NULL;
 }

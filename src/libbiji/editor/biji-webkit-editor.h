@@ -49,9 +49,11 @@ struct _BijiWebkitEditor
 
 GType biji_webkit_editor_get_type (void) G_GNUC_CONST;
 
-GtkWidget * biji_webkit_editor_new (BijiNoteObj *note);
+BijiWebkitEditor * biji_webkit_editor_new (BijiNoteObj *note);
 
 void biji_webkit_editor_apply_format (BijiWebkitEditor *self, gint format);
+
+gboolean biji_webkit_editor_has_selection (BijiWebkitEditor *self);
 
 G_END_DECLS
 

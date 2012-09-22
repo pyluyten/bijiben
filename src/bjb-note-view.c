@@ -672,7 +672,6 @@ bjb_note_view_constructed (GObject *obj)
 {
   BjbNoteView            *self = BJB_NOTE_VIEW (obj);
   BjbNoteViewPrivate     *priv = self->priv;
-  BijiNoteEditor         *editor ;
   BjbSettings            *settings;
   GtkWidget              *scroll;
   ClutterActor           *stage, *vbox;
@@ -779,7 +778,7 @@ bjb_note_view_constructed (GObject *obj)
   set_editor_color (self,priv->color);
 
   /* Edition Toolbar */
-  priv->edit_bar = bjb_editor_toolbar_new (overlay, self, editor);
+  priv->edit_bar = bjb_editor_toolbar_new (overlay, self, priv->note);
   priv->edit_bar_actor = bjb_editor_toolbar_get_actor (priv->edit_bar);
   clutter_actor_add_child (priv->embed, priv->edit_bar_actor);
 

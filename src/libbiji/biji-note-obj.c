@@ -35,7 +35,7 @@ struct _BijiNoteObjPrivate
   gchar                 *content;
 
   /* Buffer might be null */
-  BijiWebkitEditor          *editor;
+  BijiWebkitEditor      *editor;
   BijiNoteBuffer        *buffer;
   gint                  changes_to_save;
 
@@ -80,6 +80,10 @@ biji_note_obj_init (BijiNoteObj *self)
   priv->is_template = FALSE ;
   priv->is_opened = 0;
   priv->left_margin = 6 ; // defautl left margin.
+
+  /* The editor is NULL so we know it's not opened
+   * neither fully deserialized */
+  priv->editor = NULL ;
 
   /* Icon is only computed when necessary */
   priv->icon = NULL;
@@ -908,13 +912,23 @@ gchar *biji_note_obj_get_create_date(BijiNoteObj *note)
 GtkWidget *
 biji_note_obj_editor_new (BijiNoteObj *note)
 {
-//WK TODO at least ref counting
-  g_warning ("biji note obj editor new : fix this");
-  return biji_webkit_editor_new (note);
+  if (!note->priv->editor)
+    note->priv->editor = biji_webkit_editor_new (note);
+
+  return GTK_WIDGET (note->priv->editor);
 }
 
 void
 biji_note_obj_editor_apply_format (BijiNoteObj *note, gint format)
 {
-//  webkit_editor_apply_format
+  biji_webkit_editor_apply_format ( note->priv->editor , format);
+}
+
+gboolean
+biji_note_obj_editor_has_selection (BijiNoteObj *note)
+{
+  if (BIJI_IS_WEBKIT_EDITOR (note->priv->editor))
+    return biji_webkit_editor_has_selection (note->priv->editor);
+
+  return FALSE;
 }

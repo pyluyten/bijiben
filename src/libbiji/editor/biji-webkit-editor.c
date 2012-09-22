@@ -22,6 +22,27 @@ WebkitWebView is free software: you can redistribute it and/or modify it
 
 G_DEFINE_TYPE (BijiWebkitEditor, biji_webkit_editor, WEBKIT_TYPE_WEB_VIEW);
 
+gboolean
+biji_webkit_editor_has_selection (BijiWebkitEditor *self)
+{
+  WebKitWebView *view = WEBKIT_WEB_VIEW (self);
+  EEditorSelection *sel;
+  gchar *text = NULL ;
+
+  sel = e_editor_selection_new (view);
+
+  if (e_editor_selection_has_text (sel))
+  {
+    text = e_editor_selection_get_string (sel);
+    g_warning ("selection is %s", text);
+
+    if ( g_strcmp0 (text, "") != 0)
+      return TRUE;
+  }
+  
+  return FALSE;
+}
+
 void
 biji_webkit_editor_apply_format (BijiWebkitEditor *self, gint format)
 {
@@ -50,11 +71,15 @@ biji_webkit_editor_apply_format (BijiWebkitEditor *self, gint format)
         e_editor_selection_set_italic (sel, TRUE);
     }
 
-  }
+    if ( format == BIJI_STRIKE)
+    {
+      if ( e_editor_selection_get_strike_through (sel) )
+        e_editor_selection_set_strike_through (sel, FALSE);
 
-  else 
-  {
-    g_warning ("no text selected");
+      else
+        e_editor_selection_set_strike_through (sel, TRUE);
+    }
+
   }
 }
 
@@ -79,14 +104,17 @@ biji_webkit_editor_class_init (BijiWebkitEditorClass *klass)
   object_class->finalize = biji_webkit_editor_finalize;
 }
 
-GtkWidget *
+BijiWebkitEditor *
 biji_webkit_editor_new (BijiNoteObj *note)
 {
-  WebKitWebView *self;
+  BijiWebkitEditor *self;
+  WebKitWebView *view;
 
-  self = WEBKIT_WEB_VIEW (g_object_new (WEBKIT_TYPE_WEB_VIEW, NULL));
-  webkit_web_view_load_string (self, "test", NULL, NULL, NULL);
-  webkit_web_view_set_editable (self, TRUE);
+  self = (g_object_new (BIJI_TYPE_WEBKIT_EDITOR, NULL));
+  
+  view = WEBKIT_WEB_VIEW (self);
+  webkit_web_view_load_string (view, "test", NULL, NULL, NULL);
+  webkit_web_view_set_editable (view, TRUE);
 
-  return GTK_WIDGET (self);
+  return GTK_WIDGET (view);
 }

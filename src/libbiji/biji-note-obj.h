@@ -145,6 +145,10 @@ gchar *biji_note_obj_get_create_date(BijiNoteObj *note);
 
 GtkWidget * biji_note_obj_editor_new (BijiNoteObj *note);
 
+void biji_note_obj_editor_apply_format (BijiNoteObj *note, gint format);
+
+gboolean biji_note_obj_editor_has_selection (BijiNoteObj *note);
+
 G_END_DECLS
 
 #endif /* _BIJI_NOTE_OBJ_H_ */

@@ -21,12 +21,8 @@
 
 #include <webkit/webkitdom.h>
 
-WebKitDOMElement *	e_editor_dom_node_find_parent_element
-							(WebKitDOMNode *node,
-							 const gchar *tagname);
+WebKitDOMElement * e_editor_dom_node_find_parent_element (WebKitDOMNode *node, const gchar *tagname);
 
-WebKitDOMElement *	e_editor_dom_node_find_child_element
-							(WebKitDOMNode *node,
-							 const gchar *tagname);
+WebKitDOMElement * e_editor_dom_node_find_child_element (WebKitDOMNode *node, const gchar *tagname);
 
 #endif /* E_EDITOR_UTILS_H */
