@@ -1,5 +1,5 @@
 /* libiji.h
- * Copyright (C) Pierre-Yves LUYTEN 2011 <py@luyten.fr>
+ * Copyright (C) Pierre-Yves LUYTEN 2012 <py@luyten.fr>
  * 
  * bijiben is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,6 +25,7 @@
 #include "biji-note-buffer.h"
 #include "biji-note-editor.h"
 #include "biji-note-obj.h"
+#include "editor/biji-webkit-editor.h"
 
 #undef _LIBBIJI_INSIDE_H
 #endif /*_LIB_BIJI_H*/

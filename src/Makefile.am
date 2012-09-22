@@ -90,5 +90,12 @@ libbiji_a_SOURCES =  \
 	libbiji/biji-read-tomboy.c \
 	libbiji/biji-read-tomboy.h \
 	libbiji/biji-serialize.c \
-	libbiji/biji-serialize.h
+	libbiji/biji-serialize.h \
+	libbiji/editor/biji-editor-selection.c \
+	libbiji/editor/biji-editor-selection.h \
+	libbiji/editor/biji-editor-utils.c \
+	libbiji/editor/biji-editor-utils.h \
+	libbiji/editor/biji-webkit-editor.c \
+	libbiji/editor/biji-webkit-editor.h
+
 

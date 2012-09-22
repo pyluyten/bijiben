@@ -36,7 +36,7 @@ struct _BjbNoteViewPrivate {
   /* Data */
   GtkWidget         *window ;
   BijiNoteObj       *note ;
-  GtkTextBuffer     *buffer ;
+//WK  GtkTextBuffer     *buffer ;
 
   /* UI */
   ClutterActor      *embed;
@@ -593,9 +593,11 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
 
   g_signal_connect (color,"draw",G_CALLBACK(on_color_draw),note);
 
-  /* GdkDrawingArea does not have "clicked" signal */
+  /* GdkDrawingArea does not have "clicked" signal
+   * we connect both the gdk area and button (border) */
   gtk_widget_add_events (color, GDK_BUTTON_PRESS_MASK);
   g_signal_connect (color,"button-press-event",G_CALLBACK(color_key_pressed_event),self);
+  g_signal_connect (color_square, "clicked", G_CALLBACK(on_color_clicked),self);
 
   /* Sharing */
   button = gd_main_toolbar_add_button (gd, "send-to-symbolic",
@@ -679,12 +681,13 @@ bjb_note_view_constructed (GObject *obj)
   gchar                  *font;
 
   /* view new from note deserializes the note-content. */
-  priv->view = biji_text_view_new_from_note (priv->note);
-  priv->buffer = gtk_text_view_get_buffer (priv->view);
+//WK  priv->view = biji_text_view_new_from_note (priv->note);
+//WK  priv->buffer = gtk_text_view_get_buffer (priv->view);
+  priv->view = biji_note_obj_editor_new (priv->note); //WK
 
   settings = bjb_window_base_get_settings(priv->window);
     
-  editor = BIJI_NOTE_EDITOR (priv->view);
+//WK  editor = BIJI_NOTE_EDITOR (priv->view);
 
   priv->renamed = g_signal_connect(priv->note,"renamed",
                                    G_CALLBACK(on_note_renamed),
@@ -759,9 +762,8 @@ bjb_note_view_constructed (GObject *obj)
                          pango_font_description_from_string(font));
 
   /* Padding */
-  gtk_text_view_set_pixels_above_lines (GTK_TEXT_VIEW(priv->view),
-                                        8);
-  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(priv->view),16);
+//WK  gtk_text_view_set_pixels_above_lines (GTK_TEXT_VIEW(priv->view),8);
+//WK  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(priv->view),16);
 
   /* User defined color */
   GdkRGBA *color = NULL ;

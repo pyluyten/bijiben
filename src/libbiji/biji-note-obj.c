@@ -7,6 +7,7 @@
 #include "biji-note-watcher.h"
 #include "biji-read-tomboy.h"
 #include "biji-serialize.h"
+#include "editor/biji-webkit-editor.h" //WK
 #include "libbiji.h"
 
 #ifndef NO_NOTE_TITLE
@@ -34,8 +35,9 @@ struct _BijiNoteObjPrivate
   gchar                 *content;
 
   /* Buffer might be null */
+  BijiWebkitEditor          *editor;
   BijiNoteBuffer        *buffer;
-  gint                  changes_to_save ;
+  gint                  changes_to_save;
 
   /* TAGS may be notebooks. */
   GList                 *tags ;
@@ -901,4 +903,18 @@ gchar *biji_note_obj_get_last_change_date(BijiNoteObj *note)
 gchar *biji_note_obj_get_create_date(BijiNoteObj *note)
 {
   return biji_note_id_get_create_date(note_get_id(note));
+}
+
+GtkWidget *
+biji_note_obj_editor_new (BijiNoteObj *note)
+{
+//WK TODO at least ref counting
+  g_warning ("biji note obj editor new : fix this");
+  return biji_webkit_editor_new (note);
+}
+
+void
+biji_note_obj_editor_apply_format (BijiNoteObj *note, gint format)
+{
+//  webkit_editor_apply_format
 }

@@ -18,6 +18,18 @@
 
 G_BEGIN_DECLS
 
+/* Available formating for biji_note_obj_editor_apply_format
+ * If note is opened, and if text is opened
+ * This toggle the format
+ * eg bold text will become normal and normal text becomes bold */
+enum
+{
+  BIJI_BOLD,
+  BIJI_ITALIC,
+  BIJI_STRIKE,
+  BIJI_FORMAT
+};
+
 #define BIJI_TYPE_NOTE_OBJ             (biji_note_obj_get_type ())
 #define BIJI_NOTE_OBJ(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), BIJI_TYPE_NOTE_OBJ, BijiNoteObj))
 #define BIJI_NOTE_OBJ_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), BIJI_TYPE_NOTE_OBJ, BijiNoteObjClass))
@@ -130,6 +142,8 @@ gboolean biji_note_obj_remove_tag(BijiNoteObj *note,gchar *tag);
 gchar *biji_note_obj_get_last_change_date(BijiNoteObj *note);
 
 gchar *biji_note_obj_get_create_date(BijiNoteObj *note);
+
+GtkWidget * biji_note_obj_editor_new (BijiNoteObj *note);
 
 G_END_DECLS
 

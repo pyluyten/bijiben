@@ -280,7 +280,10 @@ editor_toolbar_align (BjbEditorToolbar *self)
   /* we do align the editor toolbar few pixels below the cursor
    * (we have to remove the invisible part of textView
    * x : we do align middle of bar to iter    */
-  view = GTK_TEXT_VIEW (priv->editor);
+
+//WK : should libbiji should return us the GdkRect?
+  g_warning ("editor_toolbar_align : not yet ported to wk");
+/*WK  view = GTK_TEXT_VIEW (priv->editor);
   buf = gtk_text_view_get_buffer (view);
   gtk_text_buffer_get_iter_at_mark (buf,
                                     &iter,
@@ -303,7 +306,7 @@ editor_toolbar_align (BjbEditorToolbar *self)
   constraint = clutter_bind_constraint_new (priv->parent_actor,
                                             CLUTTER_BIND_X,
                                             x_alignment);   
-  clutter_actor_add_constraint (priv->actor, constraint);
+  clutter_actor_add_constraint (priv->actor, constraint); */
 }
 
 static void
@@ -381,19 +384,20 @@ on_paste_clicked (GtkWidget *button, BjbEditorToolbar *self)
 static void
 bold_button_callback (GtkWidget *button,GtkTextView *view)
 {
-  biji_toggle_bold_tag (view);
+//WKbiji_toggle_bold_tag (view);
+  //webkit_editor_apply_format (
 }
 
 static void
 italic_button_callback (GtkWidget *button,GtkTextView *view)
 {
-  biji_toggle_italic_tag (view);
+//WKbiji_toggle_italic_tag (view);
 }
 
 static void
 strike_button_callback (GtkWidget *button,GtkTextView *view)
 {
-  biji_toggle_strike_tag (view);
+//WKbiji_toggle_strike_tag (view);
 }
 
 /* TODO : Libiji : BijiNote * bjb_notebook_note_new (notebook,string); */
@@ -406,9 +410,11 @@ link_callback (GtkWidget *button, BjbEditorToolbar *self)
   BijiNoteBook            *book;
   BjbEditorToolbarPrivate *priv = self->priv;
 
-  link = gtk_text_view_get_selection( GTK_TEXT_VIEW (priv->editor));
+//WK  link = gtk_text_view_get_selection( GTK_TEXT_VIEW (priv->editor));
+  g_warning ("Link is not yet ported to WK");
+  link = NULL;
 
-  if (link == NULL )
+  if (link == NULL)
     return;
 
   window = bjb_note_view_get_base_window (priv->view);
