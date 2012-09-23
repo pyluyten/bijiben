@@ -670,7 +670,7 @@ bjb_note_view_constructed (GObject *obj)
   gchar                  *font;
 
   /* view new from note deserializes the note-content. */
-  priv->view = biji_note_obj_editor_new (priv->note);
+  priv->view = biji_note_obj_get_editor (priv->note);
 
   settings = bjb_window_base_get_settings(priv->window);
 

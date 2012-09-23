@@ -923,7 +923,7 @@ gchar *biji_note_obj_get_create_date(BijiNoteObj *note)
 }
 
 GtkWidget *
-biji_note_obj_editor_new (BijiNoteObj *note)
+biji_note_obj_get_editor (BijiNoteObj *note)
 {
   if (!note->priv->editor)
     note->priv->editor = biji_webkit_editor_new (note);

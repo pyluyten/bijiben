@@ -143,7 +143,7 @@ gchar *biji_note_obj_get_last_change_date(BijiNoteObj *note);
 
 gchar *biji_note_obj_get_create_date(BijiNoteObj *note);
 
-GtkWidget * biji_note_obj_editor_new (BijiNoteObj *note);
+GtkWidget * biji_note_obj_get_editor (BijiNoteObj *note);
 
 void biji_note_obj_editor_apply_format (BijiNoteObj *note, gint format);
 
