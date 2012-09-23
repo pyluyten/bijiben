@@ -20,6 +20,20 @@ WebkitWebView is free software: you can redistribute it and/or modify it
 #include "biji-webkit-editor.h"
 #include "biji-editor-selection.h"
 
+/* Prop */
+enum {
+  PROP_0,
+  PROP_NOTE,
+  NUM_PROP
+};
+
+static GParamSpec *properties[NUM_PROP] = { NULL, };
+
+struct _BijiWebkitEditorPrivate
+{
+  BijiNoteObj *note;
+};
+
 G_DEFINE_TYPE (BijiWebkitEditor, biji_webkit_editor, WEBKIT_TYPE_WEB_VIEW);
 
 gboolean
@@ -27,14 +41,13 @@ biji_webkit_editor_has_selection (BijiWebkitEditor *self)
 {
   WebKitWebView *view = WEBKIT_WEB_VIEW (self);
   EEditorSelection *sel;
-  gchar *text = NULL ;
+  const gchar *text = NULL ;
 
   sel = e_editor_selection_new (view);
 
   if (e_editor_selection_has_text (sel))
   {
     text = e_editor_selection_get_string (sel);
-    g_warning ("selection is %s", text);
 
     if ( g_strcmp0 (text, "") != 0)
       return TRUE;
@@ -106,7 +119,8 @@ biji_webkit_editor_init (BijiWebkitEditor *self)
 {
   WebKitWebView *view = WEBKIT_WEB_VIEW (self);
 
-  webkit_web_view_load_string (view, "test", NULL, NULL, NULL);
+  self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BIJI_TYPE_WEBKIT_EDITOR, BijiWebkitEditorPrivate);
+
   webkit_web_view_set_editable (view, TRUE);
   webkit_web_view_set_transparent (view, TRUE);
 }
@@ -120,15 +134,80 @@ biji_webkit_editor_finalize (GObject *object)
 }
 
 static void
+biji_webkit_editor_constructed (GObject *obj)
+{
+  BijiWebkitEditor *self = BIJI_WEBKIT_EDITOR (obj);
+  BijiWebkitEditorPrivate *priv = self->priv;
+  WebKitWebView *view = WEBKIT_WEB_VIEW (self);
+
+  webkit_web_view_load_string (view,
+                               biji_note_get_raw_text (priv->note),
+                               NULL, NULL, NULL);
+}
+
+static void
+biji_webkit_editor_get_property (GObject  *object,
+                                 guint     property_id,
+                                 GValue   *value,
+                                 GParamSpec *pspec)
+{
+  BijiWebkitEditor *self = BIJI_WEBKIT_EDITOR (object);
+
+  switch (property_id)
+  {
+    case PROP_NOTE:
+      g_value_set_object (value, self->priv->note);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+  }
+}
+
+static void
+biji_webkit_editor_set_property (GObject  *object,
+                                 guint     property_id,
+                                 const GValue *value,
+                                 GParamSpec *pspec)
+{
+  BijiWebkitEditor *self = BIJI_WEBKIT_EDITOR (object);
+
+  switch (property_id)
+  {
+    case PROP_NOTE:
+      self->priv->note = g_value_get_object (value);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+  }
+}
+
+static void
 biji_webkit_editor_class_init (BijiWebkitEditorClass *klass)
 {
   GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
+  object_class->constructed = biji_webkit_editor_constructed;
   object_class->finalize = biji_webkit_editor_finalize;
+  object_class->get_property = biji_webkit_editor_get_property;
+  object_class->set_property = biji_webkit_editor_set_property;
+
+  properties[PROP_NOTE] = g_param_spec_object ("note",
+                                               "Note",
+                                               "Biji Note Obj",
+                                                BIJI_TYPE_NOTE_OBJ,
+                                                G_PARAM_READWRITE  |
+                                                G_PARAM_CONSTRUCT |
+                                                G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_property (object_class,PROP_NOTE,properties[PROP_NOTE]);
+
+  g_type_class_add_private (klass, sizeof (BijiWebkitEditorPrivate));
 }
 
 BijiWebkitEditor *
 biji_webkit_editor_new (BijiNoteObj *note)
 {
-  return g_object_new (BIJI_TYPE_WEBKIT_EDITOR, NULL);
+  return g_object_new (BIJI_TYPE_WEBKIT_EDITOR,
+                       "note", note,
+                       NULL);
 }

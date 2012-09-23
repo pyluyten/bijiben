@@ -36,6 +36,7 @@ G_BEGIN_DECLS
 
 typedef struct _BijiWebkitEditorClass BijiWebkitEditorClass;
 typedef struct _BijiWebkitEditor BijiWebkitEditor;
+typedef struct _BijiWebkitEditorPrivate BijiWebkitEditorPrivate;
 
 struct _BijiWebkitEditorClass
 {
@@ -45,6 +46,7 @@ struct _BijiWebkitEditorClass
 struct _BijiWebkitEditor
 {
   WebKitWebView parent_instance;
+  BijiWebkitEditorPrivate * priv;
 };
 
 GType biji_webkit_editor_get_type (void) G_GNUC_CONST;
