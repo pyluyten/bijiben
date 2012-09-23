@@ -55,6 +55,13 @@ void biji_webkit_editor_apply_format (BijiWebkitEditor *self, gint format);
 
 gboolean biji_webkit_editor_has_selection (BijiWebkitEditor *self);
 
+void biji_webkit_editor_cut (BijiWebkitEditor *self);
+
+void biji_webkit_editor_copy (BijiWebkitEditor *self);
+
+void biji_webkit_editor_paste (BijiWebkitEditor *self);
+
+
 G_END_DECLS
 
 #endif /* _WEBKIT_EDITOR_H_ */

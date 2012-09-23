@@ -149,6 +149,12 @@ void biji_note_obj_editor_apply_format (BijiNoteObj *note, gint format);
 
 gboolean biji_note_obj_editor_has_selection (BijiNoteObj *note);
 
+void biji_note_obj_editor_cut (BijiNoteObj *note);
+
+void biji_note_obj_editor_copy (BijiNoteObj *note);
+
+void biji_note_obj_editor_paste (BijiNoteObj *note);
+
 G_END_DECLS
 
 #endif /* _BIJI_NOTE_OBJ_H_ */

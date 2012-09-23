@@ -921,7 +921,8 @@ biji_note_obj_editor_new (BijiNoteObj *note)
 void
 biji_note_obj_editor_apply_format (BijiNoteObj *note, gint format)
 {
-  biji_webkit_editor_apply_format ( note->priv->editor , format);
+  if (BIJI_IS_WEBKIT_EDITOR (note->priv->editor))
+    biji_webkit_editor_apply_format ( note->priv->editor , format);
 }
 
 gboolean
@@ -931,4 +932,22 @@ biji_note_obj_editor_has_selection (BijiNoteObj *note)
     return biji_webkit_editor_has_selection (note->priv->editor);
 
   return FALSE;
+}
+
+void biji_note_obj_editor_cut (BijiNoteObj *note)
+{
+  if (BIJI_IS_WEBKIT_EDITOR (note->priv->editor))
+    biji_webkit_editor_cut (note->priv->editor);
+}
+
+void biji_note_obj_editor_copy (BijiNoteObj *note)
+{
+  if (BIJI_IS_WEBKIT_EDITOR (note->priv->editor))
+    biji_webkit_editor_copy (note->priv->editor);
+}
+
+void biji_note_obj_editor_paste (BijiNoteObj *note)
+{
+  if (BIJI_IS_WEBKIT_EDITOR (note->priv->editor))
+    biji_webkit_editor_paste (note->priv->editor);
 }

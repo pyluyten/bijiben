@@ -39,7 +39,7 @@ biji_webkit_editor_has_selection (BijiWebkitEditor *self)
     if ( g_strcmp0 (text, "") != 0)
       return TRUE;
   }
-  
+
   return FALSE;
 }
 
@@ -83,9 +83,31 @@ biji_webkit_editor_apply_format (BijiWebkitEditor *self, gint format)
   }
 }
 
+void
+biji_webkit_editor_cut (BijiWebkitEditor *self)
+{
+  webkit_web_view_cut_clipboard (WEBKIT_WEB_VIEW (self));
+}
+
+void
+biji_webkit_editor_copy (BijiWebkitEditor *self)
+{
+  webkit_web_view_copy_clipboard (WEBKIT_WEB_VIEW (self));
+}
+
+void
+biji_webkit_editor_paste (BijiWebkitEditor *self)
+{
+  webkit_web_view_paste_clipboard (WEBKIT_WEB_VIEW (self));
+}
+
 static void
 biji_webkit_editor_init (BijiWebkitEditor *self)
 {
+  WebKitWebView *view = WEBKIT_WEB_VIEW (self);
+
+  webkit_web_view_load_string (view, "test", NULL, NULL, NULL);
+  webkit_web_view_set_editable (view, TRUE);
 }
 
 static void
@@ -107,14 +129,5 @@ biji_webkit_editor_class_init (BijiWebkitEditorClass *klass)
 BijiWebkitEditor *
 biji_webkit_editor_new (BijiNoteObj *note)
 {
-  BijiWebkitEditor *self;
-  WebKitWebView *view;
-
-  self = (g_object_new (BIJI_TYPE_WEBKIT_EDITOR, NULL));
-  
-  view = WEBKIT_WEB_VIEW (self);
-  webkit_web_view_load_string (view, "test", NULL, NULL, NULL);
-  webkit_web_view_set_editable (view, TRUE);
-
-  return GTK_WIDGET (view);
+  return g_object_new (BIJI_TYPE_WEBKIT_EDITOR, NULL);
 }

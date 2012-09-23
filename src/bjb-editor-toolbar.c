@@ -160,7 +160,7 @@ bjb_editor_toolbar_init (BjbEditorToolbar *self)
                                         &black);
 
   /* 'n paste */
-  priv->toolbar_paste = gtk_toggle_button_new_with_label ("Paste");
+  priv->toolbar_paste = gtk_button_new_with_label ("Paste");
   gtk_container_add (GTK_CONTAINER (priv->box), priv->toolbar_paste);
   gtk_widget_override_background_color (priv->toolbar_paste,
                                         GTK_STATE_FLAG_NORMAL,
@@ -323,14 +323,10 @@ static void
 on_selection_changed (BjbEditorToolbar *self)
 {
   if (biji_note_obj_editor_has_selection (self->priv->note))
-  {
     show_edit_bar (self);
-  }
 
   else
-  {
     bjb_editor_toolbar_fade_out (self);
-  }
 }
 
 static gboolean
@@ -350,27 +346,21 @@ on_button_pressed (GtkWidget *widget,GdkEvent  *event,BjbEditorToolbar *self)
 static gboolean
 on_cut_clicked (GtkWidget *button, BjbEditorToolbar *self)
 {
-  /*GtkTextView *view = GTK_TEXT_VIEW (self->priv->editor);
-
-  g_signal_emit_by_name (view,"cut-clipboard");*/
+  biji_note_obj_editor_cut (self->priv->note);
   return TRUE ;
 }
 
 static gboolean
 on_copy_clicked (GtkWidget *button, BjbEditorToolbar *self)
 {
-  /*GtkTextView *view = GTK_TEXT_VIEW (self->priv->editor);
-
-  g_signal_emit_by_name (view,"copy-clipboard");*/
+  biji_note_obj_editor_copy (self->priv->note);
   return TRUE ;
 }
 
 static gboolean
 on_paste_clicked (GtkWidget *button, BjbEditorToolbar *self)
 {
-  /*GtkTextView *view = GTK_TEXT_VIEW (self->priv->editor);
-
-  g_signal_emit_by_name (view,"paste-clipboard");*/
+  biji_note_obj_editor_paste (self->priv->note);
   return TRUE ;
 }
 
