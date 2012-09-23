@@ -785,11 +785,13 @@ biji_note_obj_get_icon (BijiNoteObj *note)
     g_free (text);
   }
 
+  cairo_destroy (cr);
 
   ret = gdk_pixbuf_get_from_surface (surface,
                                      0, 0,
                                      ICON_WIDTH,
                                      ICON_HEIGHT);
+  cairo_surface_destroy (surface);
 
   note->priv->icon = biji_note_icon_add_frame(ret);
 
