@@ -72,8 +72,6 @@ void gtk_note_buffer_debug_xml(GtkTextBuffer *buffer) ;
 
 GtkTextView *biji_text_view_new_from_note(BijiNoteObj *note);
 
-gboolean biji_note_obj_is_opened(BijiNoteObj *note);
-
 void biji_note_close(BijiNoteObj *note) ; 
 
 gchar *gtk_text_view_get_selection(GtkTextView *editor);

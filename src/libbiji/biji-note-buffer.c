@@ -1185,12 +1185,6 @@ biji_text_view_new_from_note(BijiNoteObj *note)
   return biji_gtk_view_new((gpointer)note);
 }
 
-gboolean 
-biji_note_obj_is_opened(BijiNoteObj *note)
-{
-  return _biji_note_obj_is_opened(note) ;
-}
-
 void
 biji_note_close(BijiNoteObj *note)
 {

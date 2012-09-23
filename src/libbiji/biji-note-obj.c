@@ -922,13 +922,33 @@ gchar *biji_note_obj_get_create_date(BijiNoteObj *note)
   return biji_note_id_get_create_date(note_get_id(note));
 }
 
+/* Webkit */
+
+/*static*/ void
+on_biji_note_obj_editor_closed (BijiNoteObj *note)
+{
+  g_warning ("note closed");
+  note->priv->editor = NULL;
+}
+
 GtkWidget *
 biji_note_obj_get_editor (BijiNoteObj *note)
 {
   if (!note->priv->editor)
+  {
     note->priv->editor = biji_webkit_editor_new (note);
 
+    /*g_signal_connect_swapped (note->priv->editor,"closed",
+                      G_CALLBACK (on_biji_note_obj_editor_closed),note);*/
+  }
+
   return GTK_WIDGET (note->priv->editor);
+}
+
+gboolean
+biji_note_obj_is_opened(BijiNoteObj *note)
+{
+  return BIJI_IS_WEBKIT_EDITOR (note->priv->editor);
 }
 
 void

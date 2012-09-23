@@ -27,6 +27,14 @@ enum {
   NUM_PROP
 };
 
+/* Signals */
+enum {
+  EDITOR_CLOSED,
+  EDITOR_SIGNALS
+};
+
+static guint biji_editor_signals [EDITOR_SIGNALS] = { 0 };
+
 static GParamSpec *properties[NUM_PROP] = { NULL, };
 
 struct _BijiWebkitEditorPrivate
@@ -139,7 +147,15 @@ biji_webkit_editor_init (BijiWebkitEditor *self)
 static void
 biji_webkit_editor_finalize (GObject *object)
 {
-  /* TODO */
+  BijiWebkitEditor *self = BIJI_WEBKIT_EDITOR (object);
+
+  /* Signal the note it has no more editor */
+  g_warning ("biji webkit editor finalize");
+
+  /*g_signal_emit (G_OBJECT (object),
+                 biji_editor_signals[EDITOR_CLOSED],
+                 0);*/
+  on_biji_note_obj_editor_closed (self->priv->note);
 
   G_OBJECT_CLASS (biji_webkit_editor_parent_class)->finalize (object);
 }
@@ -224,6 +240,16 @@ biji_webkit_editor_class_init (BijiWebkitEditorClass *klass)
                                                 G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_property (object_class,PROP_NOTE,properties[PROP_NOTE]);
+
+  biji_editor_signals[EDITOR_CLOSED] = g_signal_new ("closed",
+                                       G_OBJECT_CLASS_TYPE (klass),
+                                       G_SIGNAL_RUN_FIRST,
+                                       0,
+                                       NULL,
+                                       NULL,
+                                       g_cclosure_marshal_VOID__VOID,
+                                       G_TYPE_NONE,
+                                       0);
 
   g_type_class_add_private (klass, sizeof (BijiWebkitEditorPrivate));
 }

@@ -355,7 +355,7 @@ static void
 bjb_close_note(gpointer note)
 {
   bijiben_push_note_to_tracker(note);
-  biji_note_close(note);
+  /*biji_note_close(note);*/
 }
 
 static gboolean
@@ -391,7 +391,7 @@ static void
 save_then_switch_to_notes_view(BjbNoteView *view)
 {
   bijiben_push_note_to_tracker(view->priv->note);
-  bjb_close_note(view->priv->note);
+  /*bjb_close_note(view->priv->note);*/
   just_switch_to_main_view(view);
 }
 
