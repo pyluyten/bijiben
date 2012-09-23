@@ -168,11 +168,6 @@ on_font_selected(GtkFontButton *widget, BjbSettings *settings)
   g_object_set(settings,"font",gtk_font_button_get_font_name(widget),NULL);
 }
 
-static void
-on_highlight_color_selected()
-{
-}
-
 void
 show_bijiben_settings_window(GtkMenuItem* item, GtkWidget *parent_window)
 {

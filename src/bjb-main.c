@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * main.c
  * Copyright (C) Pierre-Yves LUYTEN 2011 <py@luyten.fr>
@@ -30,11 +29,9 @@ main (int argc, char *argv[])
   Bijiben *app;
   int status;
 
-#ifdef ENABLE_NLS
   bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
   bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
   textdomain (GETTEXT_PACKAGE);
-#endif
 
   app = bijiben_new ();
   status = g_application_run (G_APPLICATION (app), argc, argv);

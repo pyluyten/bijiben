@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * bijiben
  * Copyright (C) Pierre-Yves Luyten 2012 <py@luyten.fr>
@@ -113,6 +112,7 @@ bjb_controller_finalize (GObject *object)
 
   free_notes_store(self);
   g_object_unref (priv->completion);
+  g_free (priv->needle);
 
   G_OBJECT_CLASS (bjb_controller_parent_class)->finalize (object);
 }
@@ -172,8 +172,6 @@ bjb_controller_add_note ( BijiNoteObj *note, BjbController *self )
   GtkTreeIter    iter;
   GtkListStore  *store;
   GdkPixbuf     *pix = NULL;
-  GtkWidget     *image;
-  GIcon         *gicon;
 
   store = GTK_LIST_STORE(self->priv->model);
 
@@ -313,7 +311,7 @@ add_note_to_completion(BijiNoteObj *note , BjbController *self)
   GtkListStore *store;
   GtkTreeIter iter;
 
-  store = self->priv->completion ;
+  store = GTK_LIST_STORE(self->priv->completion);
 
   // Search Tag.
   gtk_list_store_append (store, &iter);
@@ -327,7 +325,7 @@ add_note_to_completion(BijiNoteObj *note , BjbController *self)
 static void
 refresh_completion(BjbController *self)
 {
-  gtk_list_store_clear(self->priv->completion);
+  gtk_list_store_clear(GTK_LIST_STORE(self->priv->completion));
   
   g_list_foreach(biji_note_book_get_notes(self->priv->book),
                  (GFunc)add_note_to_completion,
@@ -342,16 +340,14 @@ on_book_changed ( BijiNoteBook *book, BjbController *self )
 }
 
 static void
-bjb_controller_constructed (BjbController *self)
+bjb_controller_constructed (GObject *obj)
 {
-  GObject *obj;
+  BjbController *self = BJB_CONTROLLER (obj);
 
-  g_signal_connect ( self->priv->book, "changed", 
-                     G_CALLBACK(on_book_changed), self);
-         
-  obj = G_OBJECT(self);    
-  G_OBJECT_CLASS(bjb_controller_parent_class)->constructed(obj) ;
+  G_OBJECT_CLASS(bjb_controller_parent_class)->constructed(obj);
 
+  g_signal_connect (self->priv->book, "changed",
+                    G_CALLBACK(on_book_changed), self);
 }
 
 static void
@@ -428,7 +424,7 @@ bjb_controller_set_book (BjbController *self, BijiNoteBook  *book )
 void
 bjb_controller_set_needle (BjbController *self, const gchar *needle )
 {
-  self->priv->needle = needle ;
+  self->priv->needle = g_strdup(needle);
   on_needle_changed(self);
 }
 

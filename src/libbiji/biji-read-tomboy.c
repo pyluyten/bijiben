@@ -399,7 +399,6 @@ static void
 processNode (xmlTextReaderPtr r, BijiNoteObj * n) 
 {
   xmlChar   *name;
-  GdkRGBA   *color;
   gchar     *tag;
   GString   *norm;
 
@@ -422,11 +421,11 @@ processNode (xmlTextReaderPtr r, BijiNoteObj * n)
 
   if ( g_strcmp0((gchar*)name,"color") == 0 )  
   {
-    GdkRGBA * color = g_new (GdkRGBA,1);
+    GdkRGBA color;
       
-    if ( gdk_rgba_parse( color,(gchar*) xmlTextReaderReadString(r)))
+    if ( gdk_rgba_parse(&color,(gchar*) xmlTextReaderReadString(r)))
     {
-        biji_note_obj_set_rgba ( n, color) ;
+        biji_note_obj_set_rgba (n, &color) ;
     }
 
   }

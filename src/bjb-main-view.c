@@ -53,9 +53,6 @@ struct _BjbMainViewPriv {
    * add one window specific controller */
   GdMainView       *view ; 
   BjbController    *controller ;
-
-  /* signals */
-  gulong            notes_changed ;
 };
 
 G_DEFINE_TYPE (BjbMainView, bjb_main_view, CLUTTER_TYPE_ACTOR);
@@ -72,10 +69,6 @@ bjb_main_view_finalize (GObject *object)
 {
   BjbMainView     *self = BJB_MAIN_VIEW(object) ;
   BjbMainViewPriv *priv = self->priv;
-
-  /* Signals */
-  g_signal_handler_disconnect(bjb_window_base_get_book(priv->window),
-                              priv->notes_changed);
 
   /* Widgets, actors */
   clutter_actor_destroy (priv->bin);

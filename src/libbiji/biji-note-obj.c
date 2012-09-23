@@ -518,7 +518,7 @@ biji_note_get_or_create_buffer(gpointer note_obj)
                                          biji_note_get_title(n));
     }
 #endif
-      
+
     note_buffer_set_xml(n->priv->buffer,n->priv->content);
   }
 
@@ -745,8 +745,6 @@ biji_note_obj_get_icon (BijiNoteObj *note)
 
   if (note->priv->icon)
     return note->priv->icon;
-
-  text = biji_note_get_raw_text (note);
 
   /* Create & Draw surface */ 
   surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32 , 

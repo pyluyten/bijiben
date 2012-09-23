@@ -256,7 +256,6 @@ bjb_search_toolbar_finalize (GObject *obj)
 static void
 bjb_search_toolbar_constructed (GObject *obj)
 {
-  ClutterConstraint       *constraint ;
   GtkEntryBuffer          *entry_buf;
   GtkEntryCompletion      *completion ;
   BjbSearchToolbar        *self = BJB_SEARCH_TOOLBAR(obj);
@@ -314,7 +313,6 @@ static void
 bjb_search_toolbar_init (BjbSearchToolbar *self)
 {
   BjbSearchToolbarPrivate    *priv;
-  GtkWidget                  *bin;
   GtkStyleContext            *context;
   GtkToolItem                *separator;
 

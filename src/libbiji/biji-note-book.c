@@ -4,6 +4,7 @@
 #include "libbiji.h"
 #include "biji-note-editor.h"
 #include "biji-note-book.h"
+#include "biji-read-tomboy.h"
 
 struct _BijiNoteBookPrivate
 {
