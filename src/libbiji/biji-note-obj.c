@@ -762,33 +762,39 @@ biji_note_obj_get_icon (BijiNoteObj *note)
   cairo_fill (cr);
 
   /* Text */
-  cairo_translate (cr, 10, 10);
-  layout = pango_cairo_create_layout (cr);
+  text = biji_note_get_raw_text (note);
+  if (text != NULL)
+  {
+    cairo_translate (cr, 10, 10);
+    layout = pango_cairo_create_layout (cr);
 
-  pango_layout_set_width (layout, 180000 );
-  pango_layout_set_wrap (layout,PANGO_WRAP_WORD_CHAR);
-  pango_layout_set_height (layout, 180000 ) ;
+    pango_layout_set_width (layout, 180000 );
+    pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
+    pango_layout_set_height (layout, 180000 ) ;
 
-  pango_layout_set_text (layout,text, -1);
-  desc = pango_font_description_from_string (ICON_FONT);
-  pango_layout_set_font_description (layout, desc);
-  pango_font_description_free (desc);
+    pango_layout_set_text (layout, text, -1);
+    desc = pango_font_description_from_string (ICON_FONT);
+    pango_layout_set_font_description (layout, desc);
+    pango_font_description_free (desc);
 
-  cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
-  pango_cairo_update_layout (cr, layout);
-  pango_cairo_show_layout (cr, layout);
+    cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
+    pango_cairo_update_layout (cr, layout);
+    pango_cairo_show_layout (cr, layout);
 
-  g_object_unref (layout);
+    g_object_unref (layout);
+    g_free (text);
+  }
+
 
   ret = gdk_pixbuf_get_from_surface (surface,
-                                     0,0,
+                                     0, 0,
                                      ICON_WIDTH,
                                      ICON_HEIGHT);
 
   note->priv->icon = biji_note_icon_add_frame(ret);
 
   return note->priv->icon ;
-} 
+}
 
 /* Single Note */
 
