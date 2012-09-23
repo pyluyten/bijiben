@@ -270,33 +270,16 @@ bjb_editor_toolbar_set_property (GObject  *object,
 }
 
 static void
-editor_toolbar_align (BjbEditorToolbar *self)
+editor_toolbar_align (BjbEditorToolbar *self, GdkEvent  *event)
 {
-  BjbEditorToolbarPrivate *priv = self->priv;
-  GtkTextIter              iter;
-  GdkRectangle             iter_rect, win_rect;
+  GdkWindow               *win;
+  GdkRectangle             cursor_pos;
   gint                     x_alignment, y_alignment;
-  GtkTextView             *view;
-  GtkTextBuffer           *buf;
   ClutterConstraint       *constraint;
+  BjbEditorToolbarPrivate *priv = self->priv;
 
-  /* we do align the editor toolbar few pixels below the cursor
-   * (we have to remove the invisible part of textView
-   * x : we do align middle of bar to iter    */
-
-//WK : should libbiji should return us the GdkRect?
-  g_warning ("editor_toolbar_align : not yet ported to wk");
-/*WK  view = GTK_TEXT_VIEW (priv->editor);
-  buf = gtk_text_view_get_buffer (view);
-  gtk_text_buffer_get_iter_at_mark (buf,
-                                    &iter,
-                                    gtk_text_buffer_get_insert (buf));
-  
-  gtk_text_view_get_iter_location (view, &iter, &iter_rect);
-  gtk_text_view_get_visible_rect (view, &win_rect);
-
-  y_alignment = iter_rect.y - win_rect.y + EDITOR_TOOLBAR_Y_OFFSET;
-  x_alignment = iter_rect.x + EDITOR_TOOLBAR_X_OFFSET ;
+  x_alignment = event->button.x + EDITOR_TOOLBAR_X_OFFSET;
+  y_alignment = event->button.y + EDITOR_TOOLBAR_Y_OFFSET;
 
   if ( x_alignment < 0)
     x_alignment = 0;
@@ -309,38 +292,56 @@ editor_toolbar_align (BjbEditorToolbar *self)
   constraint = clutter_bind_constraint_new (priv->parent_actor,
                                             CLUTTER_BIND_X,
                                             x_alignment);   
-  clutter_actor_add_constraint (priv->actor, constraint); */
+  clutter_actor_add_constraint (priv->actor, constraint);
 }
 
 static void
-show_edit_bar (BjbEditorToolbar *self)
+show_edit_bar (BjbEditorToolbar *self, GdkEvent *event)
 {
-  editor_toolbar_align (self);
+  if (event)
+    editor_toolbar_align (self, event);
+
   bjb_editor_toolbar_fade_in (self);
 }
 
-static void
-on_selection_changed (BjbEditorToolbar *self)
+static gboolean
+on_button_released (GtkWidget *widget,
+                    GdkEvent *event,
+                    BjbEditorToolbar *self)
 {
-  if (biji_note_obj_editor_has_selection (self->priv->note))
-    show_edit_bar (self);
+  switch (event->button.button)
+  {
+    /* If left click, see if selection */
+    case 1:
+      if (biji_note_obj_editor_has_selection (self->priv->note))
+        show_edit_bar (self, event);
 
-  else
-    bjb_editor_toolbar_fade_out (self);
+      else
+        bjb_editor_toolbar_fade_out (self);
+
+      return FALSE;
+
+    default:
+      return FALSE;
+  }
 }
 
 static gboolean
-on_button_pressed (GtkWidget *widget,GdkEvent  *event,BjbEditorToolbar *self)
+on_button_pressed (GtkWidget *widget,
+                   GdkEvent  *event,
+                   BjbEditorToolbar *self)
 {
-  /* Show toolbar on right-click */
-
-  if ( event->button.button != 3 )
+  switch (event->button.button)
   {
-    return FALSE ;    
-  }
+    /* Show toolbar on right-click */
+    case 3:
+      show_edit_bar (self, event);
+      return TRUE;
 
-  show_edit_bar (self);
-  return TRUE ;
+    /* Do not break stuff otherwise */
+    default :
+      return FALSE;
+  }
 }
 
 static gboolean
@@ -415,26 +416,18 @@ bjb_editor_toolbar_constructed (GObject *obj)
 {
   BjbEditorToolbar        *self = BJB_EDITOR_TOOLBAR(obj);
   BjbEditorToolbarPrivate *priv = self->priv ;
-
-  /* No choice but to connect to WebKitWebView signals
-   * The only alternative would be to have BijiEditor
-   * get the signals from there & transmit.
-   * This needs to create yet another Editor class */
-  WebKitWebView           *view;
+  GtkWidget               *view ;
 
   G_OBJECT_CLASS (bjb_editor_toolbar_parent_class)->constructed (obj);
 
-  /* text selected --> fade in */
-  view = WEBKIT_WEB_VIEW (biji_note_obj_editor_new (priv->note));
-  
-  g_signal_connect_swapped (view, "selection-changed",
-                            G_CALLBACK(on_selection_changed),self);
+  /* text selected --> fade in , and not selected --> fade out */
+  view = biji_note_obj_get_editor (priv->note);
 
   g_signal_connect(view,"button-press-event",
                    G_CALLBACK(on_button_pressed),self);
 
   g_signal_connect(view,"button-release-event",
-                   G_CALLBACK(on_button_pressed),self);
+                   G_CALLBACK(on_button_released),self);
 
   /* buttons */
   
