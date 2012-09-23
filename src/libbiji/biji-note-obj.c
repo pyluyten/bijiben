@@ -120,6 +120,7 @@ enum {
   NOTE_RENAMED,
   NOTE_DELETED,
   NOTE_CHANGED,
+  NOTE_COLOR_CHANGED,
   BIJI_OBJ_SIGNALS
 };
 
@@ -143,6 +144,16 @@ biji_note_obj_class_init (BijiNoteObjClass *klass)
                                                   0);
 
   biji_obj_signals[NOTE_CHANGED] = g_signal_new ( "changed" ,
+                                                  G_OBJECT_CLASS_TYPE (klass),
+                                                  G_SIGNAL_RUN_LAST,
+                                                  0, 
+                                                  NULL, 
+                                                  NULL,
+                                                  g_cclosure_marshal_VOID__VOID,
+                                                  G_TYPE_NONE,
+                                                  0);
+
+  biji_obj_signals[NOTE_COLOR_CHANGED] = g_signal_new ("color-changed" ,
                                                   G_OBJECT_CLASS_TYPE (klass),
                                                   G_SIGNAL_RUN_LAST,
                                                   0, 
@@ -326,22 +337,24 @@ void
 biji_note_obj_set_rgba(BijiNoteObj *n,GdkRGBA *rgba)
 {
     
-  if ( !n->priv->color  )
+  if (!n->priv->color)
   {    
-    n->priv->color = rgba ;
-    _biji_note_id_set_metadata_change_now(n->priv->id);
+    n->priv->color = rgba;
+    _biji_note_id_set_metadata_change_now (n->priv->id);
     _biji_note_obj_propose_saving (n);
-    g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
+    g_signal_emit (G_OBJECT (n), biji_obj_signals[NOTE_COLOR_CHANGED],0);
+//WK    g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
     return ;
   }
 
-  if ( !gdk_rgba_equal(n->priv->color,rgba) )
+  if (!gdk_rgba_equal (n->priv->color,rgba))
   {
     g_free(n->priv->color);
-    n->priv->color = rgba ;
+    n->priv->color = rgba;
     _biji_note_id_set_metadata_change_now(n->priv->id);
-    _biji_note_obj_propose_saving (n) ;
-    g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
+    _biji_note_obj_propose_saving (n);
+    g_signal_emit (G_OBJECT (n), biji_obj_signals[NOTE_COLOR_CHANGED],0);
+//WK    g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
   }  
 }
 

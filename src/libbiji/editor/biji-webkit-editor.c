@@ -115,14 +115,25 @@ biji_webkit_editor_paste (BijiWebkitEditor *self)
 }
 
 static void
+set_editor_color (GtkWidget *w, GdkRGBA *col)
+{
+  gtk_widget_override_background_color (w, GTK_STATE_FLAG_NORMAL, col);
+}
+
+static void
 biji_webkit_editor_init (BijiWebkitEditor *self)
 {
   WebKitWebView *view = WEBKIT_WEB_VIEW (self);
 
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BIJI_TYPE_WEBKIT_EDITOR, BijiWebkitEditorPrivate);
 
+  /* set standard settings */
   webkit_web_view_set_editable (view, TRUE);
   webkit_web_view_set_transparent (view, TRUE);
+
+  /* Padding */
+//WK  gtk_text_view_set_pixels_above_lines (GTK_TEXT_VIEW(priv->view),8);
+//WK  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(priv->view),16);
 }
 
 static void
@@ -134,15 +145,28 @@ biji_webkit_editor_finalize (GObject *object)
 }
 
 static void
+on_note_color_changed (BijiNoteObj *note, BijiWebkitEditor *self)
+{
+  set_editor_color (GTK_WIDGET (self), biji_note_obj_get_rgba (note));
+}
+
+static void
 biji_webkit_editor_constructed (GObject *obj)
 {
   BijiWebkitEditor *self = BIJI_WEBKIT_EDITOR (obj);
   BijiWebkitEditorPrivate *priv = self->priv;
   WebKitWebView *view = WEBKIT_WEB_VIEW (self);
 
+  /* Load the note */
   webkit_web_view_load_string (view,
                                biji_note_get_raw_text (priv->note),
                                NULL, NULL, NULL);
+
+  /* Apply color */
+  set_editor_color (GTK_WIDGET (self),
+                    biji_note_obj_get_rgba (priv->note));
+  g_signal_connect (priv->note, "color-changed",
+                    G_CALLBACK (on_note_color_changed), self);
 }
 
 static void

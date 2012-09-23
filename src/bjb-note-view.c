@@ -441,13 +441,6 @@ delete_item_callback (GtkWidget *item, gpointer user_data)
 }
 
 static void
-set_editor_color(BjbNoteView *v, GdkRGBA *to_be)
-{
-  gtk_widget_override_background_color(GTK_WIDGET(v->priv->view),
-                                       GTK_STATE_FLAG_NORMAL,to_be);
-}
-
-static void
 on_color_choosed(  GtkDialog *dialog,
                    gint       response_id,
                    BjbNoteView *view    )
@@ -457,10 +450,7 @@ on_color_choosed(  GtkDialog *dialog,
   gtk_color_chooser_get_rgba (GTK_COLOR_CHOOSER (dialog), color);
 
   if (response_id == GTK_RESPONSE_OK)
-  {
-    set_editor_color (view,color);
-    biji_note_obj_set_rgba (view->priv->note,color) ;
-  }
+    biji_note_obj_set_rgba (view->priv->note, color);
 
   gtk_widget_destroy (GTK_WIDGET (dialog));
 }
@@ -680,13 +670,9 @@ bjb_note_view_constructed (GObject *obj)
   gchar                  *font;
 
   /* view new from note deserializes the note-content. */
-//WK  priv->view = biji_text_view_new_from_note (priv->note);
-//WK  priv->buffer = gtk_text_view_get_buffer (priv->view);
-  priv->view = biji_note_obj_editor_new (priv->note); //WK
+  priv->view = biji_note_obj_editor_new (priv->note);
 
   settings = bjb_window_base_get_settings(priv->window);
-    
-//WK  editor = BIJI_NOTE_EDITOR (priv->view);
 
   priv->renamed = g_signal_connect(priv->note,"renamed",
                                    G_CALLBACK(on_note_renamed),
@@ -732,7 +718,7 @@ bjb_note_view_constructed (GObject *obj)
   clutter_actor_set_x_expand (overlay,TRUE);
   clutter_actor_set_y_expand (overlay,TRUE);
 
-  /* GtkTextView */
+  /* Text Editor (WebKitMainView) */
   scroll = gtk_scrolled_window_new (NULL,NULL);
   gtk_widget_show (scroll);
 
@@ -760,10 +746,6 @@ bjb_note_view_constructed (GObject *obj)
   gtk_widget_modify_font(GTK_WIDGET(priv->view),
                          pango_font_description_from_string(font));
 
-  /* Padding */
-//WK  gtk_text_view_set_pixels_above_lines (GTK_TEXT_VIEW(priv->view),8);
-//WK  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(priv->view),16);
-
   /* User defined color */
   GdkRGBA *color = NULL ;
   color = biji_note_obj_get_rgba(priv->note) ;
@@ -775,7 +757,6 @@ bjb_note_view_constructed (GObject *obj)
   }
 
   self->priv->color = color ;
-  set_editor_color (self,priv->color);
 
   /* Edition Toolbar */
   priv->edit_bar = bjb_editor_toolbar_new (overlay, self, priv->note);
