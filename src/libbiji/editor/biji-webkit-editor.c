@@ -108,6 +108,7 @@ biji_webkit_editor_init (BijiWebkitEditor *self)
 
   webkit_web_view_load_string (view, "test", NULL, NULL, NULL);
   webkit_web_view_set_editable (view, TRUE);
+  webkit_web_view_set_transparent (view, TRUE);
 }
 
 static void
