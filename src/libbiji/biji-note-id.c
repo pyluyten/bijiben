@@ -16,27 +16,29 @@ G_DEFINE_TYPE (BijiNoteID, biji_note_id, G_TYPE_OBJECT);
 static void
 biji_note_id_init (BijiNoteID *self)
 {
-	self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, biji_note_id_get_type(),
-	                                          BijiNoteIDPrivate);
-	self->priv->path = NULL;
-	self->priv->create_date = NULL;
+  self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, biji_note_id_get_type(),
+                                            BijiNoteIDPrivate);
+  self->priv->path = NULL;
+  self->priv->create_date = NULL;
 }
 
 static void
 biji_note_id_finalize (GObject *object)
 {
-	g_message("biji note id finalize");
+  BijiNoteID *id = BIJI_NOTE_ID (object);
 
-	G_OBJECT_CLASS (biji_note_id_parent_class)->finalize (object);
+  g_free (id->priv->path);
+
+  G_OBJECT_CLASS (biji_note_id_parent_class)->finalize (object);
 }
 
 static void
 biji_note_id_class_init (BijiNoteIDClass *klass)
 {
-	GObjectClass* object_class = G_OBJECT_CLASS (klass);
+  GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
-	object_class->finalize = biji_note_id_finalize;
-	g_type_class_add_private (klass, sizeof (BijiNoteIDPrivate));
+  object_class->finalize = biji_note_id_finalize;
+  g_type_class_add_private (klass, sizeof (BijiNoteIDPrivate));
 }
 
 //
@@ -63,18 +65,14 @@ biji_note_id_get_path(BijiNoteID* n)
   return n->priv->path ;
 }
 
-int
-set_note_id_path(BijiNoteID* n,gchar* path)
+void
+set_note_id_path(BijiNoteID* n,
+                 const gchar* path)
 {
-	if (BIJI_IS_NOTE_ID(n))
-	{
-		n->priv->path = path ;
-		return TRUE ;
-	}
-	else
-	{
-		return FALSE ;
-	}
+  g_return_if_fail (BIJI_IS_NOTE_ID (n));
+
+  g_free (n->priv->path);
+  n->priv->path = g_strdup (path);
 }
 
 void _biji_note_id_set_title(BijiNoteID *n,gchar* title)

@@ -40,7 +40,7 @@ void print_note_id(BijiNoteID* n);
 gboolean _biji_note_id_are_same(BijiNoteID *a, BijiNoteID *b);
 
 gchar* biji_note_id_get_path(BijiNoteID* n);
-int set_note_id_path(BijiNoteID* n,gchar* path);
+void set_note_id_path(BijiNoteID* n, const gchar* path);
 void _biji_note_id_set_title(BijiNoteID* n,gchar* title);
 gchar* _biji_note_id_get_title(BijiNoteID* n);
 

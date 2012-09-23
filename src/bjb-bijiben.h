@@ -58,8 +58,7 @@ Bijiben *bijiben_new (void);
 // Accessors
 
 const gchar *bijiben_get_bijiben_dir (void);
-void bijiben_set_book(GtkApplication *app,BijiNoteBook *book);
-BijiNoteBook *bijiben_get_book(GtkApplication *app) ;
+BijiNoteBook * bijiben_get_book(Bijiben *self);
 BjbSettings * bjb_app_get_settings(gpointer application);
 
 // Actions or callbacks 

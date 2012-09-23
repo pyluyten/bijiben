@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * bijiben.c
  * Copyright (C) Pierre-Yves LUYTEN 2011 <py@luyten.fr>
@@ -32,9 +31,6 @@
 #include "bjb-tags-view.h"
 #include "bjb-window-base.h"
 
-static void bijiben_startup (GApplication *application);
-
-// Currently, priv is useless structure.
 struct _BijibenPriv
 {
   BijiNoteBook *book;
@@ -46,26 +42,6 @@ G_DEFINE_TYPE (Bijiben, bijiben, GTK_TYPE_APPLICATION);
 static void
 bijiben_new_window (GApplication *app,GFile *file)
 {
-  gchar *bijiben_path;
-  GFile *folder;
-  BijiNoteBook *book;
-  
-  /* Sanitize dir, load book . but should be a thread */
-  bijiben_path =  g_strdup_printf("%s/bijiben",g_get_user_data_dir());
-  folder= g_file_new_for_path (bijiben_path);
-  g_file_make_directory(folder, NULL, NULL);
-  g_object_unref(folder);
-  book = biji_book_new_from_dir (bijiben_path);
-  g_free(bijiben_path);
-  BIJIBEN_APPLICATION (app)->priv->book = book ;
-
-  /* we should show propose importing or looking with tracker */
-  if ( book == NULL )
-  {
-    g_warning("notebook null");
-    return ;
-  }
-
   /* No file : show main window */
   if (file == NULL)
   {
@@ -85,59 +61,65 @@ bijiben_new_window (GApplication *app,GFile *file)
   }
 }
 
-
-
-// If Bijiben already runs, show the window(s) and that's all folks.
 static void
 bijiben_activate (GApplication *app)
 {
-  GList * list = gtk_application_get_windows (GTK_APPLICATION(app));
+  GList *windows = gtk_application_get_windows (GTK_APPLICATION (app));
 
-  // try each window and show main window.
-  if ( list )
-  {
-	g_list_foreach(list,(GFunc) gtk_window_present,NULL) ;	              
-  }
-
-  // create the main window
-  else 
-	bijiben_new_window (app, NULL);  
-	
-  return ;
+  // ensure the last used window is raised
+  gtk_window_present (g_list_nth_data (windows, 0));
 }
 
-// this function works ? why ? 
 static void
 bijiben_open (GApplication  *application,
               GFile        **files,
               gint           n_files,
               const gchar   *hint)
 {
-  g_message("bijiben open");
-
-  //GList * list = gtk_application_get_windows (GTK_APPLICATION(app));
-  // if list ...
-	
   gint i;
 
   for (i = 0; i < n_files; i++)
-    bijiben_new_window(application,files[i]);
-    /*create_new_window_for_note(application,
-                               biji_note_get_new_from_file(
-                                                    g_file_get_path(files[i])));*/
+    bijiben_new_window(application, files[i]);
 }
 
 static void
 bijiben_init (Bijiben *object)
 {	
-  object->priv = 
-  G_TYPE_INSTANCE_GET_PRIVATE(object,BIJIBEN_TYPE_APPLICATION,BijibenPriv);
-
-  object->priv->book = NULL ;
+  object->priv =
+    G_TYPE_INSTANCE_GET_PRIVATE(object,BIJIBEN_TYPE_APPLICATION,BijibenPriv);
 
   // TODO create a preferences GOjbect with properties to bind.
   g_message("bijiben init : preferences");
   object->priv->settings = initialize_settings();
+}
+
+static void
+bijiben_startup (GApplication *application)
+{
+  Bijiben *self = BIJIBEN_APPLICATION (application);
+  gchar *storage_path;
+  GFile *storage;
+
+  G_APPLICATION_CLASS (bijiben_parent_class)->startup (application);
+
+  if (gtk_clutter_init (NULL, NULL) != CLUTTER_INIT_SUCCESS)
+    {
+      g_warning ("Unable to initialize Clutter");
+      return;
+    }
+
+  bjb_app_menu_set(application);
+
+  storage_path = g_build_filename (g_get_user_data_dir (), "bijiben", NULL);
+  storage = g_file_new_for_path (storage_path);
+
+  self->priv->book = biji_note_book_new (storage);
+
+  g_free (storage_path);
+  g_object_unref (storage);
+
+  // create the first window
+  bijiben_new_window (application, NULL);
 }
 
 static void
@@ -149,12 +131,15 @@ bijiben_finalize (GObject *object)
 static void
 bijiben_class_init (BijibenClass *klass)
 {
-  G_APPLICATION_CLASS (klass)->activate = bijiben_activate;
-  G_APPLICATION_CLASS (klass)->open = bijiben_open;
-  G_APPLICATION_CLASS (klass)->startup = bijiben_startup;
+  GApplicationClass *aclass = G_APPLICATION_CLASS (klass);
+  GObjectClass *oclass = G_OBJECT_CLASS (klass);
 
-  G_OBJECT_CLASS (klass)->finalize = bijiben_finalize;
-	
+  aclass->activate = bijiben_activate;
+  aclass->open = bijiben_open;
+  aclass->startup = bijiben_startup;
+
+  oclass->finalize = bijiben_finalize;
+
   g_type_class_add_private (klass, sizeof (BijibenPriv));
 }
 
@@ -163,26 +148,16 @@ bijiben_new (void)
 {
   g_type_init ();
 
-  return g_object_new (bijiben_get_type (),
+  return g_object_new (BIJIBEN_TYPE_APPLICATION,
 	                   "application-id", "org.gnome.bijiben",
 	                   "flags", G_APPLICATION_HANDLES_OPEN,
 	                   NULL);
 }
 
-void
-bijiben_set_book(GtkApplication *app,BijiNoteBook *book)
-{
-  g_return_if_fail(BIJIBEN_IS_APPLICATION(app)) ;
-	
-  BIJIBEN_APPLICATION(app)->priv->book = book ;
-}
-
 BijiNoteBook *
-bijiben_get_book(GtkApplication *app)
+bijiben_get_book(Bijiben *self)
 {
-  g_return_val_if_fail(BIJIBEN_IS_APPLICATION(app),NULL) ;
-	
-  return BIJIBEN_APPLICATION(app)->priv->book ;
+  return self->priv->book ;
 }
 
 const gchar *
@@ -195,8 +170,6 @@ bijiben_get_bijiben_dir (void)
   }
   return (const gchar *) icons_dir;
 }
-
-/* const gchar * bijiben_get_bijiben_private_dir (void) */
 
 BjbSettings * bjb_app_get_settings(gpointer application)
 {
@@ -227,18 +200,4 @@ gpointer
 create_new_main_window(gpointer app)
 {
   return bjb_window_base_new(app);
-}
-
-void
-bijiben_startup (GApplication *application)
-{
-  G_APPLICATION_CLASS (bijiben_parent_class)->startup (application);
-
-  if (gtk_clutter_init (NULL, NULL) != CLUTTER_INIT_SUCCESS)
-    {
-      g_warning ("Unable to initialize Clutter");
-      return;
-    }
-
-  bjb_app_menu_set(application) ; 
 }

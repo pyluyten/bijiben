@@ -237,18 +237,6 @@ bjb_window_base_get_book(GtkWidget * win)
    }
 }
 
-void
-bjb_window_base_set_book(GtkWidget *win, BijiNoteBook *notes)
-{
-  BjbWindowBase *b = BJB_WINDOW_BASE(win);
-
-  if (b->priv)
-    bijiben_set_book(b->priv->app,notes) ;
-
-  else
-    g_warning ("Cannot set notes collection.");
-}
-
 GList *
 bjb_window_base_get_tags(GtkWidget * win)
 {

@@ -12,11 +12,29 @@ struct _BijiNoteBookPrivate
   GList *tags;            // GList of TagBooks
   GtkTextTagTable *table; // TODO common tags table for all notes
   gint length;            // simpler than crossing GList 
-  // GCancellable // when a note is deleted. it could even be a list of ?
 
   /* Signals */
   gulong note_renamed ;
+
+  GFile *location;
+  GCancellable *load_cancellable;
 };
+
+/* Properties */
+enum {
+  PROP_0,
+  PROP_LOCATION,
+  BIJI_BOOK_PROPERTIES
+};
+
+/* Signals */
+enum {
+  BOOK_AMENDED,
+  BIJI_BOOK_SIGNALS
+};
+
+static guint biji_book_signals[BIJI_BOOK_SIGNALS] = { 0 };
+static GParamSpec *properties[BIJI_BOOK_PROPERTIES] = { NULL, };
 
 #define BIJI_NOTE_BOOK_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), BIJI_TYPE_NOTE_BOOK, BijiNoteBookPrivate))
 
@@ -44,40 +62,56 @@ static void
 biji_note_book_finalize (GObject *object)
 {
   BijiNoteBook *book = BIJI_NOTE_BOOK (object) ;
-    
+
+  if (book->priv->load_cancellable)
+    g_cancellable_cancel (book->priv->load_cancellable);
+
+  g_clear_object (&book->priv->load_cancellable);
+  g_clear_object (&book->priv->location);
+
   g_list_free(book->priv->tags) ;
   g_list_free_full(book->priv->notes,destroy_note_if_needed);
 
   G_OBJECT_CLASS (biji_note_book_parent_class)->finalize (object);
 }
 
-/* Signals */
-enum {
-  BOOK_AMENDED,
-  BIJI_BOOK_SIGNALS
-};
+static void
+biji_note_book_set_property (GObject      *object,
+                             guint         property_id,
+                             const GValue *value,
+                             GParamSpec   *pspec)
+{
+  BijiNoteBook *self = BIJI_NOTE_BOOK (object);
 
-static guint biji_book_signals [BIJI_BOOK_SIGNALS] = { 0 };
+
+  switch (property_id)
+    {
+    case PROP_LOCATION:
+      self->priv->location = g_value_dup_object (value);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
 
 static void
-biji_note_book_class_init (BijiNoteBookClass *klass)
+biji_note_book_get_property (GObject    *object,
+                             guint       property_id,
+                             GValue     *value,
+                             GParamSpec *pspec)
 {
-  GObjectClass* object_class = G_OBJECT_CLASS (klass);
+  BijiNoteBook *self = BIJI_NOTE_BOOK (object);
 
-  g_type_class_add_private (klass, sizeof (BijiNoteBookPrivate));
-  object_class->finalize = biji_note_book_finalize;
-
-  biji_book_signals[BOOK_AMENDED] = g_signal_new ( "changed" ,
-	                                              G_OBJECT_CLASS_TYPE (klass),
-	    	  	    	  	    	  	    	  G_SIGNAL_RUN_LAST,
-	     		                                  0, 
-	                                              NULL, 
-	                                              NULL,
-	                                              g_cclosure_marshal_VOID__VOID,
-	                                              G_TYPE_NONE,
-	                                              0);
-	                                              
-  g_message("notebook changed");
+  switch (property_id)
+    {
+    case PROP_LOCATION:
+      g_value_set_object (value, self->priv->location);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
 }
 
 /* tag books are a trial. not really necessary, but make life easier*/
@@ -130,54 +164,6 @@ biji_book_get_or_create_tag_book(BijiNoteBook *book, gchar *tag)
   return result ;
 }
 
-BijiNoteBook *
-_biji_note_book_get_new_from_dir(gchar *folder)
-{
-  BijiNoteBook *ret;
-  GDir *dir;
-
-  ret = g_object_new(BIJI_TYPE_NOTE_BOOK,NULL);		
-  dir = g_dir_open (folder,0, NULL);
-  if (dir)
-  {
-    const gchar *file = NULL;
-    while ( (file = g_dir_read_name (dir)) )
-    {
-      if ( g_str_has_suffix(file,".note") )
-      {
-        gchar * path = g_strdup_printf("%s/%s",folder,file);
-        BijiNoteObj* cur = biji_note_get_new_from_file(path);
-        if ( BIJI_IS_NOTE_OBJ ( cur ) ) 
-        {
-          // Add the note to the book
-          _biji_note_book_add_one_note(ret,cur);            
-        }
-      }
-    }
-      
-  // FIXME 
-  g_dir_close (dir), dir = NULL;      
-  }
-	
-  return ret;
-}
-
-gboolean
-_biji_note_book_is_title_unique(BijiNoteBook *book,gchar *title)
-{
-	gint i;
-
-	for ( i=0 ; i < book->priv->length ; i++ )
-	{
-		BijiNoteObj *iter = BIJI_NOTE_OBJ(g_list_nth_data (book->priv->notes,i));
-		if ( g_strcmp0 (biji_note_get_title(iter),title) == 0 )
-		{
-			return FALSE ;
-		}
-	}
-	return TRUE ;
-}
-
 static void
 _biji_note_book_sanitize_title(BijiNoteBook *book,BijiNoteObj *note)
 {   
@@ -223,7 +209,7 @@ notify_changed(BijiNoteObj *note, BijiNoteBook *book)
   return FALSE ;
 }
 
-void
+static void
 _biji_note_book_add_one_note(BijiNoteBook *book,BijiNoteObj *note)
 {
   g_return_if_fail(BIJI_IS_NOTE_OBJ(note));
@@ -266,6 +252,162 @@ _biji_note_book_add_one_note(BijiNoteBook *book,BijiNoteObj *note)
     
   //TODO g_signal_connect(note,"deleted"...) ;
   g_signal_emit ( G_OBJECT (book), biji_book_signals[BOOK_AMENDED],0);
+}
+
+#define ATTRIBUTES_FOR_NOTEBOOK "standard::content-type,standard::name"
+
+static void
+load_location_error (GFile *location,
+                     GError *error)
+{
+  gchar *path = g_file_get_path (location);
+  g_printerr ("Unable to load location %s: %s", path, error->message);
+
+  g_free (path);
+  g_error_free (error);
+}
+
+static void
+enumerate_next_files_ready_cb (GObject *source,
+                               GAsyncResult *res,
+                               gpointer user_data)
+{
+  GFileEnumerator *enumerator = G_FILE_ENUMERATOR (source);
+  BijiNoteBook *self;
+  GList *files, *l;
+  GError *error = NULL;
+  gchar *base_path;
+
+  files = g_file_enumerator_next_files_finish (enumerator, res, &error);
+
+  if (error != NULL)
+    {
+      load_location_error (g_file_enumerator_get_container (enumerator), error);
+      return;
+    }
+
+  self = user_data;
+  base_path = g_file_get_path (self->priv->location);
+
+  // now load the notes
+  for (l = files; l != NULL; l = l->next)
+    {
+      GFileInfo *info;
+      const gchar *name;
+      gchar *path;
+      BijiNoteObj *note;
+
+      info = l->data;
+      name = g_file_info_get_name (info);
+
+      if (!g_str_has_suffix (name, ".note"))
+        continue;
+
+      path = g_build_filename (base_path, name, NULL);
+      note = biji_note_get_new_from_file (path);
+
+      _biji_note_book_add_one_note (self, note);
+
+      g_free (path);
+    }
+
+  g_free (base_path);
+  g_list_free_full (files, g_object_unref);
+}
+
+static void
+enumerate_children_ready_cb (GObject *source,
+                             GAsyncResult *res,
+                             gpointer user_data)
+{
+  GFile *location = G_FILE (source);
+  GFileEnumerator *enumerator;
+  GError *error = NULL;
+  BijiNoteBook *self;
+
+  enumerator = g_file_enumerate_children_finish (location,
+                                                 res, &error);
+
+  if (error != NULL)
+    {
+      load_location_error (location, error);
+      return;
+    }
+
+  self = user_data;
+
+  // enumerate all files
+  g_file_enumerator_next_files_async (enumerator, G_MAXINT,
+                                      G_PRIORITY_DEFAULT,
+                                      self->priv->load_cancellable,
+                                      enumerate_next_files_ready_cb,
+                                      self);
+}
+
+static void
+note_book_load_from_location (BijiNoteBook *self)
+{
+  self->priv->load_cancellable = g_cancellable_new ();
+  g_file_enumerate_children_async (self->priv->location,
+                                   ATTRIBUTES_FOR_NOTEBOOK, 0,
+                                   G_PRIORITY_DEFAULT,
+                                   self->priv->load_cancellable,
+                                   enumerate_children_ready_cb,
+                                   self);
+}
+
+static void
+biji_note_book_constructed (GObject *object)
+{
+  BijiNoteBook *self = BIJI_NOTE_BOOK (object);
+
+  G_OBJECT_CLASS (biji_note_book_parent_class)->constructed (object);
+
+  note_book_load_from_location (self);
+}
+
+static void
+biji_note_book_class_init (BijiNoteBookClass *klass)
+{
+  GObjectClass* object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = biji_note_book_finalize;
+  object_class->constructed = biji_note_book_constructed;
+  object_class->set_property = biji_note_book_set_property;
+  object_class->get_property = biji_note_book_get_property;
+
+  biji_book_signals[BOOK_AMENDED] = g_signal_new ( "changed" ,
+                                                   G_OBJECT_CLASS_TYPE (klass),
+                                                   G_SIGNAL_RUN_LAST,
+                                                   0, NULL, NULL,
+                                                   g_cclosure_marshal_VOID__VOID,
+                                                   G_TYPE_NONE,
+                                                   0);
+  properties[PROP_LOCATION] =
+    g_param_spec_object("location",
+                        "The book location",
+                        "The location where the notes are loaded and saved",
+                        G_TYPE_FILE,
+                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+
+  g_object_class_install_properties (object_class, BIJI_BOOK_PROPERTIES, properties);
+  g_type_class_add_private (klass, sizeof (BijiNoteBookPrivate));
+}
+
+gboolean
+_biji_note_book_is_title_unique(BijiNoteBook *book,gchar *title)
+{
+	gint i;
+
+	for ( i=0 ; i < book->priv->length ; i++ )
+	{
+		BijiNoteObj *iter = BIJI_NOTE_OBJ(g_list_nth_data (book->priv->notes,i));
+		if ( g_strcmp0 (biji_note_get_title(iter),title) == 0 )
+		{
+			return FALSE ;
+		}
+	}
+	return TRUE ;
 }
 
 void
@@ -492,9 +634,17 @@ biji_note_book_get_tag_template(BijiNoteBook *book, gchar *tag)
   return NULL ;
 }
 
+BijiNoteBook *
+biji_note_book_new (GFile *location)
+{
+  return g_object_new(BIJI_TYPE_NOTE_BOOK,
+                      "location", location,
+                      NULL);
+}
+
 /* Todo : check file type */
 BijiNoteObj*
-biji_note_get_new_from_file (gchar* path)
+biji_note_get_new_from_file (const gchar* path)
 {
   BijiNoteObj* ret ;
 
@@ -524,22 +674,3 @@ biji_note_get_new_from_string (gchar* title, gchar *folder)
 
   return ret ;
 }
-
-BijiNoteBook *
-biji_book_new_from_dir(gchar *tomboy_format_folder)
-{
-  if (tomboy_format_folder != NULL)
-  {
-    return _biji_note_book_get_new_from_dir(tomboy_format_folder);
-  }
-  return NULL ;
-}
-
-BijiNoteBook *
-note_book_new_from_tomboy_dir()
-{
-    gchar *tomboy_dir ;
-    tomboy_dir = g_strdup_printf("%s/tomboy",g_get_user_data_dir());
-    return _biji_note_book_get_new_from_dir(tomboy_dir);
-}
-

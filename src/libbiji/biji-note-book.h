@@ -32,9 +32,9 @@ struct _BijiNoteBook
 
 GType biji_note_book_get_type (void) G_GNUC_CONST; 
 
-BijiNoteBook *_biji_note_book_get_new_from_dir(gchar* folder);
+BijiNoteBook * biji_note_book_new (GFile *location);
+
 gboolean _biji_note_book_is_title_unique(BijiNoteBook *book,gchar *title);
-void _biji_note_book_add_one_note(BijiNoteBook *book,BijiNoteObj *note);
 gboolean _note_book_remove_one_note(BijiNoteBook *book,BijiNoteObj *note);
 void _biji_note_book_add_note_to_tag_book(BijiNoteBook *book,BijiNoteObj *note,gchar *tag);
 
@@ -82,13 +82,10 @@ BijiNoteObj * biji_note_book_get_tag_template(BijiNoteBook *book, gchar *tag);
 BijiNoteBook *biji_book_new_from_dir(gchar *tomboy_format_folder);
 
 // Create a Note from a tomboy.note file
-BijiNoteObj* biji_note_get_new_from_file (gchar* path);
+BijiNoteObj* biji_note_get_new_from_file (const gchar* path);
 
 /* Get a blanck new note FIXME set path, dates, content */
 BijiNoteObj* biji_note_get_new_from_string (gchar* title,gchar *folder);
-
-/* Get all the tomboy notes */
-BijiNoteBook *note_book_new_from_tomboy_dir();
 
 G_END_DECLS
 

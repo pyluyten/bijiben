@@ -62,8 +62,6 @@ BjbSettings *bjb_window_base_get_settings(GtkWidget *win);
 
 BijiNoteBook * bjb_window_base_get_book(GtkWidget * win);
 
-void bjb_window_base_set_book(GtkWidget * win, BijiNoteBook *notes);
-
 GList * bjb_window_base_get_tags(GtkWidget * win);
 
 void bjb_window_base_set_tags(GtkWidget * win, GList * tags);
