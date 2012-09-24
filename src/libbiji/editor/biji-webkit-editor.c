@@ -1,9 +1,8 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * WebkitWebView
+ * Bijiben
  * Copyright (C) buddho 2012 <buddho@localhost.localdomain>
  * 
-WebkitWebView is free software: you can redistribute it and/or modify it
+ * Bijiben is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
@@ -135,37 +134,32 @@ biji_webkit_editor_init (BijiWebkitEditor *self)
 
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BIJI_TYPE_WEBKIT_EDITOR, BijiWebkitEditorPrivate);
 
-  /* set standard settings */
+  /* set standard settings
+   * pixels above line, left margin might be for CSS */
   webkit_web_view_set_editable (view, TRUE);
   webkit_web_view_set_transparent (view, TRUE);
-
-  /* Padding */
-//WK  gtk_text_view_set_pixels_above_lines (GTK_TEXT_VIEW(priv->view),8);
-//WK  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(priv->view),16);
 }
 
 static void
 biji_webkit_editor_finalize (GObject *object)
 {
-  BijiWebkitEditor *self = BIJI_WEBKIT_EDITOR (object);
-
-  /* Signal the note it has no more editor */
-  g_warning ("biji webkit editor finalize");
-
-  /*g_signal_emit (G_OBJECT (object),
-                 biji_editor_signals[EDITOR_CLOSED],
-                 0);*/
-  on_biji_note_obj_editor_closed (self->priv->note);
-
   G_OBJECT_CLASS (biji_webkit_editor_parent_class)->finalize (object);
 }
 
 static void
 on_content_changed (WebKitWebView *view)
 {
-  BijiWebkitEditor *self = BIJI_WEBKIT_EDITOR (self);
+  BijiWebkitEditor     *self = BIJI_WEBKIT_EDITOR (view);
+  WebKitDOMDocument    *dom;
+  WebKitDOMHTMLElement *elem;
+  gchar                *result;
 
-  g_warning ("content changed, should queue save. Instead we save directly");
+  dom = webkit_web_view_get_dom_document (view);
+  elem = webkit_dom_document_get_body (dom);
+  result = webkit_dom_html_element_get_inner_html (elem);
+
+  biji_note_obj_set_html_content (self->priv->note, result);
+  g_free (result);
 }
 
 static void
@@ -177,15 +171,20 @@ on_note_color_changed (BijiNoteObj *note, BijiWebkitEditor *self)
 static void
 biji_webkit_editor_constructed (GObject *obj)
 {
-  BijiWebkitEditor *self = BIJI_WEBKIT_EDITOR (obj);
-  BijiWebkitEditorPrivate *priv = self->priv;
-  WebKitWebView *view = WEBKIT_WEB_VIEW (self);
+  BijiWebkitEditor *self;
+  BijiWebkitEditorPrivate *priv;
+  WebKitWebView *view;
+  gchar *html;
+
+  self = BIJI_WEBKIT_EDITOR (obj);
+  view = WEBKIT_WEB_VIEW (self);
+  priv = self->priv;
 
   /* Load the note */
-  /* Instead raw text we want to retrieve note HTML */
-  webkit_web_view_load_string (view,
-                               biji_note_get_raw_text (priv->note),
-                               NULL, NULL, NULL);
+  html = biji_note_obj_get_html (priv->note);
+
+  if (html)
+    webkit_web_view_load_string (view, html, NULL, NULL, NULL);
 
   /* Apply color */
   set_editor_color (GTK_WIDGET (self),

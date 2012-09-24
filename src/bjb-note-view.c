@@ -601,7 +601,7 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
   /* Menu */
   button = gd_main_toolbar_add_menu(gd,"emblem-system-symbolic",NULL,FALSE);
 
-  gtk_menu_button_set_menu (GTK_MENU_BUTTON (button),
+  gtk_menu_button_set_popup (GTK_MENU_BUTTON (button),
                             bjb_note_menu_new (self));
 
   /* Fix the h size for color square since gdk drawing area */

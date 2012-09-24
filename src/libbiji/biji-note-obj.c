@@ -109,6 +109,8 @@ biji_note_obj_finalize (GObject *object)
   // buffer
 
   // free content
+  if (priv->html)
+    g_free (priv->html);
 
   // tags
   g_list_free (priv->tags);
@@ -559,34 +561,28 @@ note_obj_get_editor(gpointer note_obj)
 gboolean
 note_obj_save_note_using_buffer (gpointer note_obj)
 {
-  g_warning ("note obj save note using buffer");
-
+  gboolean result;
   BijiLazySerializer *serializer;
-//WK  xmlBufferPtr buf;
-  gboolean result ;
   BijiNoteObj *note = BIJI_NOTE_OBJ(note_obj);
   BijiNoteID *id = note_get_id (note);
 
-  // Change the last change date propery.
+  // Change the last change date propery
   _biji_note_id_set_change_date_now(note->priv->id);
   
-// Work on the content. this func also updates note_obj->priv->content.
-//WK  buf = note_obj_serialize(note_obj,3);
-//WK result = g_file_set_contents (biji_note_id_get_path(id), (gchar*) buf->content,-1,NULL);*/
+  // Work on the content
   serializer = biji_lazy_serializer_new (note);
   result = biji_lazy_serialize (serializer);
 
-  /* Update the icon */
+  // Update the icon
   g_object_unref (note->priv->icon);
   note->priv->icon = NULL ;
   biji_note_obj_get_icon (note);
 
-  /* Alert */
+  // Alert
   g_signal_emit ( G_OBJECT (note_obj), 
                   biji_obj_signals[NOTE_CHANGED],
                   0);
 
-//WK xmlBufferFree(buf);
   return result ;
 }
 
@@ -931,35 +927,30 @@ gchar *biji_note_obj_get_create_date(BijiNoteObj *note)
 
 /* Webkit */
 
-/*static*/ void
-on_biji_note_obj_editor_closed (BijiNoteObj *note)
+gchar *
+biji_note_obj_get_html (BijiNoteObj *note)
 {
-  WebKitDOMDocument *dom;
-  WebKitDOMHTMLElement* elem;
+  return note->priv->html;
+}
 
-  g_warning ("note closed");
-  dom = webkit_web_view_get_dom_document (note->priv->editor);
-  elem = webkit_dom_document_get_body (dom);
-  note->priv->html = webkit_dom_html_element_get_inner_html (elem);
-  g_warning ("html:\n%s", note->priv->html);
+void
+biji_note_obj_set_html_content (BijiNoteObj *note, gchar *html)
+{
+  // TODO : queue_save with timeout struct
 
-  note->priv->editor = NULL;
-
-  /* Instead the webkit edidtor has to check text changed
-   * and when note is closed, if changed then save */
-  note_obj_save_note_using_buffer (note);
+  if (html)
+  {
+    g_free (note->priv->html);
+    note->priv->html = g_strdup (html);
+    note_obj_save_note_using_buffer (note);
+  }
 }
 
 GtkWidget *
 biji_note_obj_get_editor (BijiNoteObj *note)
 {
   if (!note->priv->editor)
-  {
     note->priv->editor = biji_webkit_editor_new (note);
-
-    /*g_signal_connect_swapped (note->priv->editor,"closed",
-                      G_CALLBACK (on_biji_note_obj_editor_closed),note);*/
-  }
 
   return GTK_WIDGET (note->priv->editor);
 }

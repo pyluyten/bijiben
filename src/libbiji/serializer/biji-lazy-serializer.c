@@ -37,7 +37,6 @@ struct _BijiLazySerializerPrivate
   BijiNoteObj *note;
 
   xmlBufferPtr buf;
-  xmlTextWriterPtr writer;
 };
 
 static void
@@ -80,14 +79,13 @@ static void
 biji_lazy_serializer_init (BijiLazySerializer *self)
 {
   BijiLazySerializerPrivate *priv;
-  /* create the xmlBuffer */
+
   priv = G_TYPE_INSTANCE_GET_PRIVATE (self,
                                       BIJI_TYPE_LAZY_SERIALIZER,
                                       BijiLazySerializerPrivate);
   self->priv = priv;
 
   priv->buf = xmlBufferCreate();
-  priv->writer = xmlNewTextWriterMemory(priv->buf, 0);
 }
 
 static void
@@ -96,8 +94,7 @@ biji_lazy_serializer_finalize (GObject *object)
   BijiLazySerializer *self = BIJI_LAZY_SERIALIZER (object);
   BijiLazySerializerPrivate *priv = self->priv;
 
-  xmlBufferFree (priv->buf);  
-  xmlFreeTextWriter(priv->writer);
+  xmlBufferFree (priv->buf);
 
   G_OBJECT_CLASS (biji_lazy_serializer_parent_class)->finalize (object);
 }
@@ -132,16 +129,40 @@ biji_lazy_serializer_new (BijiNoteObj *note)
                        NULL);
 }
 
+static void
+serialize_node (xmlTextWriterPtr writer, gchar *node, gchar *value)
+{
+  xmlTextWriterWriteRaw     (writer, BAD_CAST "\n  ");
+  xmlTextWriterStartElement (writer, BAD_CAST node);
+  xmlTextWriterWriteString  (writer,BAD_CAST value);
+  xmlTextWriterEndElement   (writer);
+}
+
+static void
+serialize_tags (gchar *tag, xmlTextWriterPtr writer)
+{
+  gchar *string;
+
+  string = g_strdup_printf("system:notebook:%s", tag);
+  serialize_node (writer, "tag", string);
+
+  g_free (string);
+}
+
 gboolean
 biji_lazy_serialize (BijiLazySerializer *self)
 {
   BijiLazySerializerPrivate *priv = self->priv;
-  xmlTextWriterPtr writer = priv->writer;
-  BijiNoteID *id;
+  BijiNoteID                *id;
+  gchar                     *html;
+  GList                     *tags;
+  GdkRGBA                   *color;
+  xmlTextWriterPtr          writer;
 
   id = note_get_id (priv->note);
+  writer = xmlNewTextWriterMemory(priv->buf, 0);
 
-  /* Header */
+  // Header
   xmlTextWriterStartDocument (writer,"1.0","utf-8",NULL);
 
   xmlTextWriterStartElement (writer, BAD_CAST "note");
@@ -156,26 +177,68 @@ biji_lazy_serialize (BijiLazySerializer *self)
   xmlTextWriterWriteAttributeNS (writer, NULL, BAD_CAST "xmlns", NULL, 
                                  BAD_CAST "http://projects.gnome.org/bijiben");
 
-  /* <Title> */
-  xmlTextWriterWriteRaw (writer, BAD_CAST "\n  ");
-  xmlTextWriterStartElement (writer, BAD_CAST "title");
-  xmlTextWriterWriteString (writer,
-                           BAD_CAST biji_note_get_title (priv->note));
-  xmlTextWriterEndElement (writer);
+  // <Title>
+  serialize_node (writer, "title", biji_note_get_title (priv->note));
 
-  /* <text> */
+  // <text> 
   xmlTextWriterWriteRaw(writer, BAD_CAST "\n  ");
   xmlTextWriterStartElement(writer, BAD_CAST "text");
   xmlTextWriterWriteAttributeNS(writer, BAD_CAST "xml",
                                 BAD_CAST "space", NULL, 
                                 BAD_CAST "preserve");
 
-  /* TODO : note content
-   * and end metadata */
+  // <note-content>
+  xmlTextWriterStartElement(writer, BAD_CAST "note-content");
+  html = biji_note_obj_get_html (priv->note);
 
-  /* <note> */
+  if (html)
+    xmlTextWriterWriteRaw(writer, BAD_CAST (html));
+
+  xmlTextWriterEndElement (writer);
+
+  // </text>  
+  xmlTextWriterEndElement(writer);
+
+  // <last-change-date>
+  serialize_node (writer, "last-change-date",
+                  biji_note_id_get_last_change_date(id));
+
+  serialize_node (writer, "last-metadata-change-date",
+                  biji_note_id_get_last_metadata_change_date(id));
+
+  serialize_node (writer, "create-date",
+                  biji_note_id_get_create_date(id));
+
+  serialize_node (writer, "cursor-position", "0");
+  serialize_node (writer, "selection-bound-position", "0");
+  serialize_node (writer, "width", "0");
+  serialize_node (writer, "height", "0");
+  serialize_node (writer, "x", "0");
+  serialize_node (writer, "y", "0");
+
+  color =  biji_note_obj_get_rgba (priv->note) ;
+    
+  if ( color )
+  {
+    serialize_node (writer, "color", gdk_rgba_to_string (color));
+  }
+
+  //<tags>
+  xmlTextWriterWriteRaw(writer, BAD_CAST "\n ");
+  xmlTextWriterStartElement (writer, BAD_CAST "tags");
+  tags = _biji_note_obj_get_tags (priv->note);
+  g_list_foreach (tags, (GFunc) serialize_tags, writer);
+  xmlTextWriterEndElement (writer);
+  g_list_free (tags);
+
+  // <open-on-startup>
+  serialize_node (writer, "open-on-startup", "False");
+
+  // <note>
   xmlTextWriterWriteRaw(writer, BAD_CAST "\n ");
   xmlTextWriterEndElement(writer);
+
+  xmlFreeTextWriter(writer);
 
   return g_file_set_contents (biji_note_id_get_path(id),
                               (gchar*) priv->buf->content,

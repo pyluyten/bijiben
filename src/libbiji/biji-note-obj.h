@@ -147,7 +147,9 @@ gchar *biji_note_obj_get_create_date(BijiNoteObj *note);
 
 GtkWidget * biji_note_obj_get_editor (BijiNoteObj *note);
 
-void on_biji_note_obj_editor_closed (BijiNoteObj *note);
+void biji_note_obj_set_html_content (BijiNoteObj *note, gchar *html);
+
+gchar * biji_note_obj_get_html (BijiNoteObj *note);
 
 gboolean biji_note_obj_is_opened(BijiNoteObj *note);
 
