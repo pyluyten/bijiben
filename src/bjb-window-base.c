@@ -12,7 +12,7 @@
 
 
 #define BJB_WIDTH 880
-#define BJB_HEIGHT 780
+#define BJB_HEIGHT 600
 #define BJB_DEFAULT_FONT "Serif 10"
 
 
@@ -104,7 +104,6 @@ bjb_window_base_init (BjbWindowBase *self)
   priv = self->priv;
     
   /* Title is set by frame. icon is app wide. */
-  gtk_widget_set_size_request (GTK_WIDGET (self), 300, 150 );
   gtk_window_set_default_size (GTK_WINDOW(self),  BJB_WIDTH, BJB_HEIGHT );
   gtk_window_set_position(GTK_WINDOW(self),GTK_WIN_POS_CENTER);
 

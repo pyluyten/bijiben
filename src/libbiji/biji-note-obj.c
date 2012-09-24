@@ -18,7 +18,7 @@
 
 /* Icon */
 #define ICON_WIDTH 200
-#define ICON_HEIGHT 260
+#define ICON_HEIGHT 240
 #define ICON_FONT "Purusa 10"
 
 struct _BijiNoteObjPrivate
