@@ -264,7 +264,7 @@ xmlBufferPtr
 note_obj_serialize(gpointer note, gint test)
 {
   BijiNoteObj *note_obj = BIJI_NOTE_OBJ(note);
-  GdkRGBA *color = NULL ;
+  GdkRGBA color;
     
   xmlBufferPtr buf = xmlBufferCreate();
   xmlTextWriterPtr writer = xmlNewTextWriterMemory(buf, 0);
@@ -373,14 +373,12 @@ note_obj_serialize(gpointer note, gint test)
   xmlTextWriterEndElement(writer);
 
   //<color>
-  color =  biji_note_obj_get_rgba(note_obj) ;
-    
-  if ( color )
+  if ( biji_note_obj_get_rgba(note_obj, &color) )
   {
     xmlTextWriterWriteRaw(writer, BAD_CAST "\n  ");
     xmlTextWriterStartElement(writer, BAD_CAST "color");
     xmlTextWriterWriteString(writer,
-                             BAD_CAST (gdk_rgba_to_string(color)));
+                             BAD_CAST (gdk_rgba_to_string(&color)));
     xmlTextWriterEndElement(writer);
   }
 

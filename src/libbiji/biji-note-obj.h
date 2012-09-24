@@ -72,7 +72,7 @@ int set_note_last_metadata_change_date(BijiNoteObj* n,gchar* date) ;
 int set_note_create_date(BijiNoteObj* n,gchar* date);
 int get_note_status(BijiNoteObj* n);
 void set_note_status(BijiNoteObj* n, int status) ;
-GdkRGBA * biji_note_obj_get_rgba(BijiNoteObj *n) ;
+gboolean biji_note_obj_get_rgba(BijiNoteObj *n, GdkRGBA *rgba) ;
 void biji_note_obj_set_rgba(BijiNoteObj *n, GdkRGBA *rgba) ;
 
 ///////////////////////////////////////////////    XML content, buffer, editor

@@ -322,7 +322,7 @@ biji_note_obj_set_rgba(BijiNoteObj *n,GdkRGBA *rgba)
     
   if ( !n->priv->color  )
   {    
-    n->priv->color = rgba ;
+    n->priv->color = gdk_rgba_copy(rgba) ;
     _biji_note_id_set_metadata_change_now(n->priv->id);
     _biji_note_obj_propose_saving (n);
     g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
@@ -331,18 +331,25 @@ biji_note_obj_set_rgba(BijiNoteObj *n,GdkRGBA *rgba)
 
   if ( !gdk_rgba_equal(n->priv->color,rgba) )
   {
-    g_free(n->priv->color);
-    n->priv->color = rgba ;
+    gdk_rgba_free(n->priv->color);
+    n->priv->color = gdk_rgba_copy(rgba) ;
     _biji_note_id_set_metadata_change_now(n->priv->id);
     _biji_note_obj_propose_saving (n) ;
     g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
   }  
 }
 
-GdkRGBA *
-biji_note_obj_get_rgba(BijiNoteObj *n)
+gboolean
+biji_note_obj_get_rgba(BijiNoteObj *n,
+                       GdkRGBA *rgba)
 {
-  return n->priv->color;
+  if (n->priv->color && rgba)
+    {
+      *rgba = *(n->priv->color);
+      return TRUE;
+    }
+
+  return FALSE;
 }
 
 // FIXME find something better that 10000 char...
@@ -735,7 +742,7 @@ biji_note_icon_add_frame (GdkPixbuf *pixbuf)
 GdkPixbuf *
 biji_note_obj_get_icon (BijiNoteObj *note)
 {
-  GdkRGBA               *note_color;
+  GdkRGBA               note_color;
   gchar                 *text;
   cairo_t               *cr;
   PangoLayout           *layout;
@@ -754,10 +761,8 @@ biji_note_obj_get_icon (BijiNoteObj *note)
 
   /* Background */
   cairo_rectangle (cr, 0.5, 0.5, ICON_WIDTH, ICON_HEIGHT);
-  note_color = biji_note_obj_get_rgba (note) ;
-
-  if ( note_color )
-    gdk_cairo_set_source_rgba (cr,note_color);
+  if (biji_note_obj_get_rgba (note, &note_color))
+    gdk_cairo_set_source_rgba (cr, &note_color);
 
   cairo_fill (cr);
 

@@ -448,63 +448,14 @@ set_editor_color(BjbNoteView *v, GdkRGBA *to_be)
 }
 
 static void
-on_color_choosed(  GtkDialog *dialog,
-                   gint       response_id,
-                   BjbNoteView *view    )
+on_color_set(GtkColorButton *button,
+             BjbNoteView *view)
 {
-  GdkRGBA *color = g_new(GdkRGBA,1) ;
+  GdkRGBA color;
 
-  gtk_color_chooser_get_rgba (GTK_COLOR_CHOOSER (dialog), color);
-
-  if (response_id == GTK_RESPONSE_OK)
-  {
-    set_editor_color (view,color);
-    biji_note_obj_set_rgba (view->priv->note,color) ;
-  }
-
-  gtk_widget_destroy (GTK_WIDGET (dialog));
-}
-
-static void
-on_color_clicked(GtkWidget *but,BjbNoteView *view)
-{
-  GtkWidget *dialog;
-    
-  dialog = gtk_color_chooser_dialog_new ("Choose note background",
-                                         GTK_WINDOW(view->priv->window));  
-
-  g_signal_connect (dialog,"response",
-                    G_CALLBACK (on_color_choosed),view); 
-
-  gtk_widget_show_all(dialog);
-}
-
-static gboolean
-color_key_pressed_event (GtkWidget *widget,
-                         GdkEvent  *event,
-                         gpointer   user_data)
-{
-  on_color_clicked (widget, user_data);
-
-  return TRUE;
-}
-
-/* Note View Toolbar */
-
-/* Draw the color button */
-static gboolean
-on_color_draw(GtkWidget *widget, cairo_t *cr, BijiNoteObj *note)
-{
-  cairo_rectangle  (cr,1,1,100,100);  
-
-  GdkRGBA *color = biji_note_obj_get_rgba(note) ;
-
-  if ( !color )
-    gdk_rgba_parse (color, DEFAULT_NOTE_COLOR );
-
-  gdk_cairo_set_source_rgba (cr, biji_note_obj_get_rgba(note));
-  cairo_fill (cr);
-  return TRUE;
+  gtk_color_chooser_get_rgba (GTK_COLOR_CHOOSER (button), &color);
+  set_editor_color (view,&color);
+  biji_note_obj_set_rgba (view->priv->note,&color) ;
 }
 
 GtkWidget *
@@ -538,6 +489,8 @@ bjb_note_menu_new (BjbNoteView *self)
   return result;
 }
 
+#define COLOR_SIZE 24
+
 static ClutterActor *
 bjb_note_main_toolbar_new (BjbNoteView *self,
                            ClutterActor *parent,
@@ -549,8 +502,8 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
   
   GtkWidget        *grid,*notes_label,*notes_icon;
 
-  GtkWidget        *color_square,*color;
-  GtkSizeGroup     *size;
+  GtkWidget        *color_button;
+  GdkRGBA           color;
 
   w = gd_main_toolbar_new();
   gd = GD_MAIN_TOOLBAR(w);
@@ -577,25 +530,20 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
   /* Note title */
   gd_main_toolbar_set_labels (gd,biji_note_get_title(note),NULL);
 
-  /* Note Color *
-   * the size requisition is done later on
-   * because it needs another widget */
-  color_square = gd_main_toolbar_add_button (gd, NULL, NULL, FALSE);
+  /* Note Color */
+  if (!biji_note_obj_get_rgba (note, &color))
+    gdk_rgba_parse (&color, DEFAULT_NOTE_COLOR );
 
-  color = gtk_drawing_area_new();
-  gtk_widget_set_hexpand (color, TRUE);
-  gtk_widget_set_vexpand (color, TRUE);
-  gtk_container_add (GTK_CONTAINER(color_square), GTK_WIDGET (color));
+  color_button = gtk_color_button_new ();
+  gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER (color_button), &color);
 
-  gtk_widget_set_vexpand (color_square, TRUE);
-  gtk_widget_set_hexpand (color_square, TRUE);
-  gtk_widget_show_all (color_square);
+  gd_main_toolbar_add_widget (gd, color_button, FALSE);
+  gtk_widget_set_size_request (gtk_bin_get_child (GTK_BIN (color_button)),
+                               COLOR_SIZE, COLOR_SIZE);
+  gtk_widget_show (color_button);
 
-  g_signal_connect (color,"draw",G_CALLBACK(on_color_draw),note);
-
-  /* GdkDrawingArea does not have "clicked" signal */
-  gtk_widget_add_events (color, GDK_BUTTON_PRESS_MASK);
-  g_signal_connect (color,"button-press-event",G_CALLBACK(color_key_pressed_event),self);
+  g_signal_connect (color_button,"color-set",
+                    G_CALLBACK(on_color_set),self);
 
   /* Sharing */
   button = gd_main_toolbar_add_button (gd, "send-to-symbolic",
@@ -606,15 +554,8 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
 
   /* Menu */
   button = gd_main_toolbar_add_menu(gd,"emblem-system-symbolic",NULL,FALSE);
-
-  gtk_menu_button_set_menu (GTK_MENU_BUTTON (button),
-                            bjb_note_menu_new (self));
-
-  /* Fix the h size for color square since gdk drawing area */
-  size = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
-  gtk_size_group_add_widget (size, button);
-  gtk_size_group_add_widget (size, color_square);
-  g_object_unref (size);
+  gtk_menu_button_set_popup (GTK_MENU_BUTTON (button),
+                             bjb_note_menu_new (self));
 
   return result;
 }
@@ -764,17 +705,12 @@ bjb_note_view_constructed (GObject *obj)
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(priv->view),16);
 
   /* User defined color */
-  GdkRGBA *color = NULL ;
-  color = biji_note_obj_get_rgba(priv->note) ;
-    
-  if ( !color )
-  {
-    gdk_rgba_parse (color, DEFAULT_NOTE_COLOR);
-    biji_note_obj_set_rgba (priv->note,color);
-  }
+  GdkRGBA color ;
+  if (!biji_note_obj_get_rgba(priv->note, &color))
+    gdk_rgba_parse (&color, DEFAULT_NOTE_COLOR);
 
-  self->priv->color = color ;
-  set_editor_color (self,priv->color);
+  biji_note_obj_set_rgba (priv->note, &color);
+  set_editor_color (self,&color);
 
   /* Edition Toolbar */
   priv->edit_bar = bjb_editor_toolbar_new (overlay, self, editor);
