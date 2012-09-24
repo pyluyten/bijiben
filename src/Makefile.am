@@ -96,6 +96,7 @@ libbiji_a_SOURCES =  \
 	libbiji/editor/biji-editor-utils.c \
 	libbiji/editor/biji-editor-utils.h \
 	libbiji/editor/biji-webkit-editor.c \
-	libbiji/editor/biji-webkit-editor.h
-
+	libbiji/editor/biji-webkit-editor.h \
+	libbiji/serializer/biji-lazy-serializer.c \
+	libbiji/serializer/biji-lazy-serializer.h
 

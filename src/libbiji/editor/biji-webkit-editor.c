@@ -161,6 +161,14 @@ biji_webkit_editor_finalize (GObject *object)
 }
 
 static void
+on_content_changed (WebKitWebView *view)
+{
+  BijiWebkitEditor *self = BIJI_WEBKIT_EDITOR (self);
+
+  g_warning ("content changed, should queue save. Instead we save directly");
+}
+
+static void
 on_note_color_changed (BijiNoteObj *note, BijiWebkitEditor *self)
 {
   set_editor_color (GTK_WIDGET (self), biji_note_obj_get_rgba (note));
@@ -174,6 +182,7 @@ biji_webkit_editor_constructed (GObject *obj)
   WebKitWebView *view = WEBKIT_WEB_VIEW (self);
 
   /* Load the note */
+  /* Instead raw text we want to retrieve note HTML */
   webkit_web_view_load_string (view,
                                biji_note_get_raw_text (priv->note),
                                NULL, NULL, NULL);
@@ -183,6 +192,10 @@ biji_webkit_editor_constructed (GObject *obj)
                     biji_note_obj_get_rgba (priv->note));
   g_signal_connect (priv->note, "color-changed",
                     G_CALLBACK (on_note_color_changed), self);
+
+  /* Save */
+  g_signal_connect (WEBKIT_WEB_VIEW (self), "user-changed-contents",
+                    G_CALLBACK (on_content_changed), NULL);
 }
 
 static void

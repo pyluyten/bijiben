@@ -75,6 +75,8 @@ bjb_note_view_finalize(GObject *object)
   g_signal_handler_disconnect(view->priv->window,view->priv->destroy);
   g_signal_handler_disconnect(view->priv->note,view->priv->deleted);
 
+  g_object_unref (biji_note_obj_get_editor);
+
   /* TODO */
 
   G_OBJECT_CLASS (bjb_note_view_parent_class)->finalize (object);
