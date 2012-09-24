@@ -739,23 +739,6 @@ decrease_font_size(GtkTextBuffer *gtk_text_buffer)
 	}
 }
 
-
-// #ifndef NO_NOTE_TITLE
-void
-format_note_title(GtkTextBuffer *buffer)
-{
-  GtkTextIter start,end;
-
-  gtk_text_buffer_get_iter_at_line(buffer,&start,0);
-  end = start;
-  gtk_text_iter_forward_visible_line(&end);
-  GtkTextTagTable *table =  gtk_text_buffer_get_tag_table(buffer);
-  gtk_text_buffer_apply_tag(buffer,
-	                        gtk_text_tag_table_lookup(table,"_title"),
-	                        &start,&end);
-}
-// #endif
-
 // BULLETS
 
 void

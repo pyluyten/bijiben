@@ -8,7 +8,7 @@
 #define NO_NOTE_TITLE
 #endif
 
-
+#ifndef NO_NOTE_TITLE
 static void
 check_or_fix_title(BijiNoteObj *obj)
 {
@@ -27,8 +27,7 @@ check_or_fix_title(BijiNoteObj *obj)
     return ;
   }
 }
-
-
+#endif
 
 void
 on_note_opened(GtkTextBuffer *buffer)
@@ -37,6 +36,22 @@ on_note_opened(GtkTextBuffer *buffer)
 	//TODO Check links
 }
 
+void
+format_note_title(GtkTextBuffer *buffer)
+{
+  GtkTextIter start,end;
+
+  gtk_text_buffer_get_iter_at_line(buffer,&start,0);
+  end = start;
+  gtk_text_iter_forward_visible_line(&end);
+
+#ifndef NO_NOTE_TITLE
+  GtkTextTagTable *table =  gtk_text_buffer_get_tag_table(buffer);
+  gtk_text_buffer_apply_tag(buffer,
+	                        gtk_text_tag_table_lookup(table,"_title"),
+	                        &start,&end);
+#endif
+}
 
 gboolean
 watch_buffer(GtkTextBuffer *buffer, BijiNoteEditor *editor)

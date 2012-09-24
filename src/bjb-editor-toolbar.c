@@ -419,7 +419,7 @@ link_callback (GtkWidget *button, BjbEditorToolbar *self)
   g_free(folder);
 
   note_book_append_new_note(book,result);
-  create_new_window_for_note(bjb_window_base_get_app(window), result);
+  create_new_window_for_note(g_application_get_default(), result);
 }
 
 static void

@@ -167,9 +167,7 @@ switch_to_note(BjbMainView *view, BijiNoteObj *to_open)
   {
     GList *notes ;
 
-    notes = gtk_application_get_windows 
-                    (GTK_APPLICATION
-                              (bjb_window_base_get_app(view->priv->window)));
+    notes = gtk_application_get_windows(GTK_APPLICATION(g_application_get_default()));
     g_list_foreach (notes,(GFunc)show_window_if_title_same,to_open);
     return ;
   }

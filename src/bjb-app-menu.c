@@ -39,6 +39,7 @@ new_activated (GSimpleAction *action,
   create_new_main_window(app);
 }
 
+/* FIXME
 static void
 tag_activated (GSimpleAction *action,
                GVariant      *parameter,
@@ -50,6 +51,7 @@ tag_activated (GSimpleAction *action,
   bjb_window_base_set_frame((gpointer)win,
                              bjb_tags_view_new(GTK_WIDGET(win)));
 }
+*/
 
 static void
 about_activated (GSimpleAction *action,

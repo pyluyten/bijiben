@@ -376,8 +376,7 @@ on_edit_template(GtkWidget *button,BjbTagsView *view)
   BijiNoteObj *result =  get_or_create_template(view,
                                                 tags_view_get_selected_tag(view));
         
-  create_new_window_for_note(bjb_window_base_get_app(view->priv->window),
-                             result);
+  create_new_window_for_note(g_application_get_default(),result);
 }
 
 static void

@@ -157,7 +157,9 @@ bjb_window_base_new(GtkApplication *app)
   priv = retval->priv;
   priv->app = app;
 
-  priv->controller = bjb_controller_new (bijiben_get_book (app),priv->entry );
+  priv->controller = bjb_controller_new 
+    (bijiben_get_book (BIJIBEN_APPLICATION(g_application_get_default())),
+     priv->entry );
 
   /* UI : notes view. But some settings could allow other default. */
   priv->view = bjb_main_view_new ( GTK_WIDGET(retval),priv->controller);
@@ -227,7 +229,7 @@ bjb_window_base_get_book(GtkWidget * win)
 
    if ( b->priv )
    {
-      return bijiben_get_book(b->priv->app) ;
+     return bijiben_get_book(BIJIBEN_APPLICATION(g_application_get_default()));
    }
 
    else

@@ -36,7 +36,7 @@ biji_note_tag_class_init (BijiNoteTagClass *klass)
 static void 
 create_biji_note_tag(GtkTextBuffer *buffer,gint tag_id)
 {
-  BijiNoteTag *result ;
+  BijiNoteTag *result = NULL;
 
   switch (tag_id)
   {
@@ -51,29 +51,29 @@ create_biji_note_tag(GtkTextBuffer *buffer,gint tag_id)
     */
 			
   case NOTE_TAG_BOLD:
-	result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","bold",
-	                      "weight",PANGO_WEIGHT_BOLD,NULL);
+    result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","bold",
+                          "weight",PANGO_WEIGHT_BOLD,NULL);
     break;
 
   case NOTE_TAG_ITALIC:
-	result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","italic",
-	                      "style",PANGO_STYLE_ITALIC,NULL);
-	break;
+    result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","italic",
+                          "style",PANGO_STYLE_ITALIC,NULL);
+    break;
 
   case NOTE_TAG_UNDERLINE:
-  result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","underline",
-	                      "underline",PANGO_UNDERLINE_SINGLE,NULL);
-  break ; 
+    result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","underline",
+                          "underline",PANGO_UNDERLINE_SINGLE,NULL);
+    break;
 
   case NOTE_TAG_STRIKE:
     result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","strikethrough",
                           "strikethrough",TRUE,NULL);
-	break;
+    break;
 
   case NOTE_TAG_HIGHLIGHT:
     result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","highlight",
                           "background","yellow",NULL);
-	break;
+    break;
 
   case NOTE_TAG_MONOSPACE:
     result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","monospace",
@@ -81,33 +81,33 @@ create_biji_note_tag(GtkTextBuffer *buffer,gint tag_id)
     break;
 
   case NOTE_TAG_SMALL:
-	  result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","size:small",
-	                      "scale", PANGO_SCALE_SMALL,NULL);
-	  break;
+    result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","size:small",
+                          "scale", PANGO_SCALE_SMALL,NULL);
+    break;
 
   case NOTE_TAG_BIG:
-	  result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","size:large",
-	                      "scale", PANGO_SCALE_X_LARGE,NULL);
-	  break;
+    result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","size:large",
+                          "scale", PANGO_SCALE_X_LARGE,NULL);
+    break;
 
-	case NOTE_TAG_HUGE:
-	  result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","size:huge",
-	                      "scale", PANGO_SCALE_XX_LARGE,NULL);
-  	break;
+  case NOTE_TAG_HUGE:
+    result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","size:huge",
+                          "scale", PANGO_SCALE_XX_LARGE,NULL);
+    break;
 
   case NOTE_TAG_WIKI:
     result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","link:internal",
-                                    "foreground", "blue",
-                                    "underline", PANGO_UNDERLINE_SINGLE,
-                                    NULL);
-	  break;
+                          "foreground", "blue",
+                          "underline", PANGO_UNDERLINE_SINGLE,
+                          NULL);
+    break;
 
   case NOTE_TAG_URL:
     result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","link:url",
-                                    "foreground", "blue",
-                                    "underline", PANGO_UNDERLINE_SINGLE,
-                                    NULL);
-  	break;
+                          "foreground", "blue",
+                          "underline", PANGO_UNDERLINE_SINGLE,
+                          NULL);
+    break;
 
 
   case NOTE_TAG_LIST_ITEM:
@@ -116,16 +116,18 @@ create_biji_note_tag(GtkTextBuffer *buffer,gint tag_id)
     break;
 
   case NOTE_TAG_LIST:
-	  result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","list",
+    result = g_object_new(BIJI_TYPE_NOTE_TAG,"name","list",
                           NULL);
     break;
- 
-		  
+
   default : 
     g_message("TAG NOT DEFINED. BIJI WILL NOT WORK PROPERLY.");
-  }	
-  gtk_text_tag_table_add(gtk_text_buffer_get_tag_table(buffer),
-		                       GTK_TEXT_TAG(result));
+  }
+
+
+  if (result)
+    gtk_text_tag_table_add(gtk_text_buffer_get_tag_table(buffer),
+                           GTK_TEXT_TAG(result));
 }
 
 // create all tags as defined above

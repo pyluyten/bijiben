@@ -42,14 +42,7 @@ static GParamSpec *properties[NUM_PROPERTIES] = { NULL, };
 
 struct _BjbSelectionToolbarPrivate
 {
-  /* check 
-  GHashTable         *item_listeners;
-  GtkWidget          *toolbar_collection;
-  GtkWidget          *toolbar_favorite;
-  GtkWidget          *toolbar_open;
-  GtkWidget          *toolbar_print; */
   GtkWidget          *toolbar_trash;
-//  gboolean           inside_refresh;
 
   /* sure */
   BjbMainView        *view ;
@@ -90,55 +83,6 @@ bjb_selection_toolbar_fade_out (BjbSelectionToolbar *self)
   clutter_actor_set_opacity (self->priv->actor, 0);
 }
 
-
-static void
-bjb_selection_toolbar_dialog_response (GtkDialog *dialog, gint response_id, gpointer user_data)
-{
-  BjbSelectionToolbar *self = BJB_SELECTION_TOOLBAR (user_data);
-
-  if (response_id != GTK_RESPONSE_OK)
-    return;
-
-  gtk_widget_destroy (GTK_WIDGET (dialog));
-  bjb_selection_toolbar_fade_in (self);
-}
-
-
-static void
-bjb_selection_toolbar_collection_clicked (GtkButton *button, gpointer user_data)
-{
-}
-
-
-static gboolean
-bjb_selection_toolbar_disconnect_listeners_foreach (gpointer key, gpointer value, gpointer user_data)
-{
-  g_signal_handler_disconnect (value, GPOINTER_TO_UINT (key));
-  return TRUE;
-}
-
-
-static void
-bjb_selection_toolbar_favorite_clicked (GtkButton *button, gpointer user_data)
-{
-  /* TODO */
-}
-
-
-static void
-bjb_selection_toolbar_open_clicked (GtkButton *button, gpointer user_data)
-{
-  /* TODO */
-}
-
-
-static void
-bjb_selection_toolbar_print_clicked (GtkButton *button, gpointer user_data)
-{
-  /* TODO */
-}
-
-
 static void
 bjb_selection_toolbar_set_item_visibility (BjbSelectionToolbar *self)
 {
@@ -152,7 +96,6 @@ bjb_selection_toolbar_selection_changed (GdMainView *view, gpointer user_data)
 {
   
   BjbSelectionToolbar *self = BJB_SELECTION_TOOLBAR (user_data);
-  BjbSelectionToolbarPrivate *priv = self->priv;
   GList *selection;
 
   selection = gd_main_view_get_selection(view);

@@ -111,7 +111,7 @@ on_text_buffer_insert_text	(GtkTextBuffer *buffer,
 				 gint           len,
 				 gpointer       user_data)
 {
-  GtkTextIter start_iter ;
+  //GtkTextIter start_iter;
 
 #ifndef NO_NOTE_TITLE
   if (gtk_text_iter_get_line(iter) == 0)
@@ -120,7 +120,7 @@ on_text_buffer_insert_text	(GtkTextBuffer *buffer,
 
   apply_active_tags(buffer, iter, text, user_data);
 
-  start_iter = *iter;
+  //start_iter = *iter;
   //end_iter = *iter;
 
   // Move start iter back to the position before the insert
