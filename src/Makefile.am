@@ -58,6 +58,22 @@ bijiben_SOURCES = \
 	utils/bjb-icons-colors.c \
 	utils/bjb-icons-colors.h
 
+resource_files = \
+	app-menu.ui
+
+bjb-resources.c: bjb.gresource.xml $(resource_files)
+	glib-compile-resources --target=$@ --sourcedir=$(srcdir) --generate-source --c-name bjb $(srcdir)/bjb.gresource.xml
+
+bjb-resources.h: bjb.gresource.xml
+	glib-compile-resources --target=$@ --sourcedir=$(srcdir) --generate-header --c-name bjb $(srcdir)/bjb.gresource.xml
+
+BUILT_SOURCES = \
+	bjb-resources.c \
+	bjb-resources.h
+
+nodist_bijiben_SOURCES = \
+	$(BUILT_SOURCES)
+
 bijiben_LDFLAGS = \
 	-Wl,--export-dynamic
 

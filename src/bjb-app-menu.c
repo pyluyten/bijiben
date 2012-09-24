@@ -99,41 +99,7 @@ void bjb_app_menu_set(GApplication *application)
                                    application);
     
   builder = gtk_builder_new ();
-  gtk_builder_add_from_string (builder,
-                               "<interface>"
-                               "  <menu id='app-menu'>"
-                               "    <section>"
-                               "      <item>"
-                               "        <attribute name='label' translatable='yes'>_New Window</attribute>"
-                               "        <attribute name='action'>app.new</attribute>"
-                               "        <attribute name='accel'>&lt;Primary&gt;n</attribute>"
-                               "      </item>"
-                               "    </section>"
-                               "    <section>"
-                               "      <item>"
-                               "        <attribute name='label' translatable='yes'>_Tags</attribute>"
-                               "        <attribute name='action'>app.tags</attribute>"
-                               "      </item>"
-                               "    </section>"
-                               "    <section>"
-                               "      <item>"
-                               "        <attribute name='label' translatable='yes'>_Help</attribute>"
-                               "        <attribute name='action'>app.help</attribute>"
-                               "      </item>"
-                               "      <item>"
-                               "        <attribute name='label' translatable='yes'>_About Bijiben</attribute>"
-                               "        <attribute name='action'>app.about</attribute>"
-                               "      </item>"
-                               "    </section>"
-                               "    <section>"
-                               "      <item>"
-                               "        <attribute name='label' translatable='yes'>_Quit</attribute>"
-                               "        <attribute name='action'>app.quit</attribute>"
-                               "        <attribute name='accel'>&lt;Primary&gt;q</attribute>"
-                               "      </item>"
-                               "    </section>"
-                               "  </menu>"
-                               "</interface>", -1, NULL);
+  gtk_builder_add_from_resource (builder, "/org/gnome/bijiben/app-menu.ui", NULL);
 
   gtk_application_set_app_menu (GTK_APPLICATION (application), 
                                 G_MENU_MODEL (gtk_builder_get_object (builder, "app-menu")));

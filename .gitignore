@@ -44,4 +44,4 @@ po/*.gmo
 po/*.pot
 src/bijiben
 src/libbiji.a
-
+src/bjb-resources*
