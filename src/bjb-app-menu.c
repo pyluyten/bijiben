@@ -34,9 +34,7 @@ new_activated (GSimpleAction *action,
                GVariant      *parameter,
                gpointer       user_data)
 {
-  GApplication *app = user_data;
-
-  create_new_main_window(app);
+  bjb_window_base_new();
 }
 
 /* FIXME

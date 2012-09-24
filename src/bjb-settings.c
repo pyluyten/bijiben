@@ -1,8 +1,8 @@
 
 #include <gtk/gtk.h>
 
+#include "bjb-bijiben.h"
 #include "bjb-settings.h"
-#include "bjb-window-base.h"
 
 struct _BjbSettingsPrivate
 {
@@ -172,7 +172,7 @@ void
 show_bijiben_settings_window(GtkMenuItem* item, GtkWidget *parent_window)
 {
   GtkWidget *dialog,*area,*notebook,*page,*frame,*picker;
-  BjbSettings *settings = bjb_window_base_get_settings(parent_window);
+  BjbSettings *settings = bjb_app_get_settings(g_application_get_default());
 
   // create dialog
   dialog = gtk_dialog_new_with_buttons("Notes tag",

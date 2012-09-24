@@ -144,18 +144,16 @@ bjb_window_base_init (BjbWindowBase *self)
 }
 
 GtkWindow *
-bjb_window_base_new(GtkApplication *app)
+bjb_window_base_new(void)
 {
   BjbWindowBase *retval;
   BjbWindowBasePriv *priv;
 
   retval = g_object_new(BJB_TYPE_WINDOW_BASE,
-                        "application", app,
+                        "application", g_application_get_default(),
                         "hide-titlebar-when-maximized", TRUE,
                         NULL);
-
   priv = retval->priv;
-  priv->app = app;
 
   priv->controller = bjb_controller_new 
     (bijiben_get_book (BIJIBEN_APPLICATION(g_application_get_default())),
@@ -210,16 +208,6 @@ ClutterActor *
 bjb_window_base_get_stage(BjbWindowBase *bwb)
 {
   return bwb->priv->stage ;
-}
-
-gpointer bjb_window_base_get_app(GtkWidget *win)
-{
-  return BJB_WINDOW_BASE(win)->priv->app ;
-}
-
-BjbSettings * bjb_window_base_get_settings(GtkWidget *win)
-{
-  return bjb_app_get_settings(BJB_WINDOW_BASE(win)->priv->app);
 }
 
 BijiNoteBook *

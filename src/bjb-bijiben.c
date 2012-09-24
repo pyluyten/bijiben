@@ -40,25 +40,32 @@ struct _BijibenPriv
 G_DEFINE_TYPE (Bijiben, bijiben, GTK_TYPE_APPLICATION);
 
 static void
-bijiben_new_window (GApplication *app,GFile *file)
+bijiben_new_window_internal (GApplication *app,
+                             GFile *file,
+                             BijiNoteObj *note_obj)
 {
-  /* No file : show main window */
-  if (file == NULL)
-  {
-    bjb_window_base_new( GTK_APPLICATION(app));
-  }
+  GtkWindow *win = bjb_window_base_new();
+  BijiNoteObj* note = NULL;
 
-  /* File : show main window, then switch to note. */
-  else
-  {
-    BijiNoteObj* cur= biji_note_get_new_from_file(g_file_get_path(file));
-    GtkWindow *win = bjb_window_base_new(GTK_APPLICATION(app));
+  if (file != NULL)
+    note = biji_note_get_new_from_file(g_file_get_path(file));
+  else if (note_obj != NULL)
+    note = note_obj;
 
-    bjb_window_base_set_frame(BJB_WINDOW_BASE(win),
-                              CLUTTER_ACTOR(bjb_note_view_new(GTK_WIDGET(win), cur)));
-  
-    gtk_window_set_title(GTK_WINDOW(win),biji_note_get_title (cur));
-  }
+  if (note != NULL)
+    {
+      bjb_window_base_set_frame(BJB_WINDOW_BASE(win),
+                                CLUTTER_ACTOR(bjb_note_view_new(GTK_WIDGET(win), note)));
+
+      gtk_window_set_title(win,biji_note_get_title (note));
+    }
+}
+
+void
+bijiben_new_window_for_note (GApplication *app,
+                             BijiNoteObj *note)
+{
+  bijiben_new_window_internal(app, NULL, note);
 }
 
 static void
@@ -79,7 +86,7 @@ bijiben_open (GApplication  *application,
   gint i;
 
   for (i = 0; i < n_files; i++)
-    bijiben_new_window(application, files[i]);
+    bijiben_new_window_internal(application, files[i],NULL);
 }
 
 static void
@@ -119,7 +126,7 @@ bijiben_startup (GApplication *application)
   g_object_unref (storage);
 
   // create the first window
-  bijiben_new_window (application, NULL);
+  bijiben_new_window_internal (application, NULL, NULL);
 }
 
 static void
@@ -174,30 +181,4 @@ bijiben_get_bijiben_dir (void)
 BjbSettings * bjb_app_get_settings(gpointer application)
 {
   return BIJIBEN_APPLICATION(application)->priv->settings ;
-}
-
-/* Create the window with its controller. Then switches to note view.
- * This should be fixed we rather want an independant window
- * with its controller but without any frame */
-void
-create_new_window_for_note(gpointer app , BijiNoteObj *note)
-{
-  GtkWindow     *win;
-  BjbWindowBase *base;
-  BjbMainView   *main_view;
-
-  g_return_if_fail (G_IS_APPLICATION (app));
-
-  win = bjb_window_base_new (app);
-  base = BJB_WINDOW_BASE (win);
-
-  main_view = BJB_MAIN_VIEW (bjb_window_base_get_main_view (base));
-  switch_to_note_view (main_view, note);
-}
-
-// return pointer to BJB main window
-gpointer
-create_new_main_window(gpointer app)
-{
-  return bjb_window_base_new(app);
 }

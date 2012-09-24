@@ -61,10 +61,9 @@ const gchar *bijiben_get_bijiben_dir (void);
 BijiNoteBook * bijiben_get_book(Bijiben *self);
 BjbSettings * bjb_app_get_settings(gpointer application);
 
-// Actions or callbacks 
-
-void create_new_window_for_note(gpointer application , BijiNoteObj *note) ;
-gpointer create_new_main_window(gpointer app) ; //return pointer to window
+// Windows
+void bijiben_new_window_for_note (GApplication *app,
+								  BijiNoteObj *note);
 
 G_END_DECLS
 

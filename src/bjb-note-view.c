@@ -682,7 +682,7 @@ bjb_note_view_constructed (GObject *obj)
   priv->view = biji_text_view_new_from_note (priv->note);
   priv->buffer = gtk_text_view_get_buffer (priv->view);
 
-  settings = bjb_window_base_get_settings(priv->window);
+  settings = bjb_app_get_settings(g_application_get_default());
     
   editor = BIJI_NOTE_EDITOR (priv->view);
 

@@ -44,7 +44,7 @@ struct _BjbWindowBase
 
 GType bjb_window_base_get_type (void);
 
-GtkWindow * bjb_window_base_new(GtkApplication *app) ;
+GtkWindow * bjb_window_base_new(void);
 
 // Accessor 
 
@@ -57,8 +57,6 @@ void bjb_window_base_set_frame(BjbWindowBase *bwb,ClutterActor *frame);
 ClutterActor * bjb_window_base_get_frame(BjbWindowBase *bwb);
 
 ClutterActor * bjb_window_base_get_stage(BjbWindowBase *bwb);
-
-BjbSettings *bjb_window_base_get_settings(GtkWidget *win);
 
 BijiNoteBook * bjb_window_base_get_book(GtkWidget * win);
 
