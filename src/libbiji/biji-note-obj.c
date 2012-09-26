@@ -32,6 +32,7 @@ struct _BijiNoteObjPrivate
   /* Metadata */
   BijiNoteID            *id;
   gchar                 *html;
+  gchar                 *raw_text;
 
   /* XML Content */
   gchar                 *content;
@@ -369,25 +370,18 @@ biji_note_obj_get_rgba(BijiNoteObj *n)
   return n->priv->color;
 }
 
-// FIXME find something better that 10000 char...
-// the issue is ... well i don't really remember why ut8 len is not good. 
 gchar *
 _biji_note_obj_get_raw_text(BijiNoteObj *n)
-{    
-  xmlDocPtr doc = xmlParseMemory(n->priv->content,
-                                 10000);
+{
+  if (n->priv->raw_text)
+    return n->priv->raw_text;
 
-  if (doc == NULL ) 
-  {
-    g_message("File not parsed successfully. \n");
-    return FALSE;
-  }
+  return "";
+}
 
-  xmlNodePtr cur = xmlDocGetRootElement(doc);        // <note-content>
-  gchar *result = (gchar*) xmlNodeGetContent (cur) ; //get raw content
-  xmlFreeDoc(doc);
-    
-  return result ;
+void biji_note_obj_set_raw_text (BijiNoteObj *note, gchar *plain_text)
+{
+  note->priv->raw_text = plain_text;
 }
 
 gint
