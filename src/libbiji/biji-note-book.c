@@ -4,6 +4,7 @@
 #include "libbiji.h"
 #include "biji-note-editor.h"
 #include "biji-note-book.h"
+#include "deserializer/biji-lazy-deserializer.h"
 
 struct _BijiNoteBookPrivate
 {
@@ -491,16 +492,21 @@ biji_note_book_get_tag_template(BijiNoteBook *book, gchar *tag)
   return NULL ;
 }
 
-/* Todo : check file type */
-BijiNoteObj*
+BijiNoteObj *
 biji_note_get_new_from_file (gchar* path)
 {
   BijiNoteObj* ret ;
+  BijiLazyDeserializer *deserializer;
 
+  /* TODO biji_note_obj_new (path) should handle this */
   ret = g_object_new(BIJI_TYPE_NOTE_OBJ,NULL);
   set_note_id_path(note_get_id(ret),path);
 
-  load_tomboy_note((gpointer)ret);
+  /* The deserializer will handle note type */
+  deserializer = biji_lazy_deserializer_new (ret);
+  biji_lazy_deserialize (deserializer);
+  g_object_unref (deserializer);
+
   return ret ;
 }
 

@@ -381,7 +381,10 @@ _biji_note_obj_get_raw_text(BijiNoteObj *n)
 
 void biji_note_obj_set_raw_text (BijiNoteObj *note, gchar *plain_text)
 {
-  note->priv->raw_text = plain_text;
+  if (note->priv->raw_text)
+    g_free (note->priv->raw_text);
+
+  note->priv->raw_text = g_strdup (plain_text);
 }
 
 gint

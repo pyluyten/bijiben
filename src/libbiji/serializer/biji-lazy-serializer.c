@@ -168,7 +168,7 @@ biji_lazy_serialize (BijiLazySerializer *self)
   xmlTextWriterStartElement (writer, BAD_CAST "note");
   xmlTextWriterWriteAttributeNS (writer, NULL, 
                                  BAD_CAST "version",NULL, 
-                                 BAD_CAST "0.4");
+                                 BAD_CAST "1");
   xmlTextWriterWriteAttributeNS (writer, BAD_CAST "xmlns",
                                  BAD_CAST "link", NULL, 
                                  BAD_CAST "http://projects.gnome.org/bijiben/link");
@@ -190,6 +190,7 @@ biji_lazy_serialize (BijiLazySerializer *self)
   // <note-content>
   xmlTextWriterStartElement(writer, BAD_CAST "note-content");
   html = biji_note_obj_get_html (priv->note);
+  g_warning ("html is %s", html);
 
   if (html)
     xmlTextWriterWriteRaw(writer, BAD_CAST (html));

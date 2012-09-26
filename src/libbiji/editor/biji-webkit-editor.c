@@ -232,8 +232,8 @@ on_content_changed (WebKitWebView *view)
   process_elements (body, plain_text);
 
   /* Return text content between <body> and </body> */
-  result = g_string_free (plain_text, FALSE);
-  biji_note_obj_set_raw_text (self->priv->note, result);
+  biji_note_obj_set_raw_text (self->priv->note, plain_text->str);
+  g_string_free (plain_text, TRUE);
 }
 
 static void

@@ -2,9 +2,6 @@
  * It's a note : it's data (BijiNoteID , content )
  * and access to this data (NoteBuffer,NoteView,NoteUndoer)
  * and signals (renamed / changed / deleted / created )
- *
- * BUT MOST PART HERE IS NOT PUBLIC. I HAVE TO FIX THIS
- * BEST WOULD BE TO GATHER PUBLIC STUFF INTO LIBBIJI.H
  * 
  */
 
