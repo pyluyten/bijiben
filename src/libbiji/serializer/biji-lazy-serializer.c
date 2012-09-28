@@ -188,9 +188,12 @@ biji_lazy_serialize (BijiLazySerializer *self)
                                 BAD_CAST "preserve");
 
   // <note-content>
+  // simply html, just replace non Xml char with something else
   xmlTextWriterStartElement(writer, BAD_CAST "note-content");
   html = biji_note_obj_get_html (priv->note);
-  g_warning ("html is %s", html);
+  g_warning ("html was %s", html);
+  html = g_strjoinv (" ", g_strsplit(html, "&nbsp;", -1));
+  g_warning ("now html is %s", html);
 
   if (html)
     xmlTextWriterWriteRaw(writer, BAD_CAST (html));
