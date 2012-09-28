@@ -75,8 +75,6 @@ libbiji_a_SOURCES =  \
 	libbiji/biji-date-time.h \
 	libbiji/biji-note-id.c \
 	libbiji/biji-note-id.h \
-	libbiji/biji-note-tag.c \
-	libbiji/biji-note-tag.h \
 	libbiji/biji-note-obj.c \
 	libbiji/biji-note-obj.h \
 	libbiji/biji-note-book.c \
