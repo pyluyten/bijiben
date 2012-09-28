@@ -91,7 +91,6 @@ gchar* note_obj_get_content(BijiNoteObj*n);
 gchar * _biji_note_obj_get_raw_text(BijiNoteObj *n);
 GtkTextTagTable *note_obj_get_gtk_tags(BijiNoteObj *note);
 void biji_note_set_gtk_tags(BijiNoteObj *note, GtkTextTagTable *table);
-GtkTextBuffer *biji_note_get_or_create_buffer(gpointer biji_note_obj);
 gint _biji_note_obj_get_left_margin(BijiNoteObj *obj);
 gboolean _biji_note_obj_is_opened(BijiNoteObj *note);
 
@@ -111,7 +110,7 @@ gchar *_biji_note_template_get_tag(BijiNoteObj *n);
 // returns TRUE if note saved , FALSE if not saved
 gboolean note_obj_save_note_using_buffer(gpointer biji_note_obj);
 void _biji_note_obj_propose_saving(gpointer note_obj);
-void _biji_note_obj_close_note(gpointer note_obj);
+
 void _biji_note_obj_mark_as_need_save(gpointer note_obj);
 
 GdkPixbuf * biji_note_obj_get_icon (BijiNoteObj *note);
@@ -144,23 +143,28 @@ gchar *biji_note_obj_get_create_date(BijiNoteObj *note);
 
 /* Webkit : note edition */
 
-GtkWidget * biji_note_obj_get_editor (BijiNoteObj *note);
+GtkWidget * biji_note_obj_open                      (BijiNoteObj *note);
 
-void biji_note_obj_set_html_content (BijiNoteObj *note, gchar *html);
+void biji_note_obj_close                            (BijiNoteObj *note);
 
-gchar * biji_note_obj_get_html (BijiNoteObj *note);
+gboolean biji_note_obj_is_opened                    (BijiNoteObj *note);
 
-gboolean biji_note_obj_is_opened(BijiNoteObj *note);
+GtkWidget * biji_note_obj_get_editor                (BijiNoteObj *note);
 
-void biji_note_obj_editor_apply_format (BijiNoteObj *note, gint format);
+void biji_note_obj_set_html_content                 (BijiNoteObj *note, gchar *html);
 
-gboolean biji_note_obj_editor_has_selection (BijiNoteObj *note);
+gchar * biji_note_obj_get_html                      (BijiNoteObj *note);
 
-void biji_note_obj_editor_cut (BijiNoteObj *note);
+void biji_note_obj_editor_apply_format              (BijiNoteObj *note,
+                                                           gint format);
 
-void biji_note_obj_editor_copy (BijiNoteObj *note);
+gboolean biji_note_obj_editor_has_selection         (BijiNoteObj *note);
 
-void biji_note_obj_editor_paste (BijiNoteObj *note);
+void biji_note_obj_editor_cut                       (BijiNoteObj *note);
+
+void biji_note_obj_editor_copy                      (BijiNoteObj *note);
+
+void biji_note_obj_editor_paste                     (BijiNoteObj *note);
 
 G_END_DECLS
 

@@ -2,7 +2,6 @@
 #include <gtk/gtk.h>
 
 #include "libbiji.h"
-#include "biji-note-editor.h"
 #include "biji-note-book.h"
 #include "deserializer/biji-lazy-deserializer.h"
 

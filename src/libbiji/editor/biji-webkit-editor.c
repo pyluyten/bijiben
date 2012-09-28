@@ -1,13 +1,12 @@
-/*
- * Bijiben
- * Copyright (C) buddho 2012 <buddho@localhost.localdomain>
+/* biji-webkit-editor.h
+ * Copyright (C) Pierre-Yves LUYTEN 2012 <py@luyten.fr>
  * 
- * Bijiben is free software: you can redistribute it and/or modify it
+ * bijiben is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
- * WebkitWebView is distributed in the hope that it will be useful, but
+ * bijiben is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
@@ -39,6 +38,7 @@ static GParamSpec *properties[NUM_PROP] = { NULL, };
 struct _BijiWebkitEditorPrivate
 {
   BijiNoteObj *note;
+  gulong changed;
 };
 
 G_DEFINE_TYPE (BijiWebkitEditor, biji_webkit_editor, WEBKIT_TYPE_WEB_VIEW);
@@ -132,17 +132,20 @@ biji_webkit_editor_init (BijiWebkitEditor *self)
 {
   WebKitWebView *view = WEBKIT_WEB_VIEW (self);
 
-  self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BIJI_TYPE_WEBKIT_EDITOR, BijiWebkitEditorPrivate);
-
   /* set standard settings
    * pixels above line, left margin might be for CSS */
   webkit_web_view_set_editable (view, TRUE);
   webkit_web_view_set_transparent (view, TRUE);
+
+  self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BIJI_TYPE_WEBKIT_EDITOR, BijiWebkitEditorPrivate);
 }
 
 static void
 biji_webkit_editor_finalize (GObject *object)
 {
+  BijiWebkitEditor *self = BIJI_WEBKIT_EDITOR (object);
+  
+  g_signal_handler_disconnect (self, self->priv->changed);
   G_OBJECT_CLASS (biji_webkit_editor_parent_class)->finalize (object);
 }
 
@@ -155,7 +158,7 @@ process_elements (WebKitDOMNode *node, GString *buffer)
   WebKitDOMDOMWindow *window;
   WebKitDOMNodeList *nodes;
   WebKitDOMCSSStyleDeclaration *style;
-  gchar *display, *tagname;
+  gchar *display;
   gulong ii, length;
   GRegex *regex;
 
@@ -167,9 +170,6 @@ process_elements (WebKitDOMNode *node, GString *buffer)
                                  window, WEBKIT_DOM_ELEMENT (node), "");
   display = webkit_dom_css_style_declaration_get_property_value (
                                                       style, "display");
-
-  tagname = webkit_dom_element_get_tag_name (WEBKIT_DOM_ELEMENT (node));
-
 
   nodes = webkit_dom_node_get_child_nodes (node);
   length = webkit_dom_node_list_get_length (nodes);

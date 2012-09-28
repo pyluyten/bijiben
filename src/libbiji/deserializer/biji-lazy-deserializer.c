@@ -23,8 +23,6 @@
 #include <string.h>
 
 #include "biji-lazy-deserializer.h"
-#include "../biji-note-buffer.h"
-#include "../biji-read-tomboy.h"
 #include "../libbiji.h"
 
 enum

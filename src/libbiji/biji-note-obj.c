@@ -1,12 +1,8 @@
 #include "biji-date-time.h"
 #include "biji-note-id.h"
 #include "biji-note-book.h"
-#include "biji-note-buffer.h"
-#include "biji-note-editor.h"
 #include "biji-note-obj.h"
 #include "biji-note-watcher.h"
-#include "biji-read-tomboy.h"
-#include "biji-serialize.h"
 #include "editor/biji-webkit-editor.h"
 #include "serializer/biji-lazy-serializer.h"
 #include "libbiji.h"
@@ -39,7 +35,6 @@ struct _BijiNoteObjPrivate
 
   /* Buffer might be null */
   BijiWebkitEditor      *editor;
-  BijiNoteBuffer        *buffer;
   gint                  changes_to_save;
 
   /* TAGS may be notebooks. */
@@ -78,7 +73,6 @@ biji_note_obj_init (BijiNoteObj *self)
   priv->changes_to_save = 0 ;
   priv->book = NULL ;
   priv->content = NULL ;
-  priv->buffer = NULL;
   priv->tags = NULL ;
   priv->is_template = FALSE ;
   priv->is_opened = 0;
@@ -521,58 +515,28 @@ _biji_note_obj_is_opened(BijiNoteObj *note)
   return note->priv->is_opened ;
 }
 
-GtkTextBuffer *
-biji_note_get_or_create_buffer(gpointer note_obj)
-{
-  BijiNoteObj *n = BIJI_NOTE_OBJ(note_obj);
-
-  if ( !n->priv->buffer )
-  {
-    g_message("no buffer yet , we do create it");
-    n->priv->buffer = create_note_buffer(note_obj);
-
-#ifndef NO_NOTE_TITLE
-    if ( n->priv->content == NULL )
-    {
-      g_message("Note has no content. Creating fake content.");
-      n->priv->content = g_strdup_printf("<note-content>%s\n\n</note-content>",
-                                         biji_note_get_title(n));
-    }
-#endif
-      
-    note_buffer_set_xml(n->priv->buffer,n->priv->content);
-  }
-
-  GtkTextBuffer *buffer = GTK_TEXT_BUFFER(n->priv->buffer);
-  on_note_opened(buffer);
-  return buffer;
-}
-
-GtkTextView *
-note_obj_get_editor(gpointer note_obj)
-{
-  BIJI_NOTE_OBJ(note_obj)->priv->is_opened ++ ;
-  return biji_gtk_view_new(note_obj);
-}
-
 gboolean
 note_obj_save_note_using_buffer (gpointer note_obj)
 {
   gboolean result;
   BijiLazySerializer *serializer;
   BijiNoteObj *note = BIJI_NOTE_OBJ(note_obj);
-  BijiNoteID *id = note_get_id (note);
 
   // Change the last change date propery
-  _biji_note_id_set_change_date_now(note->priv->id);
+  _biji_note_id_set_change_date_now (note->priv->id);
   
   // Work on the content
   serializer = biji_lazy_serializer_new (note);
   result = biji_lazy_serialize (serializer);
+  g_object_unref (serializer);
 
   // Update the icon
-  g_object_unref (note->priv->icon);
-  note->priv->icon = NULL ;
+  if (note->priv->icon)
+  {
+    g_object_unref (note->priv->icon);
+    note->priv->icon = NULL ;
+  }
+
   biji_note_obj_get_icon (note);
 
   // Alert
@@ -596,32 +560,6 @@ _biji_note_obj_propose_saving(gpointer note_obj)
   }
 
   note->priv->changes_to_save ++ ;
-}
-
-void
-_biji_note_obj_close_note(gpointer note_obj)
-{
-  BijiNoteObj *note = BIJI_NOTE_OBJ(note_obj);
-
-  if ( note->priv->changes_to_save != 0 )
-  {
-    note_obj_save_note_using_buffer(note_obj);
-    note->priv->changes_to_save = 0 ;
-  }
-
-  note->priv->is_opened -- ;
-  g_message("is opened = %i",note->priv->is_opened);
-
-  if ( note->priv->is_opened < 1 )
-  {  
-    if (BIJI_IS_NOTE_BUFFER(note->priv->buffer) )
-    {
-      g_message("closing note");
-      g_object_unref(note->priv->buffer) ;
-      note->priv->buffer = NULL ;
-    }
-  }
-  else {  g_message("keep buffer") ; } 
 }
 
 void
@@ -931,7 +869,8 @@ biji_note_obj_get_html (BijiNoteObj *note)
 }
 
 void
-biji_note_obj_set_html_content (BijiNoteObj *note, gchar *html)
+biji_note_obj_set_html_content (BijiNoteObj *note,
+                                gchar *html)
 {
   // TODO : queue_save with timeout struct
 
@@ -939,36 +878,66 @@ biji_note_obj_set_html_content (BijiNoteObj *note, gchar *html)
   {
     g_free (note->priv->html);
     note->priv->html = g_strdup (html);
+
+    /* This func will apply when first serialisazing
+     * but it handles note icon*/
     note_obj_save_note_using_buffer (note);
   }
+}
+
+gboolean
+biji_note_obj_is_opened (BijiNoteObj *note)
+{
+  return BIJI_IS_WEBKIT_EDITOR (note->priv->editor);
+}
+
+/* Should connect to "destroy" there
+ * to auto set editor=NULL when widget killed */
+GtkWidget *
+biji_note_obj_open (BijiNoteObj *note)
+{
+  note->priv->editor = biji_webkit_editor_new (note);
+  return GTK_WIDGET (note->priv->editor);
 }
 
 GtkWidget *
 biji_note_obj_get_editor (BijiNoteObj *note)
 {
-  if (!note->priv->editor)
-    note->priv->editor = biji_webkit_editor_new (note);
+  if (!biji_note_obj_is_opened (note))
+  {
+    g_warning ("note not opened");
+    return NULL;
+  }
 
   return GTK_WIDGET (note->priv->editor);
 }
 
-gboolean
-biji_note_obj_is_opened(BijiNoteObj *note)
+void
+biji_note_obj_close (BijiNoteObj *note)
 {
-  return BIJI_IS_WEBKIT_EDITOR (note->priv->editor);
+  if (biji_note_obj_is_opened (note))
+  {
+    gtk_widget_destroy (GTK_WIDGET (note->priv->editor));
+    note->priv->editor = NULL;
+  }
+
+  else
+  {
+    g_warning ("Note not opened");
+  }
 }
 
 void
 biji_note_obj_editor_apply_format (BijiNoteObj *note, gint format)
 {
-  if (BIJI_IS_WEBKIT_EDITOR (note->priv->editor))
+  if (biji_note_obj_is_opened (note))
     biji_webkit_editor_apply_format ( note->priv->editor , format);
 }
 
 gboolean
 biji_note_obj_editor_has_selection (BijiNoteObj *note)
 {
-  if (BIJI_IS_WEBKIT_EDITOR (note->priv->editor))
+  if (biji_note_obj_is_opened (note))
     return biji_webkit_editor_has_selection (note->priv->editor);
 
   return FALSE;
@@ -976,18 +945,18 @@ biji_note_obj_editor_has_selection (BijiNoteObj *note)
 
 void biji_note_obj_editor_cut (BijiNoteObj *note)
 {
-  if (BIJI_IS_WEBKIT_EDITOR (note->priv->editor))
+  if (biji_note_obj_is_opened (note))
     biji_webkit_editor_cut (note->priv->editor);
 }
 
 void biji_note_obj_editor_copy (BijiNoteObj *note)
 {
-  if (BIJI_IS_WEBKIT_EDITOR (note->priv->editor))
+  if (biji_note_obj_is_opened (note))
     biji_webkit_editor_copy (note->priv->editor);
 }
 
 void biji_note_obj_editor_paste (BijiNoteObj *note)
 {
-  if (BIJI_IS_WEBKIT_EDITOR (note->priv->editor))
+  if (biji_note_obj_is_opened (note))
     biji_webkit_editor_paste (note->priv->editor);
 }

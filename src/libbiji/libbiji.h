@@ -22,8 +22,6 @@
 
 #include "biji-date-time.h"
 #include "biji-note-book.h"
-#include "biji-note-buffer.h"
-#include "biji-note-editor.h"
 #include "biji-note-obj.h"
 #include "editor/biji-webkit-editor.h"
 

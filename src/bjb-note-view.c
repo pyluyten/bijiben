@@ -35,14 +35,13 @@ G_DEFINE_TYPE (BjbNoteView, bjb_note_view, CLUTTER_TYPE_ACTOR)
 struct _BjbNoteViewPrivate {
   /* Data */
   GtkWidget         *window ;
+  GtkWidget         *view;
   BijiNoteObj       *note ;
-//WK  GtkTextBuffer     *buffer ;
 
   /* UI */
   ClutterActor      *embed;
   ClutterActor      *edit_actor;
   GtkBox            *toolbars_box;
-  GtkTextView       *view;
   BjbEditorToolbar  *edit_bar;
   ClutterActor      *edit_bar_actor;
   gboolean           edit_bar_is_sticky ;
@@ -68,14 +67,15 @@ struct _BjbNoteViewPrivate {
 static void
 bjb_note_view_finalize(GObject *object)
 {
-  BjbNoteView *view = BJB_NOTE_VIEW(object) ;
+  BjbNoteView *self = BJB_NOTE_VIEW (object) ;
 
   /* Don't unref buffer. Biji Does it when we close note. */
-  g_signal_handler_disconnect(view->priv->note,view->priv->renamed);
-  g_signal_handler_disconnect(view->priv->window,view->priv->destroy);
-  g_signal_handler_disconnect(view->priv->note,view->priv->deleted);
+  g_signal_handler_disconnect(self->priv->note,self->priv->renamed);
+  g_signal_handler_disconnect(self->priv->window,self->priv->destroy);
+  g_signal_handler_disconnect(self->priv->note,self->priv->deleted);
 
-  g_object_unref (biji_note_obj_get_editor);
+  biji_note_obj_close (self->priv->note);
+  gtk_widget_destroy (self->priv->view);
 
   /* TODO */
 
@@ -386,6 +386,7 @@ just_switch_to_main_view(BjbNoteView *self)
   window = GTK_WINDOW(self->priv->window);
   controller = bjb_window_base_get_controller(BJB_WINDOW_BASE(window));
 
+  g_object_unref (self);
   bjb_main_view_new((gpointer)window,controller);
 }
 
@@ -393,7 +394,7 @@ static void
 save_then_switch_to_notes_view(BjbNoteView *view)
 {
   bijiben_push_note_to_tracker(view->priv->note);
-  /*bjb_close_note(view->priv->note);*/
+  bjb_close_note(view->priv->note);
   just_switch_to_main_view(view);
 }
 
@@ -672,7 +673,7 @@ bjb_note_view_constructed (GObject *obj)
   gchar                  *font;
 
   /* view new from note deserializes the note-content. */
-  priv->view = biji_note_obj_get_editor (priv->note);
+  priv->view = biji_note_obj_open (priv->note);
 
   settings = bjb_window_base_get_settings(priv->window);
 

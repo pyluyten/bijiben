@@ -1,14 +1,12 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * WebkitWebView
- * Copyright (C) buddho 2012 <buddho@localhost.localdomain>
+/* biji-webkit-editor
+ * Copyright (C) Pierre-Yves LUYTEN 2012 <py@luyten.fr>
  * 
-WebkitWebView is free software: you can redistribute it and/or modify it
+ * bijiben is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
- * WebkitWebView is distributed in the hope that it will be useful, but
+ * bijiben is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
