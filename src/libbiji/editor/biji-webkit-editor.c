@@ -63,6 +63,20 @@ biji_webkit_editor_has_selection (BijiWebkitEditor *self)
   return FALSE;
 }
 
+gchar *
+biji_webkit_editor_get_selection (BijiWebkitEditor *self)
+{
+  WebKitWebView *view = WEBKIT_WEB_VIEW (self);
+  EEditorSelection *sel;
+
+  sel = e_editor_selection_new (view);
+
+  if (e_editor_selection_has_text (sel))
+    return (gchar*) e_editor_selection_get_string (sel);
+
+  return NULL;
+}
+
 void
 biji_webkit_editor_apply_format (BijiWebkitEditor *self, gint format)
 {

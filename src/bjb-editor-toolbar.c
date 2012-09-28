@@ -393,9 +393,7 @@ link_callback (GtkWidget *button, BjbEditorToolbar *self)
   BijiNoteBook            *book;
   BjbEditorToolbarPrivate *priv = self->priv;
 
-//WK  link = gtk_text_view_get_selection( GTK_TEXT_VIEW (priv->editor));
-  g_warning ("Link is not yet ported to WK");
-  link = NULL;
+  link = biji_note_obj_editor_get_selection (priv->note);
 
   if (link == NULL)
     return;
@@ -408,7 +406,7 @@ link_callback (GtkWidget *button, BjbEditorToolbar *self)
   g_free(folder);
 
   note_book_append_new_note(book,result);
-  //create_new_window_for_note(bjb_window_base_get_app(window), result);
+  g_warning ("link callback not done on webkit branch");
 }
 
 static void

@@ -160,6 +160,8 @@ void biji_note_obj_editor_apply_format              (BijiNoteObj *note,
 
 gboolean biji_note_obj_editor_has_selection         (BijiNoteObj *note);
 
+gchar * biji_note_obj_editor_get_selection (BijiNoteObj *note);
+
 void biji_note_obj_editor_cut                       (BijiNoteObj *note);
 
 void biji_note_obj_editor_copy                      (BijiNoteObj *note);

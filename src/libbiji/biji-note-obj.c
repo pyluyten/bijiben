@@ -951,6 +951,15 @@ biji_note_obj_editor_has_selection (BijiNoteObj *note)
   return FALSE;
 }
 
+gchar *
+biji_note_obj_editor_get_selection (BijiNoteObj *note)
+{
+  if (biji_note_obj_is_opened (note))
+    return biji_webkit_editor_get_selection (note->priv->editor);
+
+  return NULL;
+}
+
 void biji_note_obj_editor_cut (BijiNoteObj *note)
 {
   if (biji_note_obj_is_opened (note))
