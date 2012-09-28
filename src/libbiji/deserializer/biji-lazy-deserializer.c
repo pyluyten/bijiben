@@ -327,10 +327,15 @@ processNode (BijiLazyDeserializer *self)
   if (g_strcmp0 ((gchar*) name, "color") == 0 )  
   {
     color = g_new (GdkRGBA,1);
-      
-    if ( gdk_rgba_parse (color,(gchar*) xmlTextReaderReadString (r)))
+    gchar *debug= (gchar*) xmlTextReaderReadString (r);
+    //if ( gdk_rgba_parse (color,(gchar*) xmlTextReaderReadString (r)))
+    if ( gdk_rgba_parse (color,debug))
     {
-        biji_note_obj_set_rgba (n, color) ;
+      biji_note_obj_set_rgba (n, color);
+    }
+    else
+    {
+      g_warning ("color invalid:%s",debug);
     }
 
   }

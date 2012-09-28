@@ -49,6 +49,7 @@ struct _BijiNoteObjPrivate
 
   /* Might be null. triggered by get_icon */
   GdkPixbuf             *icon;
+  gboolean              icon_needs_update;
 
   /* Signals */
   gulong note_renamed;
@@ -333,29 +334,35 @@ note_obj_get_content(BijiNoteObj* n)
   return n->priv->content;
 }
 
+static void
+biji_note_obj_set_rgba_internal (BijiNoteObj *n, GdkRGBA *rgba)
+{
+  n->priv->color = rgba;
+  n->priv->icon_needs_update = TRUE;
+
+  _biji_note_id_set_metadata_change_now (n->priv->id);
+  _biji_note_obj_propose_saving (n);
+
+  /* Make editor & notebook know about this change */
+  g_signal_emit (G_OBJECT (n), biji_obj_signals[NOTE_COLOR_CHANGED],0);
+  g_signal_emit (G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
+}
+
+
 void
 biji_note_obj_set_rgba(BijiNoteObj *n,GdkRGBA *rgba)
 {
-    
   if (!n->priv->color)
   {    
-    n->priv->color = rgba;
-    _biji_note_id_set_metadata_change_now (n->priv->id);
-    _biji_note_obj_propose_saving (n);
-    g_signal_emit (G_OBJECT (n), biji_obj_signals[NOTE_COLOR_CHANGED],0);
-//WK    g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
-    return ;
+    biji_note_obj_set_rgba_internal (n, rgba);
+    return;
   }
 
   if (!gdk_rgba_equal (n->priv->color,rgba))
   {
-    g_free(n->priv->color);
-    n->priv->color = rgba;
-    _biji_note_id_set_metadata_change_now(n->priv->id);
-    _biji_note_obj_propose_saving (n);
-    g_signal_emit (G_OBJECT (n), biji_obj_signals[NOTE_COLOR_CHANGED],0);
-//WK    g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
-  }  
+    g_free (n->priv->color);
+    biji_note_obj_set_rgba_internal (n, rgba);
+  }
 }
 
 GdkRGBA *
@@ -700,7 +707,7 @@ biji_note_obj_get_icon (BijiNoteObj *note)
   GdkPixbuf             *ret = NULL;
   cairo_surface_t       *surface = NULL;
 
-  if (note->priv->icon)
+  if (note->priv->icon && !note->priv->icon_needs_update)
     return note->priv->icon;
 
   text = biji_note_get_raw_text (note);
@@ -745,6 +752,7 @@ biji_note_obj_get_icon (BijiNoteObj *note)
                                      ICON_HEIGHT);
 
   note->priv->icon = biji_note_icon_add_frame(ret);
+  note->priv->icon_needs_update = FALSE;
 
   return note->priv->icon ;
 } 
