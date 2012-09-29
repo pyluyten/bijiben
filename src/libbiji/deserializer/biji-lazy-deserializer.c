@@ -159,7 +159,6 @@ process_tomboy_start_elem (BijiLazyDeserializer *self)
   const gchar *element_name;
 
   element_name = (const gchar *) xmlTextReaderConstName(priv->inner);
-  g_warning ("start elem is %s", element_name);
 
   if (g_strcmp0 (element_name, "note-content")==0)
     return;
@@ -181,8 +180,6 @@ process_tomboy_end_elem (BijiLazyDeserializer *self)
   const gchar *element_name;
   
   element_name = (const gchar *) xmlTextReaderConstName (priv->inner);
-
-  g_warning ("end elem is %s", element_name);
 
   if (g_strcmp0 (element_name, "note-content")==0)
     return;
@@ -277,7 +274,6 @@ process_bijiben_start_elem (BijiLazyDeserializer *self)
   const gchar *element_name;
 
   element_name = (const gchar *) xmlTextReaderConstName(priv->inner);
-  g_warning ("start elem is %s", element_name);
 
   if (g_strcmp0 (element_name, "note-content")==0)
     return;
@@ -300,8 +296,6 @@ process_bijiben_end_elem (BijiLazyDeserializer *self)
   
   element_name = (const gchar *) xmlTextReaderConstName (priv->inner);
 
-  g_warning ("end elem is %s", element_name);
-
   if (g_strcmp0 (element_name, "note-content")==0)
     return;
 
@@ -322,7 +316,6 @@ process_bijiben_text_elem (BijiLazyDeserializer *self)
   BijiLazyDeserializerPrivate *priv = self->priv;
 
   text = (const gchar *) xmlTextReaderConstValue (priv->inner);
-  g_warning ( "text elem:%s", text);
 
   /* Simply append the text to both raw & html */
   priv->raw_text = g_string_append (priv->raw_text, text);
