@@ -54,6 +54,7 @@ struct _BjbSearchToolbarPrivate
 
   /* A pressed key shows search entry */
   gulong            key_pressed;
+  gulong            key_released;
 
   /* Misc UI  */
   GtkWidget         *window;
@@ -76,59 +77,41 @@ bjb_search_toolbar_fade_in (BjbSearchToolbar *self)
   if (opacity != 0)
     return;
 
+  clutter_actor_set_opacity (priv->actor, 255);
   clutter_actor_show (priv->actor);
-  clutter_actor_animate (priv->actor,
-                         CLUTTER_EASE_OUT_QUAD,300,
-                         "opacity",255,
-                         NULL);
 
-  gtk_widget_grab_focus(priv->search_entry);
-  gtk_editable_set_position (GTK_EDITABLE(priv->search_entry),-1);
+  gtk_widget_grab_focus (priv->search_entry);
 }
 
 static void
 bjb_search_toolbar_fade_out (BjbSearchToolbar *self)
 {
-  ClutterAnimation *animation;
   BjbSearchToolbarPrivate *priv = self->priv;
 
-  animation = clutter_actor_animate (priv->actor, CLUTTER_EASE_OUT_QUAD, 300, "opacity", 0, NULL);
-  g_signal_connect_swapped (animation, "completed", G_CALLBACK (clutter_actor_hide), priv->actor);
-
-  gtk_entry_set_text(GTK_ENTRY(self->priv->search_entry),"");
+  clutter_actor_set_opacity (priv->actor, 0);
+  clutter_actor_hide (priv->actor);
+  gtk_entry_set_text (GTK_ENTRY (priv->search_entry),"");
 }
 
-/*
-static void
-bjb_search_toolbar_notify_width (GObject *object,
-                                 GParamSpec *pspec,
-                                 gpointer user_data)
+/* If some text has been input, handle position */
+static gboolean
+on_key_released (GtkWidget *widget,GdkEvent  *event,gpointer user_data)
 {
   BjbSearchToolbar *self = BJB_SEARCH_TOOLBAR (user_data);
   BjbSearchToolbarPrivate *priv = self->priv;
-  
-  gfloat offset = 300.0;
-  gfloat width;
 
-  width = clutter_actor_get_width (priv->parent_actor);
-  if (width > 1000)
-    offset += (width - 1000);
-  else if (width < 600)
-    offset -= (600 - width);
+  if (clutter_actor_get_opacity (priv->actor) != 0)
+    gtk_editable_set_position (GTK_EDITABLE (priv->search_entry),-1);
 
-  clutter_bind_constraint_set_offset (CLUTTER_BIND_CONSTRAINT (priv->width_constraint), -1 * offset);
-  gtk_widget_grab_focus(priv->search_entry);
-}*/
+  return FALSE;
+}
 
 static gboolean
 on_key_pressed (GtkWidget *widget,GdkEvent  *event,gpointer user_data)
 {
   BjbSearchToolbar *self = BJB_SEARCH_TOOLBAR (user_data);
 
-  //if (gd_main_view_get_selection_mode(self->priv->view)) {return TRUE ;}
-
   /* Reveal the entry is text is input. TODO add more keys not input*/
-//  if (!self->priv->has_text)
   if (clutter_actor_get_opacity (self->priv->actor) == 0)
   {
     switch (event->key.keyval)
@@ -144,6 +127,7 @@ on_key_pressed (GtkWidget *widget,GdkEvent  *event,gpointer user_data)
 
       default:
         bjb_search_toolbar_fade_in (self);
+        return FALSE;
     }
   }
 
@@ -248,7 +232,10 @@ bjb_search_toolbar_finalize (GObject *obj)
   BjbSearchToolbarPrivate *priv = self->priv ;
   
   g_signal_handler_disconnect (priv->window,priv->key_pressed);
-  priv->key_pressed = 0 ;
+  priv->key_pressed = 0;
+
+  g_signal_handler_disconnect (priv->window,priv->key_released);
+  priv->key_released = 0;
 
   G_OBJECT_CLASS (bjb_search_toolbar_parent_class)->finalize (obj);
 }
@@ -278,6 +265,9 @@ bjb_search_toolbar_constructed (GObject *obj)
   /* Connect to set the text */
   priv->key_pressed = g_signal_connect(priv->window,"key-press-event",
                                        G_CALLBACK(on_key_pressed),self);
+
+  priv->key_released = g_signal_connect(priv->window,"key-release-event",
+                                       G_CALLBACK(on_key_released),self);
 
   /* Connect to set the notes */
   g_signal_connect (priv->search_entry, "icon-press",
@@ -333,6 +323,7 @@ bjb_search_toolbar_init (BjbSearchToolbar *self)
   gtk_entry_set_icon_from_stock (GTK_ENTRY(priv->search_entry),
                                  GTK_ENTRY_ICON_SECONDARY,
                                  GTK_STOCK_CLEAR);
+  gtk_entry_set_text (GTK_ENTRY (priv->search_entry),"");
 
   GtkToolItem *entry_item ;
   entry_item = gtk_tool_item_new();
