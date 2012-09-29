@@ -131,9 +131,6 @@ bjb_editor_toolbar_init (BjbEditorToolbar *self)
   clutter_actor_set_easing_mode (priv->actor, CLUTTER_EASE_IN_QUAD);
   clutter_actor_set_easing_duration (priv->actor, 300.0);
 
-  clutter_actor_set_easing_mode (priv->actor, CLUTTER_EASE_OUT_QUAD);
-  clutter_actor_set_easing_duration (priv->actor, 200.0);
-
   bin = gtk_clutter_actor_get_widget (GTK_CLUTTER_ACTOR (priv->actor));
   gtk_widget_override_background_color (bin,
                                         GTK_STATE_FLAG_NORMAL,
