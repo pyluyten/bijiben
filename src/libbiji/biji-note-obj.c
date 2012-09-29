@@ -322,18 +322,6 @@ set_note_create_date(BijiNoteObj* n,gchar *date)
   return 0 ;
 }
 
-void
-biji_note_set_content(BijiNoteObj* n, gchar* content)
-{
-	n->priv->content = content ;
-}
-
-gchar* 
-note_obj_get_content(BijiNoteObj* n)
-{
-  return n->priv->content;
-}
-
 static void
 biji_note_obj_set_rgba_internal (BijiNoteObj *n, GdkRGBA *rgba)
 {
@@ -503,18 +491,6 @@ _biji_note_template_get_tag(BijiNoteObj *template)
   }
     
   return g_list_nth_data (template->priv->tags,0);
-}
-
-GtkTextTagTable *
-note_obj_get_gtk_tags(BijiNoteObj *note)
-{
-  return note->priv->gtk_tags;
-}
-
-void 
-biji_note_set_gtk_tags(BijiNoteObj *note, GtkTextTagTable *table)
-{
-  note->priv->gtk_tags = table ;
 }
 
 void 
@@ -798,12 +774,6 @@ set_note_title(BijiNoteObj *note_obj_ptr,gchar *title)
   _biji_note_obj_set_title(n,title);
 
   return 0 ;
-}
-
-gchar *
-biji_note_get_content(BijiNoteObj *n)
-{
-  return note_obj_get_content (n);
 }
 
 gboolean

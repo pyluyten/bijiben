@@ -86,11 +86,7 @@ void biji_note_obj_set_rgba(BijiNoteObj *n, GdkRGBA *rgba) ;
 
 ///////////////////////////////////////////////    XML content, buffer, editor
 void _biji_note_obj_increment_opened(BijiNoteObj *note) ;
-void biji_note_set_content(BijiNoteObj* n, gchar* content);
-gchar* note_obj_get_content(BijiNoteObj*n);
 gchar * _biji_note_obj_get_raw_text(BijiNoteObj *n);
-GtkTextTagTable *note_obj_get_gtk_tags(BijiNoteObj *note);
-void biji_note_set_gtk_tags(BijiNoteObj *note, GtkTextTagTable *table);
 gint _biji_note_obj_get_left_margin(BijiNoteObj *obj);
 gboolean _biji_note_obj_is_opened(BijiNoteObj *note);
 
