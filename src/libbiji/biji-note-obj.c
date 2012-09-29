@@ -740,7 +740,7 @@ biji_note_obj_get_icon (BijiNoteObj *note)
   cr = cairo_create (surface);
 
   /* Background */
-  cairo_rectangle (cr, 0.5, 0.5, ICON_WIDTH, ICON_HEIGHT);
+  cairo_rectangle (cr, 0, 0, ICON_WIDTH, ICON_HEIGHT);
   if (biji_note_obj_get_rgba (note, &note_color))
     gdk_cairo_set_source_rgba (cr, &note_color);
 
