@@ -47,6 +47,7 @@ struct _BjbMainViewPriv {
 
   /* Search Entry  */
   ClutterActor     *search_actor;
+  BjbSearchToolbar *search_bar;
 
   /* View Notes , model */
   /* TODO : controller is app-wide controller.
@@ -72,6 +73,7 @@ bjb_main_view_finalize (GObject *object)
 
   /* Widgets, actors */
   clutter_actor_destroy (priv->bin);
+  g_object_unref (priv->search_bar);
 
   G_OBJECT_CLASS (bjb_main_view_parent_class)->finalize (object);
 }
@@ -262,7 +264,6 @@ bjb_main_view_constructed(GObject *o)
   ClutterLayoutManager *filler, *packer, *switcher, *overlay;
   ClutterConstraint    *constraint ;
   BjbSelectionToolbar  *panel ;
-  BjbSearchToolbar     *search_bar;
 
   G_OBJECT_CLASS (bjb_main_view_parent_class)->constructed(G_OBJECT(o));
 
@@ -312,10 +313,10 @@ bjb_main_view_constructed(GObject *o)
   clutter_actor_set_x_expand (priv->toolbar_actor, TRUE);
 
   /* Search entry toolbar */
-  search_bar = bjb_search_toolbar_new(priv->window,
-                                      top,
-                                      priv->controller);
-  priv->search_actor = bjb_search_toolbar_get_actor(search_bar);
+  priv->search_bar = bjb_search_toolbar_new(priv->window,
+                                            top,
+                                            priv->controller);
+  priv->search_actor = bjb_search_toolbar_get_actor(priv->search_bar);
 
   clutter_actor_add_child(top,priv->search_actor);
   clutter_actor_set_x_expand (priv->search_actor, TRUE);

@@ -31,16 +31,18 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
+#include <libbiji/libbiji.h>
 
 #include "bjb-bijiben.h"
 #include "bjb-editor-toolbar.h"
 #include "bjb-window-base.h"
 
+
 enum
 {
   PROP_0,
   PROP_ACTOR,
-  PROP_EDITOR,
+  PROP_NOTE,
   PROP_BJB_NOTE_VIEW,
   NUM_PROPERTIES
 };
@@ -49,11 +51,12 @@ static GParamSpec *properties[NUM_PROPERTIES] = { NULL, };
 
 struct _BjbEditorToolbarPrivate
 {
-  /* Editor is the text view */
+  /* Note provide us the WebKitWebView editor */
   BjbNoteView        *view;
+  BijiNoteObj        *note;
+
   ClutterActor       *actor;
   GtkWidget          *widget;
-  BijiNoteEditor     *editor;
   ClutterActor       *parent_actor;
   ClutterConstraint  *width_constraint;
 
@@ -157,7 +160,7 @@ bjb_editor_toolbar_init (BjbEditorToolbar *self)
                                         &black);
 
   /* 'n paste */
-  priv->toolbar_paste = gtk_toggle_button_new_with_label ("Paste");
+  priv->toolbar_paste = gtk_button_new_with_label ("Paste");
   gtk_container_add (GTK_CONTAINER (priv->box), priv->toolbar_paste);
   gtk_widget_override_background_color (priv->toolbar_paste,
                                         GTK_STATE_FLAG_NORMAL,
@@ -257,8 +260,8 @@ bjb_editor_toolbar_set_property (GObject  *object,
     case PROP_BJB_NOTE_VIEW:
       self->priv->view = g_value_get_object (value);
       break;
-    case PROP_EDITOR:
-      self->priv->editor = g_value_get_object (value);
+    case PROP_NOTE:
+      self->priv->note = g_value_get_object (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -267,30 +270,16 @@ bjb_editor_toolbar_set_property (GObject  *object,
 }
 
 static void
-editor_toolbar_align (BjbEditorToolbar *self)
+editor_toolbar_align (BjbEditorToolbar *self, GdkEvent  *event)
 {
-  BjbEditorToolbarPrivate *priv = self->priv;
-  GtkTextIter              iter;
-  GdkRectangle             iter_rect, win_rect;
+  GdkWindow               *win;
+  GdkRectangle             cursor_pos;
   gint                     x_alignment, y_alignment;
-  GtkTextView             *view;
-  GtkTextBuffer           *buf;
   ClutterConstraint       *constraint;
+  BjbEditorToolbarPrivate *priv = self->priv;
 
-  /* we do align the editor toolbar few pixels below the cursor
-   * (we have to remove the invisible part of textView
-   * x : we do align middle of bar to iter    */
-  view = GTK_TEXT_VIEW (priv->editor);
-  buf = gtk_text_view_get_buffer (view);
-  gtk_text_buffer_get_iter_at_mark (buf,
-                                    &iter,
-                                    gtk_text_buffer_get_insert (buf));
-  
-  gtk_text_view_get_iter_location (view, &iter, &iter_rect);
-  gtk_text_view_get_visible_rect (view, &win_rect);
-
-  y_alignment = iter_rect.y - win_rect.y + EDITOR_TOOLBAR_Y_OFFSET;
-  x_alignment = iter_rect.x + EDITOR_TOOLBAR_X_OFFSET ;
+  x_alignment = event->button.x + EDITOR_TOOLBAR_X_OFFSET;
+  y_alignment = event->button.y + EDITOR_TOOLBAR_Y_OFFSET;
 
   if ( x_alignment < 0)
     x_alignment = 0;
@@ -307,93 +296,91 @@ editor_toolbar_align (BjbEditorToolbar *self)
 }
 
 static void
-show_edit_bar(BjbEditorToolbar *self, gboolean sticky)
+show_edit_bar (BjbEditorToolbar *self, GdkEvent *event)
 {
-  editor_toolbar_align (self);
+  if (event)
+    editor_toolbar_align (self, event);
+
   bjb_editor_toolbar_fade_in (self);
 }
 
-static void
-on_text_selected(GObject *toto,BjbEditorToolbar *self)
+static gboolean
+on_button_released (GtkWidget *widget,
+                    GdkEvent *event,
+                    BjbEditorToolbar *self)
 {
-  self->priv->glued = FALSE;
-  show_edit_bar(self,FALSE);
+  switch (event->button.button)
+  {
+    /* If left click, see if selection */
+    case 1:
+      if (biji_note_obj_editor_has_selection (self->priv->note))
+        show_edit_bar (self, event);
+
+      else
+        bjb_editor_toolbar_fade_out (self);
+
+      return FALSE;
+
+    default:
+      return FALSE;
+  }
 }
 
 static gboolean
-on_button_pressed (GtkWidget *widget,GdkEvent  *event,BjbEditorToolbar *self)
+on_button_pressed (GtkWidget *widget,
+                   GdkEvent  *event,
+                   BjbEditorToolbar *self)
 {
-  /* If anything else than right-click, do not break things. */
-  if ( event->button.button != 3 )
+  switch (event->button.button)
   {
-    return FALSE ;    
-  }
+    /* Show toolbar on right-click */
+    case 3:
+      show_edit_bar (self, event);
+      return TRUE;
 
-  /* If right click, show toolbar and that's all */
-  self->priv->glued = TRUE;
-  show_edit_bar(self,TRUE);
-  return TRUE ;
-}
-
-/* only keep visible if the user wants to paste with right-click */
-static void
-on_text_not_selected(GObject *toto,BjbEditorToolbar *self)
-{
-  if ( self->priv->glued == FALSE )
-  {
-    bjb_editor_toolbar_fade_out (self);
-  }
-
-  else
-  {
-    editor_toolbar_align (self);
-    self->priv->glued = FALSE;
+    /* Do not break stuff otherwise */
+    default :
+      return FALSE;
   }
 }
 
 static gboolean
 on_cut_clicked (GtkWidget *button, BjbEditorToolbar *self)
 {
-  GtkTextView *view = GTK_TEXT_VIEW (self->priv->editor);
-
-  g_signal_emit_by_name (view,"cut-clipboard");
+  biji_note_obj_editor_cut (self->priv->note);
   return TRUE ;
 }
 
 static gboolean
 on_copy_clicked (GtkWidget *button, BjbEditorToolbar *self)
 {
-  GtkTextView *view = GTK_TEXT_VIEW (self->priv->editor);
-
-  g_signal_emit_by_name (view,"copy-clipboard");
+  biji_note_obj_editor_copy (self->priv->note);
   return TRUE ;
 }
 
 static gboolean
 on_paste_clicked (GtkWidget *button, BjbEditorToolbar *self)
 {
-  GtkTextView *view = GTK_TEXT_VIEW (self->priv->editor);
-
-  g_signal_emit_by_name (view,"paste-clipboard");
+  biji_note_obj_editor_paste (self->priv->note);
   return TRUE ;
 }
 
 static void
-bold_button_callback (GtkWidget *button,GtkTextView *view)
+bold_button_callback (GtkWidget *button, BijiNoteObj *note)
 {
-  biji_toggle_bold_tag (view);
+  biji_note_obj_editor_apply_format (note, BIJI_BOLD);
 }
 
 static void
-italic_button_callback (GtkWidget *button,GtkTextView *view)
+italic_button_callback (GtkWidget *button, BijiNoteObj *note)
 {
-  biji_toggle_italic_tag (view);
+  biji_note_obj_editor_apply_format (note, BIJI_ITALIC);
 }
 
 static void
-strike_button_callback (GtkWidget *button,GtkTextView *view)
+strike_button_callback (GtkWidget *button, BijiNoteObj *note)
 {
-  biji_toggle_strike_tag (view);
+  biji_note_obj_editor_apply_format (note, BIJI_STRIKE);
 }
 
 /* TODO : Libiji : BijiNote * bjb_notebook_note_new (notebook,string); */
@@ -406,9 +393,9 @@ link_callback (GtkWidget *button, BjbEditorToolbar *self)
   BijiNoteBook            *book;
   BjbEditorToolbarPrivate *priv = self->priv;
 
-  link = gtk_text_view_get_selection( GTK_TEXT_VIEW (priv->editor));
+  link = biji_note_obj_editor_get_selection (priv->note);
 
-  if (link == NULL )
+  if (link == NULL)
     return;
 
   window = bjb_note_view_get_base_window (priv->view);
@@ -423,30 +410,24 @@ link_callback (GtkWidget *button, BjbEditorToolbar *self)
 }
 
 static void
-bjb_editor_toolbar_constructed(GObject *obj)
+bjb_editor_toolbar_constructed (GObject *obj)
 {
   BjbEditorToolbar        *self = BJB_EDITOR_TOOLBAR(obj);
   BjbEditorToolbarPrivate *priv = self->priv ;
-  GtkTextView             *view;
-
+  GtkWidget               *view ;
 
   G_OBJECT_CLASS (bjb_editor_toolbar_parent_class)->constructed (obj);
 
-  /* text selected --> fade in */
-  g_signal_connect(priv->editor,"selection",
-                   G_CALLBACK(on_text_selected),self);
+  /* text selected --> fade in , and not selected --> fade out */
+  view = biji_note_obj_get_editor (priv->note);
 
-  g_signal_connect(priv->editor,"button-press-event",
+  g_signal_connect(view,"button-press-event",
                    G_CALLBACK(on_button_pressed),self);
 
-  g_signal_connect(priv->editor,"button-release-event",
-                   G_CALLBACK(on_button_pressed),self);
-
-  g_signal_connect(priv->editor,"no-more-selection",
-                   G_CALLBACK(on_text_not_selected),self);
+  g_signal_connect(view,"button-release-event",
+                   G_CALLBACK(on_button_released),self);
 
   /* buttons */
-  view = GTK_TEXT_VIEW (priv->editor);
   
   g_signal_connect (priv->toolbar_cut,"clicked",
                     G_CALLBACK(on_cut_clicked), self);
@@ -458,13 +439,13 @@ bjb_editor_toolbar_constructed(GObject *obj)
                     G_CALLBACK(on_paste_clicked), self);
 
   g_signal_connect (priv->toolbar_bold,"clicked",
-                    G_CALLBACK(bold_button_callback), view);
+                    G_CALLBACK(bold_button_callback), priv->note);
 
   g_signal_connect (priv->toolbar_italic,"clicked",
-                    G_CALLBACK(italic_button_callback), view);
+                    G_CALLBACK(italic_button_callback), priv->note);
 
   g_signal_connect (priv->toolbar_strike,"clicked",
-                    G_CALLBACK(strike_button_callback), view);
+                    G_CALLBACK(strike_button_callback), priv->note);
 
   g_signal_connect (priv->toolbar_link,"clicked",
                     G_CALLBACK(link_callback), self);
@@ -499,15 +480,15 @@ bjb_editor_toolbar_class_init (BjbEditorToolbarClass *class)
 
   g_object_class_install_property (object_class,PROP_BJB_NOTE_VIEW,properties[PROP_BJB_NOTE_VIEW]);
 
-  properties[PROP_EDITOR] = g_param_spec_object ("editor",
-                                                     "editor",
-                                                     "editor",
-                                                      BIJI_TYPE_NOTE_EDITOR,
-                                                      G_PARAM_READWRITE  |
-                                                      G_PARAM_CONSTRUCT |
-                                                      G_PARAM_STATIC_STRINGS);
+  properties[PROP_NOTE] = g_param_spec_object ("note",
+                                               "Note",
+                                               "Biji Note Obj",
+                                                BIJI_TYPE_NOTE_OBJ,
+                                                G_PARAM_READWRITE  |
+                                                G_PARAM_CONSTRUCT |
+                                                G_PARAM_STATIC_STRINGS);
 
-  g_object_class_install_property (object_class,PROP_EDITOR,properties[PROP_EDITOR]);
+  g_object_class_install_property (object_class,PROP_NOTE,properties[PROP_NOTE]);
 
   g_type_class_add_private (class, sizeof (BjbEditorToolbarPrivate));
 }
@@ -516,15 +497,14 @@ bjb_editor_toolbar_class_init (BjbEditorToolbarClass *class)
 BjbEditorToolbar *
 bjb_editor_toolbar_new (ClutterActor   *parent_actor,
                         BjbNoteView    *bjb_note_view,
-                        BijiNoteEditor *biji_note_editor)
+                        BijiNoteObj    *biji_note_obj)
 {
   return g_object_new (BJB_TYPE_EDITOR_TOOLBAR,
-                       "actor", parent_actor,
-                       "bjbnoteview",bjb_note_view,
-                       "editor",biji_note_editor,
+                       "actor"       , parent_actor,
+                       "bjbnoteview" , bjb_note_view,
+                       "note"        , biji_note_obj,
                        NULL);
 }
-
 
 ClutterActor *
 bjb_editor_toolbar_get_actor (BjbEditorToolbar *self)

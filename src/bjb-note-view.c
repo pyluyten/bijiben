@@ -35,14 +35,13 @@ G_DEFINE_TYPE (BjbNoteView, bjb_note_view, CLUTTER_TYPE_ACTOR)
 struct _BjbNoteViewPrivate {
   /* Data */
   GtkWidget         *window ;
+  GtkWidget         *view;
   BijiNoteObj       *note ;
-  GtkTextBuffer     *buffer ;
 
   /* UI */
   ClutterActor      *embed;
   ClutterActor      *edit_actor;
   GtkBox            *toolbars_box;
-  GtkTextView       *view;
   BjbEditorToolbar  *edit_bar;
   ClutterActor      *edit_bar_actor;
   gboolean           edit_bar_is_sticky ;
@@ -68,12 +67,15 @@ struct _BjbNoteViewPrivate {
 static void
 bjb_note_view_finalize(GObject *object)
 {
-  BjbNoteView *view = BJB_NOTE_VIEW(object) ;
+  BjbNoteView *self = BJB_NOTE_VIEW (object) ;
 
   /* Don't unref buffer. Biji Does it when we close note. */
-  g_signal_handler_disconnect(view->priv->note,view->priv->renamed);
-  g_signal_handler_disconnect(view->priv->window,view->priv->destroy);
-  g_signal_handler_disconnect(view->priv->note,view->priv->deleted);
+  g_signal_handler_disconnect(self->priv->note,self->priv->renamed);
+  g_signal_handler_disconnect(self->priv->window,self->priv->destroy);
+  g_signal_handler_disconnect(self->priv->note,self->priv->deleted);
+
+  biji_note_obj_close (self->priv->note);
+  gtk_widget_destroy (self->priv->view);
 
   /* TODO */
 
@@ -355,7 +357,7 @@ static void
 bjb_close_note(gpointer note)
 {
   bijiben_push_note_to_tracker(note);
-  biji_note_close(note);
+  /*biji_note_close(note);*/
 }
 
 static gboolean
@@ -384,6 +386,7 @@ just_switch_to_main_view(BjbNoteView *self)
   window = GTK_WINDOW(self->priv->window);
   controller = bjb_window_base_get_controller(BJB_WINDOW_BASE(window));
 
+  g_object_unref (self);
   bjb_main_view_new((gpointer)window,controller);
 }
 
@@ -441,20 +444,12 @@ delete_item_callback (GtkWidget *item, gpointer user_data)
 }
 
 static void
-set_editor_color(BjbNoteView *v, GdkRGBA *to_be)
-{
-  gtk_widget_override_background_color(GTK_WIDGET(v->priv->view),
-                                       GTK_STATE_FLAG_NORMAL,to_be);
-}
-
-static void
 on_color_set(GtkColorButton *button,
              BjbNoteView *view)
 {
   GdkRGBA color;
 
   gtk_color_chooser_get_rgba (GTK_COLOR_CHOOSER (button), &color);
-  set_editor_color (view,&color);
   biji_note_obj_set_rgba (view->priv->note,&color) ;
 }
 
@@ -554,6 +549,7 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
 
   /* Menu */
   button = gd_main_toolbar_add_menu(gd,"emblem-system-symbolic",NULL,FALSE);
+
   gtk_menu_button_set_popup (GTK_MENU_BUTTON (button),
                              bjb_note_menu_new (self));
 
@@ -611,7 +607,6 @@ bjb_note_view_constructed (GObject *obj)
 {
   BjbNoteView            *self = BJB_NOTE_VIEW (obj);
   BjbNoteViewPrivate     *priv = self->priv;
-  BijiNoteEditor         *editor ;
   BjbSettings            *settings;
   GtkWidget              *scroll;
   ClutterActor           *stage, *vbox;
@@ -620,12 +615,10 @@ bjb_note_view_constructed (GObject *obj)
   gchar                  *font;
 
   /* view new from note deserializes the note-content. */
-  priv->view = biji_text_view_new_from_note (priv->note);
-  priv->buffer = gtk_text_view_get_buffer (priv->view);
+  priv->view = biji_note_obj_open (priv->note);
 
   settings = bjb_app_get_settings(g_application_get_default());
-    
-  editor = BIJI_NOTE_EDITOR (priv->view);
+
 
   priv->renamed = g_signal_connect(priv->note,"renamed",
                                    G_CALLBACK(on_note_renamed),
@@ -671,7 +664,7 @@ bjb_note_view_constructed (GObject *obj)
   clutter_actor_set_x_expand (overlay,TRUE);
   clutter_actor_set_y_expand (overlay,TRUE);
 
-  /* GtkTextView */
+  /* Text Editor (WebKitMainView) */
   scroll = gtk_scrolled_window_new (NULL,NULL);
   gtk_widget_show (scroll);
 
@@ -699,21 +692,15 @@ bjb_note_view_constructed (GObject *obj)
   gtk_widget_modify_font(GTK_WIDGET(priv->view),
                          pango_font_description_from_string(font));
 
-  /* Padding */
-  gtk_text_view_set_pixels_above_lines (GTK_TEXT_VIEW(priv->view),
-                                        8);
-  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(priv->view),16);
-
   /* User defined color */
   GdkRGBA color ;
   if (!biji_note_obj_get_rgba(priv->note, &color))
     gdk_rgba_parse (&color, DEFAULT_NOTE_COLOR);
 
   biji_note_obj_set_rgba (priv->note, &color);
-  set_editor_color (self,&color);
 
   /* Edition Toolbar */
-  priv->edit_bar = bjb_editor_toolbar_new (overlay, self, editor);
+  priv->edit_bar = bjb_editor_toolbar_new (overlay, self, priv->note);
   priv->edit_bar_actor = bjb_editor_toolbar_get_actor (priv->edit_bar);
   clutter_actor_add_child (priv->embed, priv->edit_bar_actor);
 

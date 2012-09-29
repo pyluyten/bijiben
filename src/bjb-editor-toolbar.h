@@ -56,7 +56,7 @@ struct _BjbEditorToolbarClass
 
 GType bjb_editor_toolbar_get_type (void) G_GNUC_CONST;
 
-BjbEditorToolbar * bjb_editor_toolbar_new (ClutterActor *parent_actor,BjbNoteView *bjb_note_view,BijiNoteEditor *biji_note_editor);
+BjbEditorToolbar * bjb_editor_toolbar_new (ClutterActor *parent_actor,BjbNoteView *bjb_note_view,BijiNoteObj *biji_note_obj);
 
 ClutterActor * bjb_editor_toolbar_get_actor (BjbEditorToolbar *self);
 

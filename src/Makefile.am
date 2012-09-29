@@ -91,20 +91,20 @@ libbiji_a_SOURCES =  \
 	libbiji/biji-date-time.h \
 	libbiji/biji-note-id.c \
 	libbiji/biji-note-id.h \
-	libbiji/biji-note-tag.c \
-	libbiji/biji-note-tag.h \
 	libbiji/biji-note-obj.c \
 	libbiji/biji-note-obj.h \
 	libbiji/biji-note-book.c \
 	libbiji/biji-note-book.h \
-	libbiji/biji-note-buffer.c \
-	libbiji/biji-note-buffer.h \
-	libbiji/biji-note-editor.c \
-	libbiji/biji-note-editor.h \
 	libbiji/biji-note-watcher.c \
 	libbiji/biji-note-watcher.h\
-	libbiji/biji-read-tomboy.c \
-	libbiji/biji-read-tomboy.h \
-	libbiji/biji-serialize.c \
-	libbiji/biji-serialize.h
+	libbiji/deserializer/biji-lazy-deserializer.c \
+	libbiji/deserializer/biji-lazy-deserializer.h \
+	libbiji/editor/biji-editor-selection.c \
+	libbiji/editor/biji-editor-selection.h \
+	libbiji/editor/biji-editor-utils.c \
+	libbiji/editor/biji-editor-utils.h \
+	libbiji/editor/biji-webkit-editor.c \
+	libbiji/editor/biji-webkit-editor.h \
+	libbiji/serializer/biji-lazy-serializer.c \
+	libbiji/serializer/biji-lazy-serializer.h
 

@@ -1,12 +1,10 @@
 #include "biji-date-time.h"
 #include "biji-note-id.h"
 #include "biji-note-book.h"
-#include "biji-note-buffer.h"
-#include "biji-note-editor.h"
 #include "biji-note-obj.h"
 #include "biji-note-watcher.h"
-#include "biji-read-tomboy.h"
-#include "biji-serialize.h"
+#include "editor/biji-webkit-editor.h"
+#include "serializer/biji-lazy-serializer.h"
 #include "libbiji.h"
 
 #ifndef NO_NOTE_TITLE
@@ -29,13 +27,15 @@ struct _BijiNoteObjPrivate
 
   /* Metadata */
   BijiNoteID            *id;
+  gchar                 *html;
+  gchar                 *raw_text;
 
   /* XML Content */
   gchar                 *content;
 
   /* Buffer might be null */
-  BijiNoteBuffer        *buffer;
-  gint                  changes_to_save ;
+  BijiWebkitEditor      *editor;
+  gint                  changes_to_save;
 
   /* TAGS may be notebooks. */
   GList                 *tags ;
@@ -49,6 +49,7 @@ struct _BijiNoteObjPrivate
 
   /* Might be null. triggered by get_icon */
   GdkPixbuf             *icon;
+  gboolean              icon_needs_update;
 
   /* Signals */
   gulong note_renamed;
@@ -73,11 +74,15 @@ biji_note_obj_init (BijiNoteObj *self)
   priv->changes_to_save = 0 ;
   priv->book = NULL ;
   priv->content = NULL ;
-  priv->buffer = NULL;
   priv->tags = NULL ;
   priv->is_template = FALSE ;
   priv->is_opened = 0;
   priv->left_margin = 6 ; // defautl left margin.
+
+  /* The editor is NULL so we know it's not opened
+   * neither fully deserialized */
+  priv->html = NULL;
+  priv->editor = NULL;
 
   /* Icon is only computed when necessary */
   priv->icon = NULL;
@@ -100,6 +105,8 @@ biji_note_obj_finalize (GObject *object)
   // buffer
 
   // free content
+  if (priv->html)
+    g_free (priv->html);
 
   // tags
   g_list_free (priv->tags);
@@ -114,6 +121,7 @@ enum {
   NOTE_RENAMED,
   NOTE_DELETED,
   NOTE_CHANGED,
+  NOTE_COLOR_CHANGED,
   BIJI_OBJ_SIGNALS
 };
 
@@ -137,6 +145,16 @@ biji_note_obj_class_init (BijiNoteObjClass *klass)
                                                   0);
 
   biji_obj_signals[NOTE_CHANGED] = g_signal_new ( "changed" ,
+                                                  G_OBJECT_CLASS_TYPE (klass),
+                                                  G_SIGNAL_RUN_LAST,
+                                                  0, 
+                                                  NULL, 
+                                                  NULL,
+                                                  g_cclosure_marshal_VOID__VOID,
+                                                  G_TYPE_NONE,
+                                                  0);
+
+  biji_obj_signals[NOTE_COLOR_CHANGED] = g_signal_new ("color-changed" ,
                                                   G_OBJECT_CLASS_TYPE (klass),
                                                   G_SIGNAL_RUN_LAST,
                                                   0, 
@@ -316,27 +334,35 @@ note_obj_get_content(BijiNoteObj* n)
   return n->priv->content;
 }
 
+static void
+biji_note_obj_set_rgba_internal (BijiNoteObj *n, GdkRGBA *rgba)
+{
+  n->priv->color = gdk_rgba_copy(rgba);
+  n->priv->icon_needs_update = TRUE;
+
+  _biji_note_id_set_metadata_change_now (n->priv->id);
+  _biji_note_obj_propose_saving (n);
+
+  /* Make editor & notebook know about this change */
+  g_signal_emit (G_OBJECT (n), biji_obj_signals[NOTE_COLOR_CHANGED],0);
+  g_signal_emit (G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
+}
+
+
 void
 biji_note_obj_set_rgba(BijiNoteObj *n,GdkRGBA *rgba)
 {
-    
-  if ( !n->priv->color  )
+  if (!n->priv->color)
   {    
-    n->priv->color = gdk_rgba_copy(rgba) ;
-    _biji_note_id_set_metadata_change_now(n->priv->id);
-    _biji_note_obj_propose_saving (n);
-    g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
-    return ;
+    biji_note_obj_set_rgba_internal (n, rgba);
+    return;
   }
 
-  if ( !gdk_rgba_equal(n->priv->color,rgba) )
+  if (!gdk_rgba_equal (n->priv->color,rgba))
   {
-    gdk_rgba_free(n->priv->color);
-    n->priv->color = gdk_rgba_copy(rgba) ;
-    _biji_note_id_set_metadata_change_now(n->priv->id);
-    _biji_note_obj_propose_saving (n) ;
-    g_signal_emit ( G_OBJECT (n), biji_obj_signals[NOTE_CHANGED],0);
-  }  
+    gdk_rgba_free (n->priv->color);
+    biji_note_obj_set_rgba_internal (n, rgba);
+  }
 }
 
 gboolean
@@ -352,25 +378,21 @@ biji_note_obj_get_rgba(BijiNoteObj *n,
   return FALSE;
 }
 
-// FIXME find something better that 10000 char...
-// the issue is ... well i don't really remember why ut8 len is not good. 
 gchar *
 _biji_note_obj_get_raw_text(BijiNoteObj *n)
-{    
-  xmlDocPtr doc = xmlParseMemory(n->priv->content,
-                                 10000);
+{
+  if (n->priv->raw_text)
+    return n->priv->raw_text;
 
-  if (doc == NULL ) 
-  {
-    g_message("File not parsed successfully. \n");
-    return FALSE;
-  }
+  return "";
+}
 
-  xmlNodePtr cur = xmlDocGetRootElement(doc);        // <note-content>
-  gchar *result = (gchar*) xmlNodeGetContent (cur) ; //get raw content
-  xmlFreeDoc(doc);
-    
-  return result ;
+void biji_note_obj_set_raw_text (BijiNoteObj *note, gchar *plain_text)
+{
+  if (note->priv->raw_text)
+    g_free (note->priv->raw_text);
+
+  note->priv->raw_text = g_strdup (plain_text);
 }
 
 gint
@@ -507,67 +529,35 @@ _biji_note_obj_is_opened(BijiNoteObj *note)
   return note->priv->is_opened ;
 }
 
-GtkTextBuffer *
-biji_note_get_or_create_buffer(gpointer note_obj)
+gboolean
+note_obj_save_note_using_buffer (gpointer note_obj)
 {
-  BijiNoteObj *n = BIJI_NOTE_OBJ(note_obj);
+  gboolean result;
+  BijiLazySerializer *serializer;
+  BijiNoteObj *note = BIJI_NOTE_OBJ(note_obj);
 
-  if ( !n->priv->buffer )
+  // Change the last change date propery
+  _biji_note_id_set_change_date_now (note->priv->id);
+  
+  // Work on the content
+  serializer = biji_lazy_serializer_new (note);
+  result = biji_lazy_serialize (serializer);
+  g_object_unref (serializer);
+
+  // Update the icon
+  if (note->priv->icon)
   {
-    g_message("no buffer yet , we do create it");
-    n->priv->buffer = create_note_buffer(note_obj);
-
-#ifndef NO_NOTE_TITLE
-    if ( n->priv->content == NULL )
-    {
-      g_message("Note has no content. Creating fake content.");
-      n->priv->content = g_strdup_printf("<note-content>%s\n\n</note-content>",
-                                         biji_note_get_title(n));
-    }
-#endif
-
-    note_buffer_set_xml(n->priv->buffer,n->priv->content);
+    g_object_unref (note->priv->icon);
+    note->priv->icon = NULL ;
   }
 
-  GtkTextBuffer *buffer = GTK_TEXT_BUFFER(n->priv->buffer);
-  on_note_opened(buffer);
-  return buffer;
-}
-
-GtkTextView *
-note_obj_get_editor(gpointer note_obj)
-{
-  BIJI_NOTE_OBJ(note_obj)->priv->is_opened ++ ;
-  return biji_gtk_view_new(note_obj);
-}
-
-gboolean
-note_obj_save_note_using_buffer(gpointer note_obj)
-{
-  xmlBufferPtr buf;
-  gboolean result ;
-  BijiNoteObj *note = BIJI_NOTE_OBJ(note_obj);
-  BijiNoteID *id = note_get_id (note);
-
-  // Change the last change date propery.
-  _biji_note_id_set_change_date_now(note->priv->id);
-  
-  // Work on the content. this func also updates note_obj->priv->content.
-  buf = note_obj_serialize(note_obj,3);
-  result = g_file_set_contents (biji_note_id_get_path(id),
-                                (gchar*) buf->content,-1,NULL);
-
-  /* Update the icon */
-  g_object_unref (note->priv->icon);
-  note->priv->icon = NULL ;
   biji_note_obj_get_icon (note);
 
-  /* Alert */
+  // Alert
   g_signal_emit ( G_OBJECT (note_obj), 
                   biji_obj_signals[NOTE_CHANGED],
                   0);
 
-  xmlBufferFree(buf);
   return result ;
 }
 
@@ -584,32 +574,6 @@ _biji_note_obj_propose_saving(gpointer note_obj)
   }
 
   note->priv->changes_to_save ++ ;
-}
-
-void
-_biji_note_obj_close_note(gpointer note_obj)
-{
-  BijiNoteObj *note = BIJI_NOTE_OBJ(note_obj);
-
-  if ( note->priv->changes_to_save != 0 )
-  {
-    note_obj_save_note_using_buffer(note_obj);
-    note->priv->changes_to_save = 0 ;
-  }
-
-  note->priv->is_opened -- ;
-  g_message("is opened = %i",note->priv->is_opened);
-
-  if ( note->priv->is_opened < 1 )
-  {  
-    if (BIJI_IS_NOTE_BUFFER(note->priv->buffer) )
-    {
-      g_message("closing note");
-      g_object_unref(note->priv->buffer) ;
-      note->priv->buffer = NULL ;
-    }
-  }
-  else {  g_message("keep buffer") ; } 
 }
 
 void
@@ -750,7 +714,7 @@ biji_note_obj_get_icon (BijiNoteObj *note)
   GdkPixbuf             *ret = NULL;
   cairo_surface_t       *surface = NULL;
 
-  if (note->priv->icon)
+  if (note->priv->icon && !note->priv->icon_needs_update)
     return note->priv->icon;
 
   /* Create & Draw surface */ 
@@ -787,7 +751,7 @@ biji_note_obj_get_icon (BijiNoteObj *note)
     pango_cairo_show_layout (cr, layout);
 
     g_object_unref (layout);
-    g_free (text);
+    /*g_free (text); Webkit text no longer to be freed */
   }
 
   cairo_destroy (cr);
@@ -799,6 +763,7 @@ biji_note_obj_get_icon (BijiNoteObj *note)
   cairo_surface_destroy (surface);
 
   note->priv->icon = biji_note_icon_add_frame(ret);
+  note->priv->icon_needs_update = FALSE;
 
   return note->priv->icon ;
 }
@@ -913,3 +878,114 @@ gchar *biji_note_obj_get_create_date(BijiNoteObj *note)
 {
   return biji_note_id_get_create_date(note_get_id(note));
 }
+
+/* Webkit */
+
+gchar *
+biji_note_obj_get_html (BijiNoteObj *note)
+{
+  return note->priv->html;
+}
+
+void
+biji_note_obj_set_html_content (BijiNoteObj *note,
+                                gchar *html)
+{
+  // TODO : queue_save with timeout struct
+
+  if (html)
+  {
+    g_free (note->priv->html);
+    note->priv->html = g_strdup (html);
+
+    /* This func will apply when first serialisazing
+     * but it handles note icon*/
+    note_obj_save_note_using_buffer (note);
+  }
+}
+
+gboolean
+biji_note_obj_is_opened (BijiNoteObj *note)
+{
+  return BIJI_IS_WEBKIT_EDITOR (note->priv->editor);
+}
+
+/* Should connect to "destroy" there
+ * to auto set editor=NULL when widget killed */
+GtkWidget *
+biji_note_obj_open (BijiNoteObj *note)
+{
+  note->priv->editor = biji_webkit_editor_new (note);
+  return GTK_WIDGET (note->priv->editor);
+}
+
+GtkWidget *
+biji_note_obj_get_editor (BijiNoteObj *note)
+{
+  if (!biji_note_obj_is_opened (note))
+  {
+    g_warning ("note not opened");
+    return NULL;
+  }
+
+  return GTK_WIDGET (note->priv->editor);
+}
+
+void
+biji_note_obj_close (BijiNoteObj *note)
+{
+  if (biji_note_obj_is_opened (note))
+  {
+    gtk_widget_destroy (GTK_WIDGET (note->priv->editor));
+    note->priv->editor = NULL;
+  }
+
+  else
+  {
+    g_warning ("Note not opened");
+  }
+}
+
+void
+biji_note_obj_editor_apply_format (BijiNoteObj *note, gint format)
+{
+  if (biji_note_obj_is_opened (note))
+    biji_webkit_editor_apply_format ( note->priv->editor , format);
+}
+
+gboolean
+biji_note_obj_editor_has_selection (BijiNoteObj *note)
+{
+  if (biji_note_obj_is_opened (note))
+    return biji_webkit_editor_has_selection (note->priv->editor);
+
+  return FALSE;
+}
+
+gchar *
+biji_note_obj_editor_get_selection (BijiNoteObj *note)
+{
+  if (biji_note_obj_is_opened (note))
+    return biji_webkit_editor_get_selection (note->priv->editor);
+
+  return NULL;
+}
+
+void biji_note_obj_editor_cut (BijiNoteObj *note)
+{
+  if (biji_note_obj_is_opened (note))
+    biji_webkit_editor_cut (note->priv->editor);
+}
+
+void biji_note_obj_editor_copy (BijiNoteObj *note)
+{
+  if (biji_note_obj_is_opened (note))
+    biji_webkit_editor_copy (note->priv->editor);
+}
+
+void biji_note_obj_editor_paste (BijiNoteObj *note)
+{
+  if (biji_note_obj_is_opened (note))
+    biji_webkit_editor_paste (note->priv->editor);
+}
+

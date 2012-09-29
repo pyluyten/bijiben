@@ -73,7 +73,8 @@ G_DEFINE_TYPE (BjbMainToolbar, bjb_main_toolbar, G_TYPE_OBJECT);
 static void
 on_new_note_clicked (GtkWidget *but, BjbMainView *view)
 {
-  gchar *title ;
+  gchar *title;
+  gchar *folder;
   BijiNoteObj *result ;
   BijiNoteBook *book ;
 
@@ -81,16 +82,15 @@ on_new_note_clicked (GtkWidget *but, BjbMainView *view)
                             "New Note : Title",
                             "New Note");
 
-  if ( !title)
-  {
-    return ;
-  }
+  if (!title)
+    return;
 
   /* append note to collection */
   book = bjb_window_base_get_book(bjb_main_view_get_window(view));
-  gchar *folder = g_strdup_printf("%s/bijiben",g_get_user_data_dir());
+  folder = g_strdup_printf("%s/bijiben",g_get_user_data_dir());
   result = biji_note_get_new_from_string(title,folder);
   g_free(folder);
+
   note_book_append_new_note(book,result);
 
   /* Go to that note */

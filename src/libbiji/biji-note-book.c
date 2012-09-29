@@ -2,9 +2,8 @@
 #include <gtk/gtk.h>
 
 #include "libbiji.h"
-#include "biji-note-editor.h"
 #include "biji-note-book.h"
-#include "biji-read-tomboy.h"
+#include "deserializer/biji-lazy-deserializer.h"
 
 struct _BijiNoteBookPrivate
 {
@@ -218,7 +217,7 @@ _biji_note_book_add_one_note(BijiNoteBook *book,BijiNoteObj *note)
   _biji_note_book_sanitize_title(book,note);
 
   /* Welcome to the book ! */
-  biji_note_set_gtk_tags(note,book->priv->table);
+  //biji_note_set_gtk_tags(note,book->priv->table);
   _biji_note_obj_set_book(note,(gpointer)book);
 
   // Handle tags
@@ -245,7 +244,7 @@ _biji_note_book_add_one_note(BijiNoteBook *book,BijiNoteObj *note)
   // Add it to the list and emit signal
   book->priv->notes = g_list_append(book->priv->notes,note);
   book->priv->length++;
-  //g_signal_connect(note,"renamed",G_CALLBACK(notify_changed),book);
+
   book->priv->note_renamed = g_signal_connect(note,"renamed",
                                               G_CALLBACK(notify_changed),book);
   g_signal_connect (note,"changed", G_CALLBACK(notify_changed),book);
@@ -507,22 +506,8 @@ _biji_book_get_nth(BijiNoteBook *book,int i)
 /* Notes collection */
 void note_book_append_new_note(BijiNoteBook *book,BijiNoteObj *note)
 {    
-  if (BIJI_IS_NOTE_BOOK(book))
-  {
-    if ( BIJI_IS_NOTE_OBJ(note) )
-    {
-      _biji_note_book_add_one_note(book,note);
-    }
-    else
-    {
-      g_message("You trying to add a car to a list of planes");  
-    }
-  }
-  else
-  {
-    // TODO return biji_note_book_with_single_note(NoteObj *note)
-    g_message("ERROR. NOT A BOOK.");
-  }
+  if (BIJI_IS_NOTE_BOOK(book) && BIJI_IS_NOTE_OBJ(note))
+    _biji_note_book_add_one_note(book,note);
 }
 
 gboolean 
@@ -647,11 +632,17 @@ BijiNoteObj*
 biji_note_get_new_from_file (const gchar* path)
 {
   BijiNoteObj* ret ;
+  BijiLazyDeserializer *deserializer;
 
+  /* TODO biji_note_obj_new (path) should handle this */
   ret = g_object_new(BIJI_TYPE_NOTE_OBJ,NULL);
   set_note_id_path(note_get_id(ret),path);
 
-  load_tomboy_note((gpointer)ret);
+  /* The deserializer will handle note type */
+  deserializer = biji_lazy_deserializer_new (ret);
+  biji_lazy_deserialize (deserializer);
+  g_object_unref (deserializer);
+
   return ret ;
 }
 
@@ -674,3 +665,4 @@ biji_note_get_new_from_string (gchar* title, gchar *folder)
 
   return ret ;
 }
+
