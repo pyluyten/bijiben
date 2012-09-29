@@ -25,10 +25,8 @@
 #include "bjb-app-menu.h"
 #include "bjb-bijiben.h"
 #include "bjb-settings.h"
-#include "bjb-tracker.h"
 #include "bjb-main-view.h"
 #include "bjb-note-view.h"
-#include "bjb-tags-view.h"
 #include "bjb-window-base.h"
 
 struct _BijibenPriv

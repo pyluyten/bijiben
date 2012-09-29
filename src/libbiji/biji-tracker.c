@@ -1,4 +1,4 @@
-#include "bjb-tracker.h"
+#include "biji-tracker.h"
 
 ///////////////// Utils.
 
@@ -205,8 +205,6 @@ remove_tag_from_note (gchar *tag, BijiNoteObj *note)
   bjb_perform_update(query); 
 }
 
-
-
 //
 void
 biji_note_delete_from_tracker(BijiNoteObj *note)
@@ -217,7 +215,6 @@ biji_note_delete_from_tracker(BijiNoteObj *note)
   bjb_perform_update(query);
 }
 
-// FIXME add plaintextcontent
 static void 
 biji_note_create_into_tracker(BijiNoteObj *note)
 {
@@ -252,40 +249,6 @@ biji_note_create_into_tracker(BijiNoteObj *note)
   g_free(create_date);
   g_free(last_change_date);
 }
-
-/* FIXME PROBABLY FORGET ABOUT THIS UNTILL TRACKER OFFERS THE 'REPLACE' 
-static void 
-biji_note_update_tracker(BijiNoteObj *note)
-{                    
-  gchar *query,*uri,*title,*last_change_date,*content ;
-
-  uri = get_note_path(note);
-  title = tracker_str(biji_note_get_title(note));
-  content = tracker_str ( _biji_note_obj_get_raw_text(note) );
-  last_change_date = to_8601_date(biji_note_obj_get_last_change_date(note));
-
-  query = g_strdup_printf( "DELETE { <%s> nie:contentLastModified ?x;\
-                            nie:title ?t ; \
-                            nie:plainTextContent ?content .}  \
-                            WHERE { <%s> a nfo:Note ; \
-                            nie:contentLastModified ?x ; \
-                            nie:title ?t ; \
-                            nie:plainTextContent ?content .} \
-                            INSERT { <%s> nie:contentLastModified '%s' ; \
-                            nie:title '%s' ; \
-                            nie:plainTextContent '%s' .}",
-                           uri,
-                           uri,
-                           uri,
-                           last_change_date,
-                           title,
-                           content) ;
-
-  bjb_perform_update(query);
-  g_free(title);
-  g_free(last_change_date);
-}
-*/
             
 // TODO (?) add time there, eg is_note_tracked ( BijiNoteObj, GDateTime )
 gboolean

@@ -5,7 +5,6 @@
 #include <libbiji/libbiji.h>
 
 #include "bjb-bijiben.h"
-#include "bjb-tracker.h"
 #include "bjb-window-base.h"
 #include "bjb-main-view.h"
 #include "bjb-note-view.h"

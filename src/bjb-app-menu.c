@@ -2,7 +2,6 @@
 #include "bjb-bijiben.h"
 #include "bjb-main-view.h"
 #include "bjb-settings.h"
-#include "bjb-tags-view.h"
 #include "bjb-window-base.h"
 
 /* Callbacks */
@@ -37,20 +36,6 @@ new_activated (GSimpleAction *action,
   bjb_window_base_new();
 }
 
-/* FIXME
-static void
-tag_activated (GSimpleAction *action,
-               GVariant      *parameter,
-               gpointer       user_data)
-{
-  GApplication *app = user_data;
-
-  GtkWindow *win = create_new_main_window(app);
-  bjb_window_base_set_frame((gpointer)win,
-                             bjb_tags_view_new(GTK_WIDGET(win)));
-}
-*/
-
 static void
 about_activated (GSimpleAction *action,
                  GVariant      *parameter,
@@ -82,7 +67,6 @@ quit_activated (GSimpleAction *action,
 
 static GActionEntry app_entries[] = {
            { "new", new_activated, NULL, NULL, NULL },
-/*         { "tags", tag_activated, NULL, NULL, NULL }, FIXME */
            { "help", help_activated, NULL, NULL, NULL },
            { "about", about_activated, NULL, NULL, NULL },
            { "quit", quit_activated, NULL, NULL, NULL },

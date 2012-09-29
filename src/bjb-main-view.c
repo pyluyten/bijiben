@@ -13,8 +13,6 @@
 #include "bjb-rename-note.h"
 #include "bjb-search-toolbar.h"
 #include "bjb-selection-toolbar.h"
-#include "bjb-tags-view.h"
-#include "bjb-tracker.h"
 #include "bjb-window-base.h"
 
 #define DEFAULT_VIEW GD_MAIN_VIEW_ICON

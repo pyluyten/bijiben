@@ -8,7 +8,6 @@
 #include "bjb-editor-toolbar.h"
 #include "bjb-rename-note.h"
 #include "bjb-share.h"
-#include "bjb-tracker.h"
 #include "bjb-main-view.h"
 #include "bjb-note-view.h"
 #include "bjb-window-base.h"
