@@ -272,8 +272,6 @@ bjb_editor_toolbar_set_property (GObject  *object,
 static void
 editor_toolbar_align (BjbEditorToolbar *self, GdkEvent  *event)
 {
-  GdkWindow               *win;
-  GdkRectangle             cursor_pos;
   gint                     x_alignment, y_alignment;
   ClutterConstraint       *constraint;
   BjbEditorToolbarPrivate *priv = self->priv;
@@ -324,6 +322,22 @@ on_button_released (GtkWidget *widget,
     default:
       return FALSE;
   }
+}
+
+static gboolean
+on_key_released                     (GtkWidget *widget,
+                                     GdkEvent  *event,
+                                     gpointer   user_data)
+{
+  BjbEditorToolbar *self = BJB_EDITOR_TOOLBAR (user_data);
+
+  if (biji_note_obj_editor_has_selection (self->priv->note))
+    show_edit_bar (self, event);
+
+  else
+    bjb_editor_toolbar_fade_out (self);
+
+  return FALSE;
 }
 
 static gboolean
@@ -426,6 +440,9 @@ bjb_editor_toolbar_constructed (GObject *obj)
 
   g_signal_connect(view,"button-release-event",
                    G_CALLBACK(on_button_released),self);
+
+  g_signal_connect(view,"key-release-event",
+                   G_CALLBACK(on_key_released),self);
 
   /* buttons */
   
