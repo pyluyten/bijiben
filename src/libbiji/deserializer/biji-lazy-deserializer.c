@@ -278,6 +278,9 @@ process_bijiben_start_elem (BijiLazyDeserializer *self)
   if (g_strcmp0 (element_name, "note-content")==0)
     return;
 
+  if (g_strcmp0 (element_name, "div")==0)
+    priv->html = g_string_append (priv->html, "<div>");
+
   if (g_strcmp0 (element_name, "b")==0)
     priv->html = g_string_append (priv->html, "<b>");
 
@@ -298,6 +301,9 @@ process_bijiben_end_elem (BijiLazyDeserializer *self)
 
   if (g_strcmp0 (element_name, "note-content")==0)
     return;
+
+  if (g_strcmp0 (element_name, "div")==0)
+    priv->html = g_string_append (priv->html, "</div>");
 
   if (g_strcmp0 (element_name, "b")==0)
     priv->html = g_string_append (priv->html, "</b>");
