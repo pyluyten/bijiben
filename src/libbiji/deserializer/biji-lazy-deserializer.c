@@ -360,6 +360,7 @@ process_bijiben_html_content (BijiLazyDeserializer *self)
 {
   BijiLazyDeserializerPrivate *priv = self->priv;
   int ret;
+  gchar *revamped_html;
 
   priv->inner = xmlReaderForMemory (priv->content,
                                     strlen(priv->content),
@@ -377,7 +378,9 @@ process_bijiben_html_content (BijiLazyDeserializer *self)
   /* Now the inner content is known, we can
    * assign note values and let deserialization work on last elements*/
   biji_note_obj_set_raw_text (priv->note, priv->raw_text->str);
-  biji_note_obj_set_html_content (priv->note, priv->html->str);
+
+  revamped_html= g_strjoinv ("&", g_strsplit(priv->html->str, "&amp;", -1));
+  biji_note_obj_set_html_content (priv->note, revamped_html);
 }
 
 /* Common XML format for both Bijiben / Tomboy */
