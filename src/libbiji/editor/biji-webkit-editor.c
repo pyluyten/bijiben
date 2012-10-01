@@ -248,6 +248,8 @@ on_content_changed (WebKitWebView *view)
   /* Return text content between <body> and </body> */
   biji_note_obj_set_raw_text (self->priv->note, plain_text->str);
   g_string_free (plain_text, TRUE);
+
+  note_obj_save_note_using_buffer (self->priv->note);
 }
 
 static void

@@ -375,12 +375,26 @@ _biji_note_obj_get_raw_text(BijiNoteObj *n)
   return "";
 }
 
+static void
+biji_note_obj_update_icon (BijiNoteObj *note)
+{
+  if (note->priv->icon)
+  {
+    g_object_unref (note->priv->icon);
+    note->priv->icon = NULL ;
+  }
+
+  biji_note_obj_get_icon (note);
+  g_signal_emit (G_OBJECT (note), biji_obj_signals[NOTE_CHANGED],0);
+}
+
 void biji_note_obj_set_raw_text (BijiNoteObj *note, gchar *plain_text)
 {
   if (note->priv->raw_text)
     g_free (note->priv->raw_text);
 
   note->priv->raw_text = g_strdup (plain_text);
+  biji_note_obj_update_icon (note);
 }
 
 gint
@@ -519,20 +533,6 @@ note_obj_save_note_using_buffer (gpointer note_obj)
   serializer = biji_lazy_serializer_new (note);
   result = biji_lazy_serialize (serializer);
   g_object_unref (serializer);
-
-  // Update the icon
-  if (note->priv->icon)
-  {
-    g_object_unref (note->priv->icon);
-    note->priv->icon = NULL ;
-  }
-
-  biji_note_obj_get_icon (note);
-
-  // Alert
-  g_signal_emit ( G_OBJECT (note_obj), 
-                  biji_obj_signals[NOTE_CHANGED],
-                  0);
 
   return result ;
 }
@@ -861,10 +861,6 @@ biji_note_obj_set_html_content (BijiNoteObj *note,
   {
     g_free (note->priv->html);
     note->priv->html = g_strdup (html);
-
-    /* This func will apply when first serialisazing
-     * but it handles note icon*/
-    note_obj_save_note_using_buffer (note);
   }
 }
 
