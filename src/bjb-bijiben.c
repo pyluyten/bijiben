@@ -93,8 +93,6 @@ bijiben_init (Bijiben *object)
   object->priv =
     G_TYPE_INSTANCE_GET_PRIVATE(object,BIJIBEN_TYPE_APPLICATION,BijibenPriv);
 
-  // TODO create a preferences GOjbect with properties to bind.
-  g_message("bijiben init : preferences");
   object->priv->settings = initialize_settings();
 }
 

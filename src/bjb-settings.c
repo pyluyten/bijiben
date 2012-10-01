@@ -30,9 +30,7 @@ G_DEFINE_TYPE (BjbSettings, bjb_settings, G_TYPE_OBJECT);
 
 static void
 bjb_settings_init (BjbSettings *object)
-{
-  g_message("bjb settings init");
-    
+{    
   object->priv = 
   G_TYPE_INSTANCE_GET_PRIVATE(object,BJB_TYPE_SETTINGS,BjbSettingsPrivate);
 }

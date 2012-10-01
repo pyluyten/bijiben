@@ -750,13 +750,9 @@ gchar*
 biji_note_get_title(BijiNoteObj *note_obj_ptr)
 {
   if (BIJI_IS_NOTE_OBJ(note_obj_ptr))
-  {
     return _biji_note_obj_get_title(note_obj_ptr);
-  }
-  else
-  {
-    return "This is NOT a NoteObj" ;
-  }
+
+  return NULL;
 }
 
 gchar *
@@ -801,8 +797,6 @@ GList *biji_note_obj_get_tags(BijiNoteObj *note)
 gboolean
 biji_note_obj_add_tag(BijiNoteObj *note, gchar *tag)
 {
-  g_message("Biji note obj add tag - NEW way");
-
   // If the note has already the tag, return FALSE
   if  ( _biji_note_obj_has_tag(note,tag) )
   {
@@ -893,10 +887,7 @@ GtkWidget *
 biji_note_obj_get_editor (BijiNoteObj *note)
 {
   if (!biji_note_obj_is_opened (note))
-  {
-    g_warning ("note not opened");
     return NULL;
-  }
 
   return GTK_WIDGET (note->priv->editor);
 }
@@ -908,11 +899,6 @@ biji_note_obj_close (BijiNoteObj *note)
   {
     gtk_widget_destroy (GTK_WIDGET (note->priv->editor));
     note->priv->editor = NULL;
-  }
-
-  else
-  {
-    g_warning ("Note not opened");
   }
 }
 
