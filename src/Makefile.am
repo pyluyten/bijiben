@@ -49,8 +49,6 @@ bijiben_SOURCES = \
 	bjb-share.h \
 	bjb-window-base.c \
 	bjb-window-base.h \
-	bjb-zeitgeist-dataprovider.c \
-	bjb-zeitgeist-dataprovider.h \
 	utils/bjb-icons-colors.c \
 	utils/bjb-icons-colors.h
 
@@ -95,6 +93,8 @@ libbiji_a_SOURCES =  \
 	libbiji/biji-note-watcher.h\
 	libbiji/biji-tracker.c \
 	libbiji/biji-tracker.h \
+	libbiji/biji-zeitgeist.c \
+	libbiji/biji-zeitgeist.h \
 	libbiji/deserializer/biji-lazy-deserializer.c \
 	libbiji/deserializer/biji-lazy-deserializer.h \
 	libbiji/editor/biji-editor-selection.c \

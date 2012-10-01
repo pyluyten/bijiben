@@ -1,5 +1,5 @@
-/* libiji.h
- * Copyright (C) Pierre-Yves LUYTEN 2012 <py@luyten.fr>
+/* biji-zeitgeist.h
+ * Copyright (C) Pierre-Yves LUYTEN 2011 <py@luyten.fr>
  * 
  * bijiben is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -12,20 +12,15 @@
  * See the GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ * with this program.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#ifndef _LIB_BIJI_H
-#define _LIB_BIJI_H
+#ifndef _BIJI_ZEITGEIST_H
+#define _BIJI_ZEITGEIST_H
 
-#define _LIBBIJI_INSIDE_H
+#include <zeitgeist.h>
 
-#include "biji-date-time.h"
-#include "biji-note-book.h"
 #include "biji-note-obj.h"
-#include "biji-tracker.h"
-#include "biji-zeitgeist.h"
-#include "editor/biji-webkit-editor.h"
 
-#undef _LIBBIJI_INSIDE_H
-#endif /*_LIB_BIJI_H*/
+void insert_zeitgeist(BijiNoteObj *note,const char *action) ;
+
+#endif /* _BIJI_ZEITGEIST_H */
