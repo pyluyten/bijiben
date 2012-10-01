@@ -346,7 +346,7 @@ biji_note_obj_set_rgba_internal (BijiNoteObj *n, GdkRGBA *rgba)
   n->priv->icon_needs_update = TRUE;
 
   _biji_note_id_set_metadata_change_now (n->priv->id);
-  _biji_note_obj_propose_saving (n);
+  note_obj_save_note_using_buffer (n);
 
   /* Make editor & notebook know about this change */
   g_signal_emit (G_OBJECT (n), biji_obj_signals[NOTE_COLOR_CHANGED],0);
