@@ -15,6 +15,8 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <libxml/xmlwriter.h>
+
 #include "biji-webkit-editor.h"
 #include "biji-editor-selection.h"
 
@@ -39,6 +41,8 @@ struct _BijiWebkitEditorPrivate
 {
   BijiNoteObj *note;
   gulong changed;
+
+  WebKitWebSettings *settings;
 };
 
 G_DEFINE_TYPE (BijiWebkitEditor, biji_webkit_editor, WEBKIT_TYPE_WEB_VIEW);
@@ -161,13 +165,30 @@ static void
 biji_webkit_editor_init (BijiWebkitEditor *self)
 {
   WebKitWebView *view = WEBKIT_WEB_VIEW (self);
+  BijiWebkitEditorPrivate *priv;  
+  gchar *css_path;
 
-  /* set standard settings
-   * pixels above line, left margin might be for CSS */
+  priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BIJI_TYPE_WEBKIT_EDITOR, BijiWebkitEditorPrivate);
+  self->priv = priv;
+
+  /* Settings */
   webkit_web_view_set_editable (view, TRUE);
   webkit_web_view_set_transparent (view, TRUE);
+  priv->settings = webkit_web_settings_new();
 
-  self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BIJI_TYPE_WEBKIT_EDITOR, BijiWebkitEditorPrivate);
+  css_path = g_build_filename ("file://",
+                               DATADIR, "bijiben",
+                               "Default.css",NULL);
+
+  g_object_set (G_OBJECT(priv->settings),
+                "enable-file-access-from-file-uris", TRUE,
+                NULL);
+  g_object_set (G_OBJECT(priv->settings),
+                "user-stylesheet-uri", css_path,
+                NULL);
+  webkit_web_view_set_settings (view, priv->settings);
+
+  g_free (css_path);
 }
 
 static void
@@ -283,18 +304,18 @@ biji_webkit_editor_constructed (GObject *obj)
   BijiWebkitEditor *self;
   BijiWebkitEditorPrivate *priv;
   WebKitWebView *view;
-  gchar *html;
+  gchar *body;
   GdkRGBA color;
 
   self = BIJI_WEBKIT_EDITOR (obj);
   view = WEBKIT_WEB_VIEW (self);
   priv = self->priv;
 
-  /* Load the note */
-  html = biji_note_obj_get_html (priv->note);
+  body = biji_note_obj_get_html (priv->note);
+  if (!body)
+    body = "";
 
-  if (html)
-    webkit_web_view_load_string (view, html, NULL, NULL, NULL);
+  webkit_web_view_load_string (view, body, NULL, NULL, NULL);
 
   /* Apply color */
   if (biji_note_obj_get_rgba (priv->note,&color))
