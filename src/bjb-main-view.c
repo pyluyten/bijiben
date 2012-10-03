@@ -1,4 +1,22 @@
+/* bjb-main-view.c
+ * Copyright (C) Pierre-Yves LUYTEN 2012 <py@luyten.fr>
+ * 
+ * bijiben is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * bijiben is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <glib/gprintf.h>
+#include <gtk/gtk.h>
 #include <libbiji/libbiji.h>
 #include <libgd/gd-main-view.h>
 
@@ -71,7 +89,7 @@ bjb_main_view_finalize (GObject *object)
 
   /* Widgets, actors */
   clutter_actor_destroy (priv->bin);
-  g_object_unref (priv->search_bar);
+  g_clear_object (& (priv->search_bar));
 
   G_OBJECT_CLASS (bjb_main_view_parent_class)->finalize (object);
 }
@@ -145,7 +163,7 @@ switch_to_note_view(BjbMainView *self,BijiNoteObj *note)
 {
   GtkWidget *window = self->priv->window;
 
-  g_object_unref (self);
+  g_clear_object (&self);
   bjb_note_view_new (window,note);
 }
 

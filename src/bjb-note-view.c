@@ -91,10 +91,11 @@ bjb_note_view_finalize(GObject *object)
   g_signal_handler_disconnect (priv->window, priv->destroy);
   g_signal_handler_disconnect (priv->note, priv->deleted);
 
-  g_object_unref (priv->accel);
+  g_clear_object (&(priv->accel));
   biji_note_obj_close (priv->note);
   gtk_widget_destroy (priv->view);
-  g_object_unref (priv->edit_bar);
+  g_clear_object (&(priv->edit_bar));
+  clutter_actor_destroy (priv->last_update);
 
   G_OBJECT_CLASS (bjb_note_view_parent_class)->finalize (object);
 }
@@ -399,14 +400,12 @@ just_switch_to_main_view(BjbNoteView *self)
   GtkWindow     *window;
   BjbController *controller;
 
-  clutter_actor_destroy(self->priv->embed);
-
   window = GTK_WINDOW(self->priv->window);
   gtk_window_remove_accel_group (window, self->priv->accel);
   controller = bjb_window_base_get_controller(BJB_WINDOW_BASE(window));
 
-  g_object_unref (self);
-  bjb_main_view_new((gpointer)window,controller);
+  g_clear_object (&self);
+  bjb_main_view_new ((gpointer) window,controller);
 }
 
 static void
