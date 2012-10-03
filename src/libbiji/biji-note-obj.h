@@ -19,13 +19,15 @@ G_BEGIN_DECLS
  * If note is opened, and if text is opened
  * This toggle the format
  * eg bold text will become normal and normal text becomes bold */
-enum
+typedef enum
 {
+  BIJI_NO_FORMAT,
   BIJI_BOLD,
   BIJI_ITALIC,
   BIJI_STRIKE,
-  BIJI_FORMAT
-};
+  BIJI_BULLET_LIST,
+  BIJI_ORDER_LIST
+} BijiEditorFormat;
 
 #define BIJI_TYPE_NOTE_OBJ             (biji_note_obj_get_type ())
 #define BIJI_NOTE_OBJ(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), BIJI_TYPE_NOTE_OBJ, BijiNoteObj))

@@ -77,6 +77,17 @@ biji_webkit_editor_get_selection (BijiWebkitEditor *self)
   return NULL;
 }
 
+typedef gboolean GetFormatFunc (EEditorSelection*);
+typedef void     SetFormatFunc (EEditorSelection*, gboolean);
+
+static void
+biji_toggle_format (EEditorSelection *sel,
+                    GetFormatFunc get_format,
+                    SetFormatFunc set_format)
+{
+  set_format (sel, !get_format (sel));
+}
+
 void
 biji_webkit_editor_apply_format (BijiWebkitEditor *self, gint format)
 {
@@ -87,33 +98,38 @@ biji_webkit_editor_apply_format (BijiWebkitEditor *self, gint format)
 
   if ( e_editor_selection_has_text (sel))
   {
-    if ( format == BIJI_BOLD)
+    switch (format)
     {
-      if ( e_editor_selection_get_bold (sel) )
-        e_editor_selection_set_bold (sel, FALSE);
+      case BIJI_BOLD:
+        biji_toggle_format (sel, e_editor_selection_get_bold,
+                                 e_editor_selection_set_bold);
+        break;
 
-      else
-        e_editor_selection_set_bold (sel, TRUE);
+      case BIJI_ITALIC:
+        biji_toggle_format (sel, e_editor_selection_get_italic,
+                                 e_editor_selection_set_italic);
+        break;
+
+      case BIJI_STRIKE:
+        biji_toggle_format (sel, e_editor_selection_get_strike_through,
+                                 e_editor_selection_set_strike_through);
+        break;
+
+      case BIJI_BULLET_LIST:
+        e_editor_selection_set_block_format(
+                        sel,
+                        E_EDITOR_SELECTION_BLOCK_FORMAT_UNORDERED_LIST);
+        break;
+
+      case BIJI_ORDER_LIST:
+        e_editor_selection_set_block_format(
+                        sel,
+                        E_EDITOR_SELECTION_BLOCK_FORMAT_ORDERED_LIST);
+        break;
+
+      default:
+        g_warning ("biji_webkit_editor_apply_format : Invalid format");
     }
-
-    if ( format == BIJI_ITALIC)
-    {
-      if ( e_editor_selection_get_italic (sel) )
-        e_editor_selection_set_italic (sel, FALSE);
-
-      else
-        e_editor_selection_set_italic (sel, TRUE);
-    }
-
-    if ( format == BIJI_STRIKE)
-    {
-      if ( e_editor_selection_get_strike_through (sel) )
-        e_editor_selection_set_strike_through (sel, FALSE);
-
-      else
-        e_editor_selection_set_strike_through (sel, TRUE);
-    }
-
   }
 }
 

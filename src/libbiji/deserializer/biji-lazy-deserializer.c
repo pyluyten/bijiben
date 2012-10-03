@@ -293,6 +293,15 @@ process_bijiben_start_elem (BijiLazyDeserializer *self)
 
   if (g_strcmp0 (element_name, "strike")==0)
     priv->html = g_string_append (priv->html, "<strike>");
+
+  if (g_strcmp0 (element_name, "ul")==0)
+    priv->html = g_string_append (priv->html, "<ul>");
+
+  if (g_strcmp0 (element_name, "ol")==0)
+    priv->html = g_string_append (priv->html, "<ol>");
+
+  if (g_strcmp0 (element_name, "li")==0)
+    priv->html = g_string_append (priv->html, "<li>");
 }
 
 static void
@@ -317,6 +326,15 @@ process_bijiben_end_elem (BijiLazyDeserializer *self)
 
   if (g_strcmp0 (element_name, "strike")==0)
     priv->html = g_string_append (priv->html, "</strike>");
+
+  if (g_strcmp0 (element_name, "ul")==0)
+    priv->html = g_string_append (priv->html, "</ul>");
+
+  if (g_strcmp0 (element_name, "ol")==0)
+    priv->html = g_string_append (priv->html, "</ol>");
+
+  if (g_strcmp0 (element_name, "li")==0)
+    priv->html = g_string_append (priv->html, "</li>");
 }
 
 static void
@@ -356,9 +374,6 @@ process_bijiben_node (BijiLazyDeserializer *self)
       break;
 
     case XML_TEXT_NODE:
-      process_bijiben_text_elem (self);
-      break;
-
     case XML_DTD_NODE:
       process_bijiben_text_elem (self);
       break;
@@ -375,7 +390,7 @@ process_bijiben_html_content (BijiLazyDeserializer *self)
   priv->inner = xmlReaderForMemory (priv->content,
                                     strlen(priv->content),
                                     "", "UTF-8", 0);
-
+  
   ret = xmlTextReaderRead (priv->inner);
 
   /* Make the GString grow as we read */
@@ -389,7 +404,7 @@ process_bijiben_html_content (BijiLazyDeserializer *self)
    * assign note values and let deserialization work on last elements*/
   biji_note_obj_set_raw_text (priv->note, priv->raw_text->str);
 
-  revamped_html= g_strjoinv ("&", g_strsplit(priv->html->str, "&amp;", -1));
+  revamped_html = g_strjoinv ("&", g_strsplit(priv->html->str, "&amp;", -1));
   biji_note_obj_set_html_content (priv->note, revamped_html);
 }
 
@@ -404,6 +419,7 @@ processNode (BijiLazyDeserializer *self)
   GdkRGBA   *color;
   gchar     *tag;
   GString   *norm;
+  gchar *debug;
 
   name = xmlTextReaderName (r);
 
@@ -439,8 +455,8 @@ processNode (BijiLazyDeserializer *self)
   if (g_strcmp0 ((gchar*) name, "color") == 0 )  
   {
     color = g_new (GdkRGBA,1);
-    gchar *debug= (gchar*) xmlTextReaderReadString (r);
-    //if ( gdk_rgba_parse (color,(gchar*) xmlTextReaderReadString (r)))
+    debug = (gchar*) xmlTextReaderReadString (r);
+
     if ( gdk_rgba_parse (color,debug))
     {
       biji_note_obj_set_rgba (n, color);

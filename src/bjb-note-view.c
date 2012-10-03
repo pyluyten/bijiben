@@ -468,28 +468,82 @@ on_color_set(GtkColorButton *button,
   biji_note_obj_set_rgba (view->priv->note,&color) ;
 }
 
+/* just a bridge between note menu & webkit func */
+static void
+bjb_toggle_bullets (BijiWebkitEditor *editor)
+{
+  biji_webkit_editor_apply_format (editor, BIJI_BULLET_LIST);
+}
+
+static void
+bjb_toggle_list (BijiWebkitEditor *editor)
+{
+  biji_webkit_editor_apply_format (editor, BIJI_ORDER_LIST);
+}
+
+
 GtkWidget *
 bjb_note_menu_new (BjbNoteView *self)
 {
   GtkWidget   *result, *item;
+  BijiWebkitEditor *editor;
   
   result = gtk_menu_new();
+  editor = BIJI_WEBKIT_EDITOR (biji_note_obj_get_editor (self->priv->note));
 
-  /* Rename */
+  /* Undo Redo separator */
+  item = gtk_menu_item_new_with_label ("Undo");
+  gtk_menu_shell_append (GTK_MENU_SHELL (result), item);
+  g_signal_connect_swapped (item, "activate",
+                            G_CALLBACK (webkit_web_view_undo), editor); 
+  gtk_widget_show (item);
+
+  item = gtk_menu_item_new_with_label ("Redo");
+  gtk_menu_shell_append (GTK_MENU_SHELL (result), item);
+  g_signal_connect_swapped (item, "activate",
+                            G_CALLBACK (webkit_web_view_redo), editor); 
+  gtk_widget_show (item);
+
+  item = gtk_separator_menu_item_new ();
+  gtk_menu_shell_append (GTK_MENU_SHELL (result), item);
+  gtk_widget_show (item);
+
+  /* Bullets, ordered list, separator */
+  item = gtk_menu_item_new_with_label ("Bullets");
+  gtk_menu_shell_append (GTK_MENU_SHELL (result), item);
+  g_signal_connect_swapped (item, "activate",
+                            G_CALLBACK (bjb_toggle_bullets), editor); 
+  gtk_widget_show(item);
+
+  item = gtk_menu_item_new_with_label ("List");
+  gtk_menu_shell_append (GTK_MENU_SHELL (result), item);
+  g_signal_connect_swapped (item, "activate",
+                            G_CALLBACK (bjb_toggle_list), editor); 
+  gtk_widget_show(item);
+
+  item = gtk_separator_menu_item_new ();
+  gtk_menu_shell_append (GTK_MENU_SHELL (result), item);
+  gtk_widget_show (item);
+
+  /* Rename, view tags, separtor */
   item = gtk_menu_item_new_with_label("Rename");
   gtk_menu_shell_append(GTK_MENU_SHELL(result),item);
   g_signal_connect(item,"activate",
                    G_CALLBACK(action_rename_note_callback),self); 
   gtk_widget_show(item);
-  
-  /* View Tags */
+
   item = gtk_menu_item_new_with_label("Tags");
   gtk_menu_shell_append(GTK_MENU_SHELL(result),item);
   g_signal_connect(item,"activate",
                    G_CALLBACK(action_view_tags_callback),self);
   gtk_widget_show(item);
 
-  /* Delete Note */
+  item = gtk_separator_menu_item_new ();
+  gtk_menu_shell_append (GTK_MENU_SHELL (result), item);
+  gtk_widget_show (item);
+
+  /* Delete Note
+   * TODO : note is currently NOT backuped!!! */
   item = gtk_menu_item_new_with_label("Delete this note");
   gtk_menu_shell_append(GTK_MENU_SHELL(result),item);
   g_signal_connect(item,"activate",
