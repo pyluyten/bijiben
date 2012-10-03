@@ -171,6 +171,14 @@ process_tomboy_start_elem (BijiLazyDeserializer *self)
 
   if (g_strcmp0 (element_name, "strikethrough")==0)
     priv->html = g_string_append (priv->html, "<strike>");
+
+  /* Currently tomboy has unordered list */
+
+  if (g_strcmp0 (element_name, "list")==0)
+    priv->html = g_string_append (priv->html, "<ul>");
+
+  if (g_strcmp0 (element_name, "list-item")==0)
+    priv->html = g_string_append (priv->html, "<li>");
 }
 
 static void
@@ -192,6 +200,14 @@ process_tomboy_end_elem (BijiLazyDeserializer *self)
 
   if (g_strcmp0 (element_name, "strikethrough")==0)
     priv->html = g_string_append (priv->html, "</strike>");
+
+  /* Currently tomboy has unordered list */
+
+  if (g_strcmp0 (element_name, "list")==0)
+    priv->html = g_string_append (priv->html, "</ul>");
+
+  if (g_strcmp0 (element_name, "list-item")==0)
+    priv->html = g_string_append (priv->html, "</li>");
 }
 
 static void
