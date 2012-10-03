@@ -15,13 +15,19 @@ GtkWidget *get_icon (gchar *icon)
 GdkPixbuf *
 get_note_pixbuf()
 {
-  GdkPixbuf *note_pixbuf ;
+  GdkPixbuf *note_pixbuf;
+  gchar *full_path;
   GError *error = NULL ;
+  const gchar *icons_path = bijiben_get_bijiben_dir ();
 
-  const gchar * icons_path = bijiben_get_bijiben_dir (); 
-
-  gchar * full_path = g_strdup_printf ("%s/bijiben/icons/hicolor/16x16/actions/note.png",
-                                       icons_path);
+  full_path = g_build_filename (icons_path,
+                                "bijiben",
+                                "icons",
+                                "hicolor",
+                                "16x16",
+                                "actions",
+                                "note.png",
+                                NULL);
 
   note_pixbuf = gdk_pixbuf_new_from_file_at_size(full_path,
                                                  16,
