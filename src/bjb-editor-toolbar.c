@@ -57,6 +57,7 @@ struct _BjbEditorToolbarPrivate
 
   ClutterActor       *actor;
   GtkWidget          *widget;
+  GtkAccelGroup      *accel;
   ClutterActor       *parent_actor;
   ClutterConstraint  *width_constraint;
 
@@ -118,6 +119,8 @@ bjb_editor_toolbar_init (BjbEditorToolbar *self)
 
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BJB_TYPE_EDITOR_TOOLBAR, BjbEditorToolbarPrivate);
   priv = self->priv;
+
+  priv->accel = gtk_accel_group_new ();
 
   priv->widget = gtk_box_new (GTK_ORIENTATION_HORIZONTAL,0);
   context = gtk_widget_get_style_context (priv->widget);
@@ -425,9 +428,13 @@ bjb_editor_toolbar_constructed (GObject *obj)
 {
   BjbEditorToolbar        *self = BJB_EDITOR_TOOLBAR(obj);
   BjbEditorToolbarPrivate *priv = self->priv ;
-  GtkWidget               *view ;
+  GtkWidget               *view;
+  GtkWidget               *window;
 
   G_OBJECT_CLASS (bjb_editor_toolbar_parent_class)->constructed (obj);
+
+  window = bjb_note_view_get_base_window (priv->view);
+  gtk_window_add_accel_group (GTK_WINDOW (window), priv->accel);
 
   /* text selected --> fade in , and not selected --> fade out */
   view = biji_note_obj_get_editor (priv->note);
@@ -454,15 +461,38 @@ bjb_editor_toolbar_constructed (GObject *obj)
 
   g_signal_connect (priv->toolbar_bold,"clicked",
                     G_CALLBACK(bold_button_callback), priv->note);
+  gtk_widget_add_accelerator (priv->toolbar_bold,
+                              "activate", priv->accel, GDK_KEY_b,
+                              GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
 
   g_signal_connect (priv->toolbar_italic,"clicked",
                     G_CALLBACK(italic_button_callback), priv->note);
+  gtk_widget_add_accelerator (priv->toolbar_italic,
+                              "activate", priv->accel, GDK_KEY_i,
+                              GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
 
   g_signal_connect (priv->toolbar_strike,"clicked",
                     G_CALLBACK(strike_button_callback), priv->note);
+  gtk_widget_add_accelerator (priv->toolbar_strike,
+                              "activate", priv->accel, GDK_KEY_s,
+                              GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
 
   g_signal_connect (priv->toolbar_link,"clicked",
                     G_CALLBACK(link_callback), self);
+}
+
+static void
+bjb_editor_toolbar_finalize (GObject *obj)
+{
+  BjbEditorToolbar *self = BJB_EDITOR_TOOLBAR (obj);
+  BjbEditorToolbarPrivate *priv = self->priv;
+  GtkWidget *window;
+
+  window = bjb_note_view_get_base_window (priv->view);
+  gtk_window_remove_accel_group (GTK_WINDOW (window), priv->accel);
+  g_object_unref (priv->accel);
+
+  clutter_actor_destroy (priv->actor);
 }
 
 static void
@@ -473,6 +503,7 @@ bjb_editor_toolbar_class_init (BjbEditorToolbarClass *class)
   object_class->get_property = bjb_editor_toolbar_get_property ;
   object_class->set_property = bjb_editor_toolbar_set_property ;
   object_class->constructed = bjb_editor_toolbar_constructed ;
+  object_class->finalize = bjb_editor_toolbar_finalize;
 
   properties[PROP_ACTOR] = g_param_spec_object ("actor",
                                                 "Actor",

@@ -55,6 +55,7 @@ struct _BjbNoteViewPrivate {
 
   /* UI */
   ClutterActor      *embed;
+  GtkAccelGroup     *accel;
   ClutterActor      *edit_actor;
   GtkBox            *toolbars_box;
   BjbEditorToolbar  *edit_bar;
@@ -83,16 +84,17 @@ static void
 bjb_note_view_finalize(GObject *object)
 {
   BjbNoteView *self = BJB_NOTE_VIEW (object) ;
+  BjbNoteViewPrivate *priv = self->priv;
 
   /* Don't unref buffer. Biji Does it when we close note. */
-  g_signal_handler_disconnect(self->priv->note,self->priv->renamed);
-  g_signal_handler_disconnect(self->priv->window,self->priv->destroy);
-  g_signal_handler_disconnect(self->priv->note,self->priv->deleted);
+  g_signal_handler_disconnect (priv->note, priv->renamed);
+  g_signal_handler_disconnect (priv->window, priv->destroy);
+  g_signal_handler_disconnect (priv->note, priv->deleted);
 
-  biji_note_obj_close (self->priv->note);
-  gtk_widget_destroy (self->priv->view);
-
-  /* TODO */
+  g_object_unref (priv->accel);
+  biji_note_obj_close (priv->note);
+  gtk_widget_destroy (priv->view);
+  g_object_unref (priv->edit_bar);
 
   G_OBJECT_CLASS (bjb_note_view_parent_class)->finalize (object);
 }
@@ -148,6 +150,7 @@ bjb_note_view_init (BjbNoteView *self)
                                             BjbNoteViewPrivate);
 
   self->priv->embed = clutter_actor_new ();
+  self->priv->accel = gtk_accel_group_new ();
 }
 
 // Handlers for GtkTreeView of tags
@@ -399,6 +402,7 @@ just_switch_to_main_view(BjbNoteView *self)
   clutter_actor_destroy(self->priv->embed);
 
   window = GTK_WINDOW(self->priv->window);
+  gtk_window_remove_accel_group (window, self->priv->accel);
   controller = bjb_window_base_get_controller(BJB_WINDOW_BASE(window));
 
   g_object_unref (self);
@@ -485,23 +489,28 @@ bjb_toggle_list (BijiWebkitEditor *editor)
 GtkWidget *
 bjb_note_menu_new (BjbNoteView *self)
 {
+  BjbNoteViewPrivate *priv = self->priv;
   GtkWidget   *result, *item;
   BijiWebkitEditor *editor;
-  
+
   result = gtk_menu_new();
-  editor = BIJI_WEBKIT_EDITOR (biji_note_obj_get_editor (self->priv->note));
+  editor = BIJI_WEBKIT_EDITOR (biji_note_obj_get_editor (priv->note));
 
   /* Undo Redo separator */
   item = gtk_menu_item_new_with_label ("Undo");
   gtk_menu_shell_append (GTK_MENU_SHELL (result), item);
   g_signal_connect_swapped (item, "activate",
-                            G_CALLBACK (webkit_web_view_undo), editor); 
+                            G_CALLBACK (webkit_web_view_undo), editor);
+  gtk_widget_add_accelerator (item, "activate", priv->accel, GDK_KEY_u,
+                             GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
   gtk_widget_show (item);
 
   item = gtk_menu_item_new_with_label ("Redo");
   gtk_menu_shell_append (GTK_MENU_SHELL (result), item);
   g_signal_connect_swapped (item, "activate",
-                            G_CALLBACK (webkit_web_view_redo), editor); 
+                            G_CALLBACK (webkit_web_view_redo), editor);
+  gtk_widget_add_accelerator (item, "activate", priv->accel, GDK_KEY_r,
+                             GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
   gtk_widget_show (item);
 
   item = gtk_separator_menu_item_new ();
@@ -577,7 +586,7 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
   gtk_widget_show_all(w);
   clutter_actor_set_x_expand(result,TRUE);
 
-  /* Go to main view */
+  /* Go to main view basically means closing note */
   grid = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,2);
   notes_icon = get_icon("go-previous-symbolic");
   gtk_box_pack_start(GTK_BOX(grid),notes_icon,TRUE,TRUE,TRUE);
@@ -590,6 +599,8 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
   gtk_widget_show_all(button);
   gtk_widget_set_vexpand (button, TRUE);
   g_signal_connect (button,"clicked",G_CALLBACK(action_switch_to_notes_callback),self);
+  gtk_widget_add_accelerator (button, "activate", self->priv->accel,
+                              GDK_KEY_w, GDK_CONTROL_MASK, GTK_ACCEL_MASK);
 
   /* Note title */
   gd_main_toolbar_set_labels (gd,biji_note_get_title(note),NULL);
@@ -687,7 +698,7 @@ bjb_note_view_constructed (GObject *obj)
   priv->view = biji_note_obj_open (priv->note);
 
   settings = bjb_app_get_settings(g_application_get_default());
-
+  gtk_window_add_accel_group (GTK_WINDOW (priv->window), priv->accel);
 
   priv->renamed = g_signal_connect(priv->note,"renamed",
                                    G_CALLBACK(on_note_renamed),

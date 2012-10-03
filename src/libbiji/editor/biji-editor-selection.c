@@ -110,53 +110,52 @@ static const GdkRGBA black = { 0 };
 static WebKitDOMRange *
 editor_selection_get_current_range (EEditorSelection *selection)
 {
-	WebKitDOMDocument *document;
-	WebKitDOMDOMWindow *window;
-	WebKitDOMDOMSelection *dom_selection;
+  WebKitDOMDocument *document;
+  WebKitDOMDOMWindow *window;
+  WebKitDOMDOMSelection *dom_selection;
 
-	document = webkit_web_view_get_dom_document (selection->priv->webview);
-	window = webkit_dom_document_get_default_view (document);
-	if (!window) {
-		return NULL;
-	}
+  document = webkit_web_view_get_dom_document (selection->priv->webview);
+  window = webkit_dom_document_get_default_view (document);
 
-	dom_selection = webkit_dom_dom_window_get_selection (window);
-	if (webkit_dom_dom_selection_get_range_count (dom_selection) < 1) {
-		return NULL;
-	}
+  if (!window)
+    return NULL;
 
-	return webkit_dom_dom_selection_get_range_at (dom_selection, 0, NULL);
+  dom_selection = webkit_dom_dom_window_get_selection (window);
+  
+  if (webkit_dom_dom_selection_get_range_count (dom_selection) < 1)
+    return NULL;
+
+  return webkit_dom_dom_selection_get_range_at (dom_selection, 0, NULL);
 }
 
 static gboolean
-get_has_style (EEditorSelection *selection,
-	       const gchar *style_tag)
+get_has_style (EEditorSelection *selection, const gchar *style_tag)
 {
-	WebKitDOMNode *node;
-	WebKitDOMElement *element;
-	WebKitDOMRange *range;
-	gboolean result;
-	gint tag_len;
+  WebKitDOMNode *node;
+  WebKitDOMElement *element;
+  WebKitDOMRange *range;
+  gboolean result;
+  gint tag_len;
 
+  range = editor_selection_get_current_range (selection);
 
-	range = editor_selection_get_current_range (selection);
-	if (!range) {
-		return FALSE;
-	}
+  if (!range)
+    return FALSE;
 
-	node = webkit_dom_range_get_start_container (range, NULL);
-	if (!WEBKIT_DOM_IS_ELEMENT (node)) {
-		element = webkit_dom_node_get_parent_element (node);
-	} else {
-		element = WEBKIT_DOM_ELEMENT (node);
-	}
+  node = webkit_dom_range_get_start_container (range, NULL);
 
-	tag_len = strlen (style_tag);
-	result = FALSE;
-	while (!result && element) {
-		gchar *element_tag;
+  if (!WEBKIT_DOM_IS_ELEMENT (node))
+    element = webkit_dom_node_get_parent_element (node);
 
-		element_tag = webkit_dom_element_get_tag_name (element);
+  else
+    element = WEBKIT_DOM_ELEMENT (node);
+
+  tag_len = strlen (style_tag);
+  result = FALSE;
+  while (!result && element) {
+    gchar *element_tag;
+
+    element_tag = webkit_dom_element_get_tag_name (element);
 
 		result = ((tag_len == strlen (element_tag)) &&
 				(g_ascii_strncasecmp (element_tag, style_tag, tag_len) == 0));
