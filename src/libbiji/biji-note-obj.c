@@ -29,7 +29,7 @@
 #endif
 
 /* Default color (X11 rgb.txt)  */ 
-#define DEFAULT_NOTE_COLOR "rgb(233,235,191)"
+#define DEFAULT_NOTE_COLOR "rgb(229,230,180)"
 
 /* Icon */
 #define ICON_WIDTH 200
