@@ -166,12 +166,7 @@ bijiben_get_book(Bijiben *self)
 const gchar *
 bijiben_get_bijiben_dir (void)
 {
-  static gchar *icons_dir = NULL;
-  if (!icons_dir)
-  {
-    icons_dir = g_strdup_printf ("%s",DATADIR);
-  }
-  return (const gchar *) icons_dir;
+  return DATADIR;
 }
 
 BjbSettings * bjb_app_get_settings(gpointer application)

@@ -203,7 +203,15 @@ bjb_editor_toolbar_init (BjbEditorToolbar *self)
   priv->toolbar_link = gtk_button_new ();
 
   icons_path = (gchar*) bijiben_get_bijiben_dir ();
-  full_path = g_strdup_printf ("%s/bijiben/icons/hicolor/scalable/actions/link.svg", icons_path);
+  full_path = g_build_filename (icons_path,
+                                "bijiben",
+                                "icons",
+                                "hicolor",
+                                "scalable",
+                                "actions",
+                                "link.svg",
+                                NULL);
+
   pixbuf = gdk_pixbuf_new_from_file (full_path, &error);
   g_free (full_path);
 

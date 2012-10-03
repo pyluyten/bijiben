@@ -108,7 +108,14 @@ bjb_window_base_init (BjbWindowBase *self)
 
   /* Icon for window. TODO - Should be BjbApp */
   icons_path = bijiben_get_bijiben_dir ();
-  full_path = g_strdup_printf ("%s/icons/hicolor/48x48/apps/bijiben.png", icons_path);
+  full_path = g_build_filename (icons_path,
+                                "icons",
+                                "hicolor",
+                                "48x48",
+                                "apps",
+                                "bijiben.png",
+                                NULL);
+
   bjb = gdk_pixbuf_new_from_file (full_path, &error);
   g_free (full_path);
     
