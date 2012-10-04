@@ -59,7 +59,7 @@ struct _BijiLazyDeserializerPrivate
   xmlTextReaderPtr r;
 
   /* Reader for internal content, either tomboy XML or Bijiben html */
-  xmlTextReader *inner;
+  xmlTextReaderPtr inner;
   gchar *content;
 
   /* Result for both raw_text & html */
@@ -121,9 +121,14 @@ static void
 biji_lazy_deserializer_finalize (GObject *object)
 {
   BijiLazyDeserializer *self= BIJI_LAZY_DESERIALIZER (object);
+  BijiLazyDeserializerPrivate *priv = self->priv;
 
-  g_string_free (self->priv->raw_text, TRUE);
-  g_string_free (self->priv->html, TRUE);
+  g_string_free (priv->raw_text, TRUE);
+  g_string_free (priv->html, TRUE);
+  g_free (priv->content);
+
+  xmlFreeTextReader (priv->r);
+  xmlFreeTextReader (priv->inner);
 
   G_OBJECT_CLASS (biji_lazy_deserializer_parent_class)->finalize (object);
 }
@@ -517,7 +522,7 @@ biji_parse_file (BijiLazyDeserializer *self)
 }
 
 gboolean
-biji_lazy_deserialize (BijiLazyDeserializer *self)
+biji_lazy_deserialize_internal (BijiLazyDeserializer *self)
 {
   BijiNoteObj* n = self->priv->note;
   xmlDocPtr doc;
@@ -587,7 +592,7 @@ biji_lazy_deserialize (BijiLazyDeserializer *self)
   return TRUE ;
 }
 
-BijiLazyDeserializer *
+static BijiLazyDeserializer *
 biji_lazy_deserializer_new (BijiNoteObj *note)
 {
   return g_object_new (BIJI_TYPE_LAZY_DESERIALIZER,
@@ -595,4 +600,15 @@ biji_lazy_deserializer_new (BijiNoteObj *note)
                        NULL);
 }
 
+gboolean
+biji_lazy_deserialize (BijiNoteObj *note)
+{
+  BijiLazyDeserializer *bld;
+  gboolean result;
 
+  bld = biji_lazy_deserializer_new (note);
+  result = biji_lazy_deserialize_internal (bld);
+  g_clear_object (&bld);
+
+  return result;
+}

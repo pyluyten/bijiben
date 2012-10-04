@@ -630,16 +630,13 @@ BijiNoteObj*
 biji_note_get_new_from_file (const gchar* path)
 {
   BijiNoteObj* ret ;
-  BijiLazyDeserializer *deserializer;
 
   /* TODO biji_note_obj_new (path) should handle this */
   ret = g_object_new(BIJI_TYPE_NOTE_OBJ,NULL);
   set_note_id_path(note_get_id(ret),path);
 
   /* The deserializer will handle note type */
-  deserializer = biji_lazy_deserializer_new (ret);
-  biji_lazy_deserialize (deserializer);
-  g_object_unref (deserializer);
+  biji_lazy_deserialize (ret);
 
   return ret ;
 }

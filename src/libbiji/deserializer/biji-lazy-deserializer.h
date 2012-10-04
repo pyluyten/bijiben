@@ -48,9 +48,7 @@ struct _BijiLazyDeserializer
 
 GType biji_lazy_deserializer_get_type (void) G_GNUC_CONST;
 
-BijiLazyDeserializer * biji_lazy_deserializer_new (BijiNoteObj *note);
-
-gboolean biji_lazy_deserialize (BijiLazyDeserializer *self);
+gboolean biji_lazy_deserialize (BijiNoteObj *note);
 
 G_END_DECLS
 
