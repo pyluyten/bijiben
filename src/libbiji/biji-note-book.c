@@ -1,3 +1,19 @@
+/* bjb-note-book.c
+ * Copyright (C) Pierre-Yves LUYTEN 2012 <py@luyten.fr>
+ * 
+ * bijiben is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * bijiben is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <gtk/gtk.h>
 
@@ -7,9 +23,9 @@
 
 struct _BijiNoteBookPrivate
 {
-  GList *notes;           // GList of BijiNoteObj
-  GList *tags;            // GList of TagBooks
-  gint length;            // simpler than crossing GList 
+  /* Notes & TagBooks */
+  GHashTable *notes;
+  GList *tags;
 
   /* Signals */
   gulong note_renamed ;
@@ -39,20 +55,17 @@ static GParamSpec *properties[BIJI_BOOK_PROPERTIES] = { NULL, };
 G_DEFINE_TYPE (BijiNoteBook, biji_note_book, G_TYPE_OBJECT);
 
 static void
-biji_note_book_init (BijiNoteBook *object)
+biji_note_book_init (BijiNoteBook *self)
 {
-  object->priv = G_TYPE_INSTANCE_GET_PRIVATE (object, BIJI_TYPE_NOTE_BOOK,
-	                                          BijiNoteBookPrivate);
-  object->priv->notes = NULL;
-  object->priv->tags = NULL ;
-  object->priv->length = 0 ;
-}
+  self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BIJI_TYPE_NOTE_BOOK,
+                                            BijiNoteBookPrivate);
 
-static void
-destroy_note_if_needed(gpointer note)
-{
-  // FIXME : if ref = 0
-  g_free(BIJI_NOTE_OBJ(note));
+  /* Note path is key for table. It's freed by note itself */
+  self->priv->notes = g_hash_table_new_full (g_str_hash,
+                                             g_str_equal,
+                                             NULL,
+                                             g_object_unref);
+  self->priv->tags = NULL;
 }
 
 static void
@@ -66,8 +79,8 @@ biji_note_book_finalize (GObject *object)
   g_clear_object (&book->priv->load_cancellable);
   g_clear_object (&book->priv->location);
 
-  g_list_free(book->priv->tags) ;
-  g_list_free_full(book->priv->notes,destroy_note_if_needed);
+  g_list_free (book->priv->tags); // g_list_free_full ?
+  g_hash_table_destroy (book->priv->notes);
 
   G_OBJECT_CLASS (biji_note_book_parent_class)->finalize (object);
 }
@@ -116,7 +129,7 @@ biji_note_book_get_property (GObject    *object,
 static void
 biji_note_book_add_tag_book(BijiNoteBook *book, TagBook *tag)
 {
-  book->priv->tags = g_list_append(book->priv->tags,tag);         
+  book->priv->tags = g_list_append(book->priv->tags,tag);
 }
 
 static TagBook *
@@ -215,7 +228,6 @@ _biji_note_book_add_one_note(BijiNoteBook *book,BijiNoteObj *note)
   _biji_note_book_sanitize_title(book,note);
 
   /* Welcome to the book ! */
-  //biji_note_set_gtk_tags(note,book->priv->table);
   _biji_note_obj_set_book(note,(gpointer)book);
 
   // Handle tags
@@ -240,8 +252,8 @@ _biji_note_book_add_one_note(BijiNoteBook *book,BijiNoteObj *note)
   }
 
   // Add it to the list and emit signal
-  book->priv->notes = g_list_append(book->priv->notes,note);
-  book->priv->length++;
+  g_hash_table_insert (book->priv->notes,
+                       note_obj_get_path (note), note);
 
   book->priv->note_renamed = g_signal_connect(note,"renamed",
                                               G_CALLBACK(notify_changed),book);
@@ -394,17 +406,21 @@ biji_note_book_class_init (BijiNoteBookClass *klass)
 gboolean
 _biji_note_book_is_title_unique(BijiNoteBook *book,gchar *title)
 {
-	gint i;
+  gint i;
+  gboolean result = TRUE;
+  BijiNoteObj *iter;
+  GList *notes = g_hash_table_get_values (book->priv->notes);
 
-	for ( i=0 ; i < book->priv->length ; i++ )
-	{
-		BijiNoteObj *iter = BIJI_NOTE_OBJ(g_list_nth_data (book->priv->notes,i));
-		if ( g_strcmp0 (biji_note_get_title(iter),title) == 0 )
-		{
-			return FALSE ;
-		}
-	}
-	return TRUE ;
+  for ( i=0 ; i < g_hash_table_size (book->priv->notes) ; i++)
+  {
+    iter = BIJI_NOTE_OBJ (g_list_nth_data (notes, i));
+
+    if (g_strcmp0 (biji_note_get_title (iter), title) == 0)
+     result = FALSE;
+  }
+
+  g_list_free (notes);
+  return result;
 }
 
 void
@@ -414,39 +430,34 @@ _biji_note_book_add_note_to_tag_book(BijiNoteBook *book,
 {
   TagBook *tag_book;
   tag_book = biji_book_get_or_create_tag_book(book,tag);
-  tag_book->notes = g_list_append(tag_book->notes,note) ;
-  book->priv->length++; ;
+  tag_book->notes = g_list_append(tag_book->notes,note);
 }
 
 gboolean 
 _note_book_remove_one_note(BijiNoteBook *book,BijiNoteObj *note)
 {
-  int i;
+  BijiNoteObj *to_delete = NULL;
 
-  for ( i = 0 ; i< book->priv->length ; i++ )
+  to_delete = g_hash_table_lookup (book->priv->notes,
+                                  note_obj_get_path(note));
+
+  if (to_delete)
   {
-    // Find the note to remove
-    if ( note_obj_are_same(g_list_nth_data(book->priv->notes,i),note) )
-    {
-      // Update the Book
-      book->priv->notes = g_list_remove( book->priv->notes,(gpointer)note);
-      book->priv->length-- ;
-
-      // Destroy the Note (including file) and return
-      biji_note_obj_delete(note);
-      g_signal_emit ( G_OBJECT (book), biji_book_signals[BOOK_AMENDED],0);
-
-      return TRUE ;
-    }
+    /* Ref note first, hash_table won't finalize it & we can delete it*/
+    g_object_ref (to_delete);
+    g_hash_table_remove (book->priv->notes, note_obj_get_path (note));
+    biji_note_obj_delete (note);
+    g_signal_emit ( G_OBJECT (book), biji_book_signals[BOOK_AMENDED],0);
+    return TRUE;
   }
 
-  return FALSE ;
+  return FALSE;
 }
 
 GList *
 _biji_note_book_get_notes (BijiNoteBook *book)
 {
-  return g_list_copy(book->priv->notes);
+  return g_hash_table_get_values (book->priv->notes);
 }
 
 static void
@@ -472,13 +483,17 @@ _biji_note_book_get_notes_with_tag_prefix(BijiNoteBook *book,gchar *tag)
   TagBook booklet ;
   booklet.name = tag ;
   booklet.notes = NULL ;
-    
-  g_list_foreach(book->priv->notes,(GFunc)add_note_to_list_if_tag_prefix,&booklet);
+
+  GList *notes;
+  notes = g_hash_table_get_values (book->priv->notes);
+
+  g_list_foreach (notes,(GFunc)add_note_to_list_if_tag_prefix,&booklet);
+  g_list_free (notes);
   return booklet.notes ;
 }
 
 static void
-add_note_to_list_if_no_tag(BijiNoteObj *note,GList **notes)
+add_note_to_list_if_no_tag (BijiNoteObj *note, GList **notes)
 {
   if ( _biji_note_obj_get_tags(note) == NULL )
   {
@@ -489,23 +504,30 @@ add_note_to_list_if_no_tag(BijiNoteObj *note,GList **notes)
 GList *
 _biji_note_book_get_no_tag_notes(BijiNoteBook *book)
 {
-  GList * notes = NULL ;
-    
-  g_list_foreach(book->priv->notes,(GFunc)add_note_to_list_if_no_tag,&notes);
-  return notes ;
+  GList *result = NULL ;
+  GList *notes = g_hash_table_get_values (book->priv->notes);
+
+  g_list_foreach (notes, (GFunc) add_note_to_list_if_no_tag, &result);
+  g_list_free (notes);
+  return result;
 }
 
+/* TODO : remove this & see what needs to be updated */
 BijiNoteObj * 
 _biji_book_get_nth(BijiNoteBook *book,int i)
 {
-  return BIJI_NOTE_OBJ(g_list_nth_data(book->priv->notes,i));
+  GList *notes = g_hash_table_get_values (book->priv->notes);
+  BijiNoteObj *result = g_list_nth_data (notes, i);
+  g_list_free (notes);
+
+  return result;
 }
 
 /* Notes collection */
 void note_book_append_new_note(BijiNoteBook *book,BijiNoteObj *note)
 {    
   if (BIJI_IS_NOTE_BOOK(book) && BIJI_IS_NOTE_OBJ(note))
-    _biji_note_book_add_one_note(book,note);
+    _biji_note_book_add_one_note (book,note);
 }
 
 gboolean 
@@ -517,6 +539,7 @@ biji_note_book_remove_note(BijiNoteBook *book,BijiNoteObj *note)
   return _note_book_remove_one_note(book,note);
 }
 
+/* TODO REMOVE THIS!!! */
 BijiNoteObj * note_book_get_nth_data(BijiNoteBook *book,int nth)
 {
   if (BIJI_IS_NOTE_BOOK(book))
@@ -532,32 +555,18 @@ GList * biji_note_book_get_notes(BijiNoteBook *book)
 }
 
 BijiNoteObj *
-note_book_get_note_at_path(BijiNoteBook *book,gchar *path)
+note_book_get_note_at_path (BijiNoteBook *book, gchar *path)
 {
-  gint i,len;
-  len = book->priv->length ;
-
-  for (i=0 ; i<len; i++)
-  {
-
-    BijiNoteObj *o = _biji_book_get_nth(book,i);
-    gchar *current = note_obj_get_path (o);
-    
-    if ( g_strcmp0 (current,path) == 0 )
-      return o ;
-  }
-  
-  return NULL ;
+  return g_hash_table_lookup (book->priv->notes, path);
 }
 
-
+/* No hash table key, still TODO = better than biji_book_get_nth */
 BijiNoteObj *
 note_book_get_note(BijiNoteBook *book,gchar *title)
 {
-  gint i,len;
-  len = book->priv->length;
+  gint i;
 
-  for (i=0 ; i<len; i++)
+  for (i=0 ; i < g_hash_table_size (book->priv->notes); i++)
   {
     BijiNoteObj *o = _biji_book_get_nth(book,i);
     gchar *current = biji_note_get_title (o);
@@ -641,6 +650,9 @@ biji_note_get_new_from_file (const gchar* path)
   return ret ;
 }
 
+/* TODO
+ * use some hash for path. no signed number as path...
+ * path must be unique, use hash_table */
 BijiNoteObj*
 biji_note_get_new_from_string (gchar* title, gchar *folder)
 {
@@ -648,6 +660,7 @@ biji_note_get_new_from_string (gchar* title, gchar *folder)
   BijiNoteID *id;
   GRand *random;
   gint suffix;
+  gchar *name, *path;
 
   ret = g_object_new(BIJI_TYPE_NOTE_OBJ,NULL);
   id = note_get_id(ret);
@@ -656,7 +669,12 @@ biji_note_get_new_from_string (gchar* title, gchar *folder)
   random = g_rand_new();
   suffix = g_rand_int(random);
   g_rand_free (random);
-  set_note_id_path(id,g_strdup_printf ("%s/%i.note",folder,suffix));
+
+  name = g_strdup_printf ("%i.note", suffix);
+  path = g_build_filename (folder, name, NULL);
+  g_free (name);
+  set_note_id_path (id, path);
+  g_free (path);
 
   return ret ;
 }
