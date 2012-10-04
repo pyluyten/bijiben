@@ -327,7 +327,7 @@ bjb_main_toolbar_finalize (GObject *object)
 {
   BjbMainToolbar *self = BJB_MAIN_TOOLBAR(object);
 
-  g_object_unref(self->priv->toolbar);
+  gtk_widget_destroy (GTK_WIDGET (self->priv->toolbar));
 
   /* chain up */
   G_OBJECT_CLASS (bjb_main_toolbar_parent_class)->finalize (object);

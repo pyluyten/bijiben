@@ -40,15 +40,11 @@ struct _BijiNoteObjPrivate
 {
   /* Notebook might be null. Shared GtkTextTagTable */
   BijiNoteBook          *book;
-  GtkTextTagTable       *gtk_tags;
 
   /* Metadata */
   BijiNoteID            *id;
   gchar                 *html;
   gchar                 *raw_text;
-
-  /* XML Content */
-  gchar                 *content;
 
   /* Buffer might be null */
   BijiWebkitEditor      *editor;
@@ -90,8 +86,6 @@ biji_note_obj_init (BijiNoteObj *self)
 
   priv->changes_to_save = 0 ;
   priv->book = NULL ;
-  priv->content = NULL ;
-  priv->tags = NULL ;
   priv->is_template = FALSE ;
   priv->is_opened = 0;
   priv->left_margin = 6 ; // defautl left margin.
@@ -113,22 +107,18 @@ biji_note_obj_finalize (GObject *object)
 {    
   BijiNoteObj        *self = BIJI_NOTE_OBJ(object);
   BijiNoteObjPrivate *priv = self->priv;
-    
-  // Finalize id
-  //biji_note_id_finalize(object);
 
-  // gtk text tag table?
+  g_clear_object (&priv->id);
 
-  // buffer
-
-  // free content
   if (priv->html)
     g_free (priv->html);
 
-  // tags
+  if (priv->raw_text);
+    g_free (priv->raw_text);
+
   g_list_free (priv->tags);
 
-  g_object_unref (priv->icon);
+  g_clear_object (&priv->icon);
 
   G_OBJECT_CLASS (biji_note_obj_parent_class)->finalize (object);
 }
@@ -223,7 +213,7 @@ note_obj_are_same(BijiNoteObj *a, BijiNoteObj* b)
 { 
   if ( _biji_note_id_are_same(a->priv->id,b->priv->id) )
   {
-    if ( g_strcmp0 (a->priv->content ,b->priv->content) == 0 )
+    if ( g_strcmp0 (a->priv->raw_text ,b->priv->raw_text) == 0 )
       return TRUE ;
   }
 
@@ -253,13 +243,6 @@ biji_note_obj_delete(BijiNoteObj *dead)
   biji_note_obj_finalize(G_OBJECT(dead));
   
   return ;
-}
-
-int
-set_note_content(BijiNoteObj* note,gchar* cont)
-{
-  note->priv->content = cont ;
-  return 0 ;
 }
 
 gchar* get_note_path (BijiNoteObj* n)
@@ -381,15 +364,6 @@ biji_note_obj_get_rgba(BijiNoteObj *n,
     }
 
   return FALSE;
-}
-
-gchar *
-_biji_note_obj_get_raw_text(BijiNoteObj *n)
-{
-  if (n->priv->raw_text)
-    return n->priv->raw_text;
-
-  return "";
 }
 
 static void
@@ -744,7 +718,6 @@ biji_note_obj_get_icon (BijiNoteObj *note)
     pango_cairo_show_layout (cr, layout);
 
     g_object_unref (layout);
-    /*g_free (text); Webkit text no longer to be freed */
   }
 
   cairo_destroy (cr);
@@ -775,9 +748,10 @@ biji_note_get_title(BijiNoteObj *note_obj_ptr)
 gchar *
 biji_note_get_raw_text(BijiNoteObj *note)
 {
-  g_return_val_if_fail(BIJI_IS_NOTE_OBJ(note),NULL);
+  if (note->priv->raw_text)
+    return note->priv->raw_text;
 
-  return _biji_note_obj_get_raw_text(note);
+  return "";
 }
 
 int
@@ -912,7 +886,7 @@ biji_note_obj_close (BijiNoteObj *note)
 {
   if (biji_note_obj_is_opened (note))
   {
-    gtk_widget_destroy (GTK_WIDGET (note->priv->editor));
+    g_clear_object (&(note->priv->editor));
     note->priv->editor = NULL;
   }
 }

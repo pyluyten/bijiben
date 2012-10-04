@@ -86,12 +86,6 @@ void set_note_status(BijiNoteObj* n, int status) ;
 gboolean biji_note_obj_get_rgba(BijiNoteObj *n, GdkRGBA *rgba) ;
 void biji_note_obj_set_rgba(BijiNoteObj *n, GdkRGBA *rgba) ;
 
-///////////////////////////////////////////////    XML content, buffer, editor
-void _biji_note_obj_increment_opened(BijiNoteObj *note) ;
-gchar * _biji_note_obj_get_raw_text(BijiNoteObj *n);
-gint _biji_note_obj_get_left_margin(BijiNoteObj *obj);
-gboolean _biji_note_obj_is_opened(BijiNoteObj *note);
-
 //////////////////////////////////////////////////////  Tags (as in tag clouds)
 GList * _biji_note_obj_get_tags(BijiNoteObj *n) ;
 gboolean _biji_note_obj_has_tag(BijiNoteObj *note,gchar *tag);
@@ -120,8 +114,6 @@ gchar *biji_note_get_raw_text(BijiNoteObj *note);
 void biji_note_obj_set_raw_text (BijiNoteObj *note, gchar *plain_text);
 
 int set_note_title(BijiNoteObj* note_obj_ptr,gchar* title) ;
-
-gchar * biji_note_get_content(BijiNoteObj* note_obj_ptr);
 
 gboolean biji_note_obj_is_template(BijiNoteObj *note);
 

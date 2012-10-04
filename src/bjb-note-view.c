@@ -86,16 +86,14 @@ bjb_note_view_finalize(GObject *object)
   BjbNoteView *self = BJB_NOTE_VIEW (object) ;
   BjbNoteViewPrivate *priv = self->priv;
 
-  /* Don't unref buffer. Biji Does it when we close note. */
   g_signal_handler_disconnect (priv->note, priv->renamed);
   g_signal_handler_disconnect (priv->window, priv->destroy);
   g_signal_handler_disconnect (priv->note, priv->deleted);
 
-  g_clear_object (&(priv->accel));
+  clutter_actor_destroy (priv->embed);
+  g_clear_object (&priv->accel);
   biji_note_obj_close (priv->note);
-  gtk_widget_destroy (priv->view);
-  g_clear_object (&(priv->edit_bar));
-  clutter_actor_destroy (priv->last_update);
+  g_clear_object (&priv->edit_bar);
 
   G_OBJECT_CLASS (bjb_note_view_parent_class)->finalize (object);
 }
@@ -371,12 +369,11 @@ show_tags_dialog(BjbNoteView *view)
   }
 }
 
-/* tracker is not handled by libbiji */
+/* TODO move to libbiji */
 static void
 bjb_close_note(gpointer note)
 {
   bijiben_push_note_to_tracker(note);
-  /*biji_note_close(note);*/
 }
 
 static gboolean

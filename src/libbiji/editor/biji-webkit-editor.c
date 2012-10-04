@@ -40,9 +40,11 @@ static GParamSpec *properties[NUM_PROP] = { NULL, };
 struct _BijiWebkitEditorPrivate
 {
   BijiNoteObj *note;
-  gulong changed;
+  gulong content_changed;
+  gulong color_changed;
 
   WebKitWebSettings *settings;
+  GObject *spell_check;
 };
 
 G_DEFINE_TYPE (BijiWebkitEditor, biji_webkit_editor, WEBKIT_TYPE_WEB_VIEW);
@@ -182,21 +184,26 @@ biji_webkit_editor_init (BijiWebkitEditor *self)
 
   g_object_set (G_OBJECT(priv->settings),
                 "enable-file-access-from-file-uris", TRUE,
-                NULL);
-  g_object_set (G_OBJECT(priv->settings),
                 "user-stylesheet-uri", css_path,
+                "enable-spell-checking", TRUE,
                 NULL);
-  webkit_web_view_set_settings (view, priv->settings);
 
   g_free (css_path);
+
+  webkit_web_view_set_settings (view, priv->settings);
+  priv->spell_check = webkit_get_text_checker ();
 }
 
 static void
 biji_webkit_editor_finalize (GObject *object)
 {
   BijiWebkitEditor *self = BIJI_WEBKIT_EDITOR (object);
-  
-  g_signal_handler_disconnect (self, self->priv->changed);
+  BijiWebkitEditorPrivate *priv = self->priv;
+
+  /* priv->spell_check is ref by webkit. probably not to unref */
+
+  g_signal_handler_disconnect (priv->note, priv->color_changed);
+
   G_OBJECT_CLASS (biji_webkit_editor_parent_class)->finalize (object);
 }
 
@@ -321,12 +328,16 @@ biji_webkit_editor_constructed (GObject *obj)
   if (biji_note_obj_get_rgba (priv->note,&color))
     set_editor_color (GTK_WIDGET (self), &color);
 
-  g_signal_connect (priv->note, "color-changed",
-                    G_CALLBACK (on_note_color_changed), self);
+  priv->color_changed = g_signal_connect (priv->note,
+                                     "color-changed",
+                                     G_CALLBACK (on_note_color_changed),
+                                     self);
 
   /* Save */
-  g_signal_connect (WEBKIT_WEB_VIEW (self), "user-changed-contents",
-                    G_CALLBACK (on_content_changed), NULL);
+  priv->content_changed = g_signal_connect (WEBKIT_WEB_VIEW (self),
+                                     "user-changed-contents",
+                                     G_CALLBACK (on_content_changed),
+                                     NULL);
 }
 
 static void

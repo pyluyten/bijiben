@@ -88,8 +88,10 @@ bjb_main_view_finalize (GObject *object)
   BjbMainViewPriv *priv = self->priv;
 
   /* Widgets, actors */
+  g_clear_object (&priv->main_toolbar);
+  g_clear_object (&priv->search_bar);
+
   clutter_actor_destroy (priv->bin);
-  g_clear_object (& (priv->search_bar));
 
   G_OBJECT_CLASS (bjb_main_view_parent_class)->finalize (object);
 }

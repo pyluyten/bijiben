@@ -113,6 +113,11 @@ bjb_selection_toolbar_selection_changed (GdMainView *view, gpointer user_data)
 static void
 bjb_selection_toolbar_dispose (GObject *object)
 {
+  BjbSelectionToolbar *self = BJB_SELECTION_TOOLBAR (object);
+  BjbSelectionToolbarPrivate *priv = self->priv;
+
+  gtk_widget_destroy (priv->widget);
+
   G_OBJECT_CLASS (bjb_selection_toolbar_parent_class)->dispose (object);
 }
 
