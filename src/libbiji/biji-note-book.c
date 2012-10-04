@@ -9,7 +9,6 @@ struct _BijiNoteBookPrivate
 {
   GList *notes;           // GList of BijiNoteObj
   GList *tags;            // GList of TagBooks
-  GtkTextTagTable *table; // TODO common tags table for all notes
   gint length;            // simpler than crossing GList 
 
   /* Signals */
@@ -46,7 +45,6 @@ biji_note_book_init (BijiNoteBook *object)
 	                                          BijiNoteBookPrivate);
   object->priv->notes = NULL;
   object->priv->tags = NULL ;
-  object->priv->table = NULL ; //create_all_note_tags();
   object->priv->length = 0 ;
 }
 
