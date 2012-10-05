@@ -84,8 +84,8 @@ BijiNoteBook *biji_book_new_from_dir(gchar *tomboy_format_folder);
 // Create a Note from a tomboy.note file
 BijiNoteObj* biji_note_get_new_from_file (const gchar* path);
 
-/* Get a blanck new note FIXME set path, dates, content */
-BijiNoteObj* biji_note_get_new_from_string (gchar* title,gchar *folder);
+/* Get a blanck new note FIXME set dates */
+BijiNoteObj * biji_note_book_get_new_note_from_string (BijiNoteBook *book, gchar *title);
 
 G_END_DECLS
 

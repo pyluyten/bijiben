@@ -91,6 +91,8 @@ libbiji_a_SOURCES =  \
 	libbiji/biji-note-book.h \
 	libbiji/biji-note-watcher.c \
 	libbiji/biji-note-watcher.h\
+	libbiji/biji-timeout.c \
+	libbiji/biji-timeout.h \
 	libbiji/biji-tracker.c \
 	libbiji/biji-tracker.h \
 	libbiji/biji-zeitgeist.c \

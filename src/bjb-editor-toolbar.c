@@ -405,11 +405,10 @@ strike_button_callback (GtkWidget *button, BijiNoteObj *note)
   biji_note_obj_editor_apply_format (note, BIJI_STRIKE);
 }
 
-/* TODO : Libiji : BijiNote * bjb_notebook_note_new (notebook,string); */
 static void
 link_callback (GtkWidget *button, BjbEditorToolbar *self)
 {
-  gchar                   *link, *folder ;
+  gchar                   *link;
   GtkWidget               *window;
   BijiNoteObj             *result;
   BijiNoteBook            *book;
@@ -421,13 +420,9 @@ link_callback (GtkWidget *button, BjbEditorToolbar *self)
     return;
 
   window = bjb_note_view_get_base_window (priv->view);
-
   book = bjb_window_base_get_book(window);
-  folder = g_strdup_printf("%s/bijiben",g_get_user_data_dir());
-  result = biji_note_get_new_from_string(link,folder);
-  g_free(folder);
 
-  note_book_append_new_note(book,result);
+  result = biji_note_book_get_new_note_from_string (book, link);
   bijiben_new_window_for_note(g_application_get_default(), result);
 }
 

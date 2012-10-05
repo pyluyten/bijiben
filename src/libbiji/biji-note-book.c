@@ -16,10 +16,12 @@
  */
 
 #include <gtk/gtk.h>
+#include <uuid/uuid.h>
 
 #include "libbiji.h"
 #include "biji-note-book.h"
 #include "deserializer/biji-lazy-deserializer.h"
+
 
 struct _BijiNoteBookPrivate
 {
@@ -650,31 +652,48 @@ biji_note_get_new_from_file (const gchar* path)
   return ret ;
 }
 
-/* TODO
- * use some hash for path. no signed number as path...
- * path must be unique, use hash_table */
+gchar *
+biji_note_book_get_uuid (void)
+{
+  uuid_t unique;
+  char out[40];
+
+  uuid_generate (unique);
+  uuid_unparse_lower (unique, out);
+  return g_strdup_printf ("%s.note", out);
+}
+
 BijiNoteObj*
-biji_note_get_new_from_string (gchar* title, gchar *folder)
+biji_note_book_get_new_note_from_string (BijiNoteBook *book,
+                                         gchar *title)
 {
   BijiNoteObj *ret;
   BijiNoteID *id;
-  GRand *random;
-  gint suffix;
-  gchar *name, *path;
+  gchar *folder, *name, *path;
+  gboolean unique = FALSE;
 
   ret = g_object_new(BIJI_TYPE_NOTE_OBJ,NULL);
   id = note_get_id(ret);
   _biji_note_obj_set_title(ret,title);
 
-  random = g_rand_new();
-  suffix = g_rand_int(random);
-  g_rand_free (random);
+  folder = g_file_get_path (book->priv->location);
 
-  name = g_strdup_printf ("%i.note", suffix);
-  path = g_build_filename (folder, name, NULL);
-  g_free (name);
-  set_note_id_path (id, path);
-  g_free (path);
+  /* Untested */
+  while (!unique)
+  {
+    name = biji_note_book_get_uuid ();
+    path = g_build_filename (folder, name, NULL);
+    g_free (name);
+    set_note_id_path (id, path);
+
+    if (!g_hash_table_lookup (book->priv->notes, path))
+      unique = TRUE;
+
+    g_free (path);
+  }
+
+  note_obj_save_note_using_buffer (ret);
+  note_book_append_new_note (book,ret);
 
   return ret ;
 }

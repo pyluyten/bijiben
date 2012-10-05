@@ -74,7 +74,6 @@ static void
 on_new_note_clicked (GtkWidget *but, BjbMainView *view)
 {
   gchar *title;
-  gchar *folder;
   BijiNoteObj *result ;
   BijiNoteBook *book ;
 
@@ -87,15 +86,10 @@ on_new_note_clicked (GtkWidget *but, BjbMainView *view)
 
   /* append note to collection */
   book = bjb_window_base_get_book(bjb_main_view_get_window(view));
-  folder = g_strdup_printf("%s/bijiben",g_get_user_data_dir());
-  result = biji_note_get_new_from_string(title,folder);
-  g_free(folder);
-
-  note_book_append_new_note(book,result);
+  result = biji_note_book_get_new_note_from_string (book, title);
 
   /* Go to that note */
   switch_to_note_view(view,result);
-  note_obj_save_note_using_buffer((gpointer)result);
 }
 
 static void populate_main_toolbar(BjbMainToolbar *self);
