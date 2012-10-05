@@ -128,6 +128,11 @@ bijiben_startup (GApplication *application)
 static void
 bijiben_finalize (GObject *object)
 {
+  Bijiben *self = BIJIBEN_APPLICATION (object);
+
+  g_clear_object (&self->priv->book);
+  g_clear_object (&self->priv->settings);
+
   G_OBJECT_CLASS (bijiben_parent_class)->finalize (object);
 }
 
