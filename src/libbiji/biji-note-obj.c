@@ -525,6 +525,8 @@ note_obj_save_note_using_buffer (gpointer note_obj)
   result = biji_lazy_serialize (serializer);
   g_object_unref (serializer);
 
+  bijiben_push_note_to_tracker(note);
+
   return result ;
 }
 

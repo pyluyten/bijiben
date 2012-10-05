@@ -369,24 +369,13 @@ show_tags_dialog(BjbNoteView *view)
   }
 }
 
-/* TODO move to libbiji */
 static void
-bjb_close_note(gpointer note)
-{
-  bijiben_push_note_to_tracker(note);
-}
-
-static gboolean
 on_window_closed(GtkWidget *window,gpointer note)
-{   
+{
   if ( window == NULL )
   {
-    g_message ("on window closed : note deleted, don't close it");
-    return TRUE ;
+    /* Note is deleted */
   }
-    
-  bjb_close_note(note) ;
-  return TRUE ;
 }
 
 /* Callbacks */
@@ -403,20 +392,6 @@ just_switch_to_main_view(BjbNoteView *self)
 
   g_clear_object (&self);
   bjb_main_view_new ((gpointer) window,controller);
-}
-
-static void
-save_then_switch_to_notes_view(BjbNoteView *view)
-{
-  bijiben_push_note_to_tracker(view->priv->note);
-  bjb_close_note(view->priv->note);
-  just_switch_to_main_view(view);
-}
-
-static void
-action_switch_to_notes_callback(GtkButton *but,BjbNoteView *view)
-{
-  save_then_switch_to_notes_view(view);
 }
 
 static void
@@ -594,7 +569,8 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
   gtk_container_add(GTK_CONTAINER(button),grid);
   gtk_widget_show_all(button);
   gtk_widget_set_vexpand (button, TRUE);
-  g_signal_connect (button,"clicked",G_CALLBACK(action_switch_to_notes_callback),self);
+  g_signal_connect_swapped (button, "clicked",
+                            G_CALLBACK(just_switch_to_main_view),self);
   gtk_widget_add_accelerator (button, "activate", self->priv->accel,
                               GDK_KEY_w, GDK_CONTROL_MASK, GTK_ACCEL_MASK);
 
