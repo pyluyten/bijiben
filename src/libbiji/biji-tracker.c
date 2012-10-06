@@ -1,6 +1,21 @@
-#include "biji-tracker.h"
+/* biji-tracker.c
+ * Copyright (C) Pierre-Yves LUYTEN 2012 <py@luyten.fr>
+ * 
+ * bijiben is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * bijiben is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-///////////////// Utils.
+#include "biji-tracker.h"
 
 TrackerSparqlConnection *bjb_connection ;
 
@@ -62,8 +77,7 @@ bjb_perform_update(gchar *query)
 static gchar *
 tracker_str ( gchar * string )
 {
-  gchar *result = g_strjoinv(" ", g_strsplit(string, "\n", -1));
-  return g_strjoinv("\\'", g_strsplit(result, "'", -1));
+  return biji_str_mass_replace (string, "\n", " ", "'", "\\", NULL);
 }
 
 static gchar *
@@ -81,12 +95,15 @@ tracker_tag_get_files(gchar *tag)
 {
   GList *result = NULL ;
     
-  gchar *query ;
+  gchar *query, *value ;
+  value = tracker_str (tag);
   query = g_strdup_printf( "SELECT ?s nie:url(?s) nie:mimeType(?s) WHERE \
           { ?s a nfo:FileDataObject;nao:hasTag [nao:prefLabel'%s'] }",
-                          tracker_str(tag) );
+                          value );
+  g_free (value);
   
   TrackerSparqlCursor *cursor = bjb_perform_query(query) ;
+  g_free (query);
       
   if (!cursor)
   {
@@ -108,12 +125,16 @@ tracker_tag_get_files(gchar *tag)
 gint
 tracker_tag_get_number_of_files(gchar *tag)
 {      
-  gchar *query ;
+  gchar *query, *value ;
+
+  value = tracker_str (tag);
   query = g_strdup_printf( "SELECT ?s nie:url(?s) nie:mimeType(?s) WHERE \
           { ?s a nfo:FileDataObject;nao:hasTag [nao:prefLabel'%s'] }",
-                          tracker_str(tag));
+                          value);
+  g_free (value);
 
   TrackerSparqlCursor *cursor = bjb_perform_query(query);
+  g_free (query);
   gint result = 0 ;
 	
   if (!cursor)
@@ -160,7 +181,7 @@ get_all_tracker_tags()
       ret = g_list_append(ret,(gpointer)g_string_free(tag,FALSE));
     }
         
-	g_object_unref (cursor);
+    g_object_unref (cursor);
   }
     
   return ret;
@@ -175,16 +196,20 @@ push_tag_to_tracker(gchar *tag)
   FILTER (!bound(?tag)) }",tag,tag);
 
   bjb_perform_update (query) ;
+  g_free (query);
 }
 
 // removes the tag EVEN if files associated.
 void
 remove_tag_from_tracker(gchar *tag)
 {
+  gchar *value = tracker_str (tag);
   gchar *query = g_strdup_printf ("DELETE { ?tag a nao:Tag } \
-  WHERE { ?tag nao:prefLabel '%s' }",tracker_str(tag));
+  WHERE { ?tag nao:prefLabel '%s' }",value);
 
   bjb_perform_update(query);
+  g_free (query);
+  g_free (tag);
 }
 
 void
@@ -194,6 +219,7 @@ push_existing_tag_to_note(gchar *tag,BijiNoteObj *note)
   WHERE {   ?id nao:prefLabel '%s' }", get_note_path(note),tag ) ;
     
   bjb_perform_update(query);
+  g_free (query);
 }
 
 void
@@ -203,6 +229,7 @@ remove_tag_from_note (gchar *tag, BijiNoteObj *note)
   WHERE {   ?id nao:prefLabel '%s' }", get_note_path(note),tag ) ;
     
   bjb_perform_update(query); 
+  g_free (query);
 }
 
 //
@@ -213,6 +240,7 @@ biji_note_delete_from_tracker(BijiNoteObj *note)
                                   get_note_path(note) );
 
   bjb_perform_update(query);
+  g_free (query);
 }
 
 static void 
@@ -242,6 +270,7 @@ biji_note_create_into_tracker(BijiNoteObj *note)
 
   bjb_perform_update(query);
 
+  g_free (query);
   g_free(title);
   g_free(file);
   g_free(content); 
@@ -258,6 +287,8 @@ is_note_into_tracker ( BijiNoteObj *note )
                                   get_note_path(note));
 
   TrackerSparqlCursor *cursor = bjb_perform_query(query);
+  g_free (query);
+
   if (!cursor)
     return FALSE ;
 
@@ -278,3 +309,4 @@ bijiben_push_note_to_tracker(BijiNoteObj *note)
 
   biji_note_create_into_tracker(note);
 }
+

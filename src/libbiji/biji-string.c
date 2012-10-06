@@ -21,27 +21,27 @@
 gchar *
 biji_str_replace (gchar *string, gchar *as_is, gchar *to_be)
 {
-	gchar **array;
-	gchar *result = NULL;
+  gchar **array;
+  gchar *result = NULL;
 
-	if (!string)
-		return NULL;
+  if (!string)
+    return NULL;
 
-	if (!as_is)
-		return g_strdup (string);
+  if (!as_is)
+    return g_strdup (string);
 
-	if (!to_be)
-		return g_strdup (string);
+  if (!to_be)
+    return g_strdup (string);
 
-	array = g_strsplit( string, as_is, -1);
+  array = g_strsplit( string, as_is, -1);
 
-	if (array)
-	{
-		result = g_strjoinv (to_be, array);
-		g_strfreev (array);
-	}
+  if (array)
+  {
+    result = g_strjoinv (to_be, array);
+    g_strfreev (array);
+  }
 
-	return result;
+  return result;
 }
 
 gchar * biji_str_mass_replace (gchar *string,
@@ -55,28 +55,28 @@ gchar * biji_str_mass_replace (gchar *string,
 
   va_start (args, string);
   as_is = va_arg (args, gchar*);
-	
+
   while (as_is)
   {
-	  to_be = va_arg (args, gchar*);
+    to_be = va_arg (args, gchar*);
 
-	  if (to_be)
-	  {
-		  tmp = biji_str_replace (result, as_is, to_be);
+    if (to_be)
+    {
+      tmp = biji_str_replace (result, as_is, to_be);
 
-		  if (tmp)
-		  {
-			g_free (result);
-			result = tmp;
-		  }
+      if (tmp)
+      {
+        g_free (result);
+        result = tmp;
+      }
 
-		  as_is = va_arg (args, gchar*);
-	  }
+      as_is = va_arg (args, gchar*);
+    }
 
-          else
-             as_is = NULL;
+    else
+      as_is = NULL;
   }
-	
+
   va_end (args);
   return result;
 }

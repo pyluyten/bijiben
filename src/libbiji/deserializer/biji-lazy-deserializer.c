@@ -285,7 +285,7 @@ process_tomboy_xml_content (BijiLazyDeserializer *self)
    * assign note values and let deserialization work on last elements*/
   biji_note_obj_set_raw_text (priv->note, priv->raw_text->str);
 
-  revamped_html = g_strjoinv ("<br>", g_strsplit(priv->html->str, "\n", -1));
+  revamped_html = biji_str_replace (priv->html->str, "\n", "<br/>");
   biji_note_obj_set_html_content (priv->note, revamped_html);
   g_free (revamped_html);
 }
@@ -368,7 +368,7 @@ process_bijiben_text_elem (BijiLazyDeserializer *self)
     /* Simply append the text to both raw & html */
     priv->html = g_string_append (priv->html, text);
 
-    text = g_strjoinv ("    ", g_strsplit (text, "&#xA;", -1));
+    text = biji_str_replace (text, "&#xA;", "    ");
     priv->raw_text = g_string_append (priv->raw_text, text);
     
     g_free (text);
@@ -429,8 +429,9 @@ process_bijiben_html_content (BijiLazyDeserializer *self)
    * assign note values and let deserialization work on last elements*/
   biji_note_obj_set_raw_text (priv->note, priv->raw_text->str);
 
-  revamped_html = g_strjoinv ("&", g_strsplit(priv->html->str, "&amp;", -1));
+  revamped_html = biji_str_replace (priv->html->str, "&amp;", "&");
   biji_note_obj_set_html_content (priv->note, revamped_html);
+  g_free (revamped_html);
 }
 
 /* Common XML format for both Bijiben / Tomboy */
