@@ -19,7 +19,7 @@
 #include <libxml/xmlwriter.h>
 
 #include "biji-lazy-serializer.h"
-#include "../biji-note-id.h"
+#include "../libbiji.h"
 
 enum
 {
@@ -186,13 +186,14 @@ biji_lazy_serialize_internal (BijiLazySerializer *self)
   if (html)
   {
     // Sanitize html, just replace non Xml char with something else
-    html = g_strjoinv (" ", g_strsplit(html, "&nbsp;", -1));
-    html = g_strjoinv ("&#xA;", g_strsplit(html, "<br>", -1));
-    html = g_strjoinv ("&#xA;", g_strsplit(html, "<div>", -1));
-    html = g_strjoinv ("", g_strsplit(html, "</div>", -1));
-    html = g_strjoinv ("&amp;", g_strsplit(html, "&", -1));
-  
+    html = biji_str_mass_replace (html, "&nbsp;", " ",
+                                        "<br>", "&#xA;",
+                                        "<div>", "&#xA;",
+                                        "</div>", "",
+                                        "&", "&amp;", NULL);
+
     xmlTextWriterWriteRaw(writer, BAD_CAST (html));
+    g_free (html);
   }
 
   xmlTextWriterEndElement (writer);
