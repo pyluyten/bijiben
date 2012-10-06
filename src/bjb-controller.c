@@ -98,10 +98,9 @@ free_notes_store(BjbController *self)
 {
   GtkListStore *store ;
 
-  store = GTK_LIST_STORE(self->priv->model) ;
+  store = GTK_LIST_STORE (self->priv->model) ;
 
   gtk_list_store_clear(store);
-
 }
 
 static void
@@ -110,8 +109,10 @@ bjb_controller_finalize (GObject *object)
   BjbController *self = BJB_CONTROLLER(object);
   BjbControllerPrivate *priv = self->priv ;
 
-  free_notes_store(self);
+  free_notes_store (self);
+
   g_object_unref (priv->completion);
+  g_clear_object (&priv->cur);  
   g_free (priv->needle);
 
   G_OBJECT_CLASS (bjb_controller_parent_class)->finalize (object);

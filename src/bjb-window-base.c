@@ -66,6 +66,10 @@ bjb_window_base_constructor (GType                  gtype,
 static void
 bjb_window_base_finalize (GObject *object)
 {
+  BjbWindowBase *self = BJB_WINDOW_BASE (object);
+  BjbWindowBasePriv *priv = self->priv;
+
+  g_clear_object (&priv->controller);
   G_OBJECT_CLASS (bjb_window_base_parent_class)->finalize (object);
 }
 
