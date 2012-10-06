@@ -100,23 +100,21 @@ on_selection_mode_clicked (GtkWidget *button, BjbMainToolbar *self)
   GtkStyleContext *context;
   GdMainView *view = self->priv->view;
   GtkWidget *widget = GTK_WIDGET(self->priv->toolbar);
+  context = gtk_widget_get_style_context (widget);
 
   if (gd_main_view_get_selection_mode (view))
   {
     gd_main_view_set_selection_mode (view, FALSE);
-    context = gtk_widget_get_style_context (widget);
     gtk_style_context_remove_class (context, "selection-mode");
-    gtk_widget_reset_style (widget);
   }
 
   else
   {
     gd_main_view_set_selection_mode (view, TRUE);
-    context = gtk_widget_get_style_context (widget);
     gtk_style_context_add_class (context, "selection-mode");
-    gtk_widget_reset_style (widget);
   }
 
+  gtk_widget_reset_style (widget);
   populate_main_toolbar(self);
   return ;
 }
@@ -170,9 +168,13 @@ static void
 populate_bar_for_selection(BjbMainToolbar *self)
 {
   BjbMainToolbarPrivate *priv = self->priv;
+  GtkStyleContext *context;
 
   priv->select = gd_main_toolbar_add_button (priv->toolbar,
                                              NULL,"Done", FALSE);
+  context = gtk_widget_get_style_context (priv->select);
+  gtk_style_context_add_class (context, "suggested-action");
+  gtk_widget_reset_style (priv->select);
 
   g_signal_connect (priv->select, "clicked",
                     G_CALLBACK (on_selection_mode_clicked), self);
