@@ -54,9 +54,7 @@ struct _BijiLazySerializer
 
 GType biji_lazy_serializer_get_type (void) G_GNUC_CONST;
 
-BijiLazySerializer * biji_lazy_serializer_new (BijiNoteObj *note);
-
-gboolean biji_lazy_serialize (BijiLazySerializer *self);
+gboolean biji_lazy_serialize (BijiNoteObj *note);
 
 G_END_DECLS
 

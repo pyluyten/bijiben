@@ -20,6 +20,7 @@
 #include "biji-note-book.h"
 #include "biji-note-obj.h"
 #include "biji-note-watcher.h"
+#include "biji-timeout.h"
 #include "editor/biji-webkit-editor.h"
 #include "serializer/biji-lazy-serializer.h"
 #include "libbiji.h"
@@ -46,9 +47,10 @@ struct _BijiNoteObjPrivate
   gchar                 *html;
   gchar                 *raw_text;
 
-  /* Buffer might be null */
   BijiWebkitEditor      *editor;
-  gint                  changes_to_save;
+
+  BijiTimeout           *timeout;
+  gboolean              needs_save;
 
   /* TAGS may be notebooks. */
   GList                 *tags ;
@@ -73,6 +75,22 @@ struct _BijiNoteObjPrivate
 G_DEFINE_TYPE (BijiNoteObj, biji_note_obj, G_TYPE_OBJECT);
 
 static void
+on_save_timeout (BijiNoteObj *self)
+{
+  BijiNoteObjPrivate *priv = self->priv;
+
+  if (!priv->needs_save)
+    return;
+
+  // Change the last change date propery
+  _biji_note_id_set_change_date_now (priv->id);
+
+  biji_lazy_serialize (self);
+  bijiben_push_note_to_tracker(self);
+  priv->needs_save = FALSE;
+}
+
+static void
 biji_note_obj_init (BijiNoteObj *self)
 {
   BijiNoteObjPrivate *priv ;
@@ -81,10 +99,13 @@ biji_note_obj_init (BijiNoteObj *self)
 
   self->priv = priv ;
 
-  BijiNoteID* id = g_object_new(biji_note_id_get_type(),NULL);
-  priv->id = id ;
+  priv->id = g_object_new(biji_note_id_get_type(),NULL);
 
-  priv->changes_to_save = 0 ;
+  priv->needs_save = FALSE;
+  priv->timeout = biji_timeout_new ();
+  g_signal_connect_swapped (priv->timeout, "timeout",
+                            G_CALLBACK (on_save_timeout), self);
+
   priv->book = NULL ;
   priv->is_template = FALSE ;
   priv->is_opened = 0;
@@ -107,6 +128,11 @@ biji_note_obj_finalize (GObject *object)
 {    
   BijiNoteObj        *self = BIJI_NOTE_OBJ(object);
   BijiNoteObjPrivate *priv = self->priv;
+
+  g_object_unref (priv->timeout);
+
+  if (priv->needs_save)
+    on_save_timeout (self);
 
   g_clear_object (&priv->id);
 
@@ -220,14 +246,16 @@ note_obj_are_same(BijiNoteObj *a, BijiNoteObj* b)
   return FALSE ;
 }
 
+/* First cancel timeout */
 void
 biji_note_obj_delete(BijiNoteObj *dead)
 {
   GFile *file ;
-  //GError *error = NULL ;
+//  GError *error = NULL ;
 
+  biji_timeout_cancel (dead->priv->timeout);
   file = g_file_new_for_path(biji_note_id_get_path(dead->priv->id));
-    
+
   // TODO get the note book GCancellable and set it,
   // or create one and append it to BijiNoteBook
   if ( g_file_trash(file,NULL,NULL) == FALSE )
@@ -241,8 +269,6 @@ biji_note_obj_delete(BijiNoteObj *dead)
 
   g_signal_emit ( G_OBJECT (dead), biji_obj_signals[NOTE_DELETED],0);
   biji_note_obj_finalize(G_OBJECT(dead));
-  
-  return ;
 }
 
 gchar* get_note_path (BijiNoteObj* n)
@@ -329,7 +355,7 @@ biji_note_obj_set_rgba_internal (BijiNoteObj *n, GdkRGBA *rgba)
   n->priv->icon_needs_update = TRUE;
 
   _biji_note_id_set_metadata_change_now (n->priv->id);
-  note_obj_save_note_using_buffer (n);
+  biji_note_obj_save_note (n);
 
   /* Make editor & notebook know about this change */
   g_signal_emit (G_OBJECT (n), biji_obj_signals[NOTE_COLOR_CHANGED],0);
@@ -510,45 +536,13 @@ _biji_note_obj_is_opened(BijiNoteObj *note)
   return note->priv->is_opened ;
 }
 
-gboolean
-note_obj_save_note_using_buffer (gpointer note_obj)
-{
-  gboolean result;
-  BijiLazySerializer *serializer;
-  BijiNoteObj *note = BIJI_NOTE_OBJ(note_obj);
-
-  // Change the last change date propery
-  _biji_note_id_set_change_date_now (note->priv->id);
-  
-  // Work on the content
-  serializer = biji_lazy_serializer_new (note);
-  result = biji_lazy_serialize (serializer);
-  g_object_unref (serializer);
-
-  bijiben_push_note_to_tracker(note);
-
-  return result ;
-}
-
+/* TODO : see if note beeing deleted. set metadata date
+ * and last_change date according to a WHAT param */
 void
-_biji_note_obj_propose_saving(gpointer note_obj)
+biji_note_obj_save_note (BijiNoteObj *self)
 {
-  BijiNoteObj *note = BIJI_NOTE_OBJ(note_obj);
-
-  if ( note->priv->changes_to_save > 4 )
-  {
-    note_obj_save_note_using_buffer(note_obj);
-    note->priv->changes_to_save = 0 ;
-    return ;
-  }
-
-  note->priv->changes_to_save ++ ;
-}
-
-void
-_biji_note_obj_mark_as_need_save(gpointer note_obj)
-{
-  BIJI_NOTE_OBJ(note_obj)->priv->changes_to_save ++ ;
+  self->priv->needs_save = TRUE;
+  biji_timeout_reset (self->priv->timeout, 3000);
 }
 
 /* Borders are just temp before libiji includes
@@ -863,14 +857,25 @@ biji_note_obj_is_opened (BijiNoteObj *note)
   return BIJI_IS_WEBKIT_EDITOR (note->priv->editor);
 }
 
-/* Should connect to "destroy" there
- * to auto set editor=NULL when widget killed */
+/* Saving there might be no good. Untill better it ensures
+ * note is saved when app quit. */
+static void
+_biji_note_obj_close (BijiNoteObj *note)
+{
+  note->priv->editor = NULL;
+  on_save_timeout (note);
+}
+
 GtkWidget *
 biji_note_obj_open (BijiNoteObj *note)
 {
   note->priv->editor = biji_webkit_editor_new (note);
+
+  g_signal_connect_swapped (note->priv->editor, "destroy",
+                            G_CALLBACK (_biji_note_obj_close), note);
+
   insert_zeitgeist (note, ZEITGEIST_ZG_ACCESS_EVENT) ;
-  
+
   return GTK_WIDGET (note->priv->editor);
 }
 
@@ -881,16 +886,6 @@ biji_note_obj_get_editor (BijiNoteObj *note)
     return NULL;
 
   return GTK_WIDGET (note->priv->editor);
-}
-
-void
-biji_note_obj_close (BijiNoteObj *note)
-{
-  if (biji_note_obj_is_opened (note))
-  {
-    g_clear_object (&(note->priv->editor));
-    note->priv->editor = NULL;
-  }
 }
 
 void

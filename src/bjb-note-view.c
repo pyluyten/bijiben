@@ -92,8 +92,8 @@ bjb_note_view_finalize(GObject *object)
 
   clutter_actor_destroy (priv->embed);
   g_clear_object (&priv->accel);
-  biji_note_obj_close (priv->note);
   g_clear_object (&priv->edit_bar);
+  /* TODO : check if the editor has been destroyed */
 
   G_OBJECT_CLASS (bjb_note_view_parent_class)->finalize (object);
 }
@@ -220,7 +220,7 @@ tag_toggled (GtkCellRendererToggle *cell,gchar *path_str,BjbNoteView *view)
   {
     // add into libbiji then tracker.
     biji_note_obj_add_tag(view->priv->note,tag);
-    note_obj_save_note_using_buffer(view->priv->note);
+    biji_note_obj_save_note (view->priv->note);
     push_existing_tag_to_note(tag,view->priv->note);
                           
     // and update the cell
@@ -230,7 +230,7 @@ tag_toggled (GtkCellRendererToggle *cell,gchar *path_str,BjbNoteView *view)
   {
     // Remove the tag as in libiji, also remove tracker tag
     biji_note_obj_remove_tag (view->priv->note,tag);
-    note_obj_save_note_using_buffer (view->priv->note);
+    biji_note_obj_save_note (view->priv->note);
     remove_tag_from_note (tag,view->priv->note);
 
     // and update the cell

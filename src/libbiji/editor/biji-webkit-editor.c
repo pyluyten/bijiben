@@ -293,7 +293,7 @@ on_content_changed (WebKitWebView *view)
   biji_note_obj_set_raw_text (self->priv->note, plain_text->str);
   g_string_free (plain_text, TRUE);
 
-  note_obj_save_note_using_buffer (self->priv->note);
+  biji_note_obj_save_note (self->priv->note);
 }
 
 static void

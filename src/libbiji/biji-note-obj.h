@@ -99,11 +99,7 @@ void note_obj_set_is_template(BijiNoteObj *n,gboolean is_template);
 gchar *_biji_note_template_get_tag(BijiNoteObj *n);
 
 /////////////////////////////////////////////////////////////////// Save
-// returns TRUE if note saved , FALSE if not saved
-gboolean note_obj_save_note_using_buffer(gpointer biji_note_obj);
-void _biji_note_obj_propose_saving(gpointer note_obj);
-
-void _biji_note_obj_mark_as_need_save(gpointer note_obj);
+void biji_note_obj_save_note (BijiNoteObj *self);
 
 GdkPixbuf * biji_note_obj_get_icon (BijiNoteObj *note);
 
@@ -134,8 +130,6 @@ gchar *biji_note_obj_get_create_date(BijiNoteObj *note);
 /* Webkit : note edition */
 
 GtkWidget * biji_note_obj_open                      (BijiNoteObj *note);
-
-void biji_note_obj_close                            (BijiNoteObj *note);
 
 gboolean biji_note_obj_is_opened                    (BijiNoteObj *note);
 

@@ -121,14 +121,6 @@ biji_lazy_serializer_class_init (BijiLazySerializerClass *klass)
   g_type_class_add_private (klass, sizeof (BijiLazySerializerPrivate));
 }
 
-BijiLazySerializer *
-biji_lazy_serializer_new (BijiNoteObj *note)
-{
-  return g_object_new (BIJI_TYPE_LAZY_SERIALIZER,
-                       "note", note,
-                       NULL);
-}
-
 static void
 serialize_node (xmlTextWriterPtr writer, gchar *node, gchar *value)
 {
@@ -150,7 +142,7 @@ serialize_tags (gchar *tag, xmlTextWriterPtr writer)
 }
 
 gboolean
-biji_lazy_serialize (BijiLazySerializer *self)
+biji_lazy_serialize_internal (BijiLazySerializer *self)
 {
   BijiLazySerializerPrivate *priv = self->priv;
   BijiNoteID                *id;
@@ -245,5 +237,19 @@ biji_lazy_serialize (BijiLazySerializer *self)
                               (gchar*) priv->buf->content,
                               -1,
                               NULL);
+}
+
+gboolean
+biji_lazy_serialize (BijiNoteObj *note)
+{
+  BijiLazySerializer *self;
+  gboolean result ;
+
+  self = g_object_new (BIJI_TYPE_LAZY_SERIALIZER,
+                       "note", note, NULL);
+  result = biji_lazy_serialize_internal (self);
+  g_object_unref (self);
+
+  return result;
 }
 

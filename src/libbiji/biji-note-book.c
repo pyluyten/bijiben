@@ -605,8 +605,8 @@ biji_note_book_remove_tag(BijiNoteBook *book,gchar *tag)
   GList *notes = _biji_note_book_get_notes_with_tag(book,tag) ;
 
   // Remove the tag then save the note.
-  g_list_foreach(notes,(GFunc)biji_note_obj_remove_tag,tag);
-  g_list_foreach(notes,(GFunc)note_obj_save_note_using_buffer,NULL);
+  g_list_foreach(notes,(GFunc) biji_note_obj_remove_tag,tag);
+  g_list_foreach(notes,(GFunc) biji_note_obj_save_note,NULL);
 }
 
 BijiNoteObj *
@@ -692,7 +692,7 @@ biji_note_book_get_new_note_from_string (BijiNoteBook *book,
     g_free (path);
   }
 
-  note_obj_save_note_using_buffer (ret);
+  biji_note_obj_save_note (ret);
   note_book_append_new_note (book,ret);
 
   return ret ;
