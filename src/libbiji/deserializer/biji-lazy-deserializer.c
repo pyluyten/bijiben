@@ -304,7 +304,7 @@ process_bijiben_start_elem (BijiLazyDeserializer *self)
     return;
 
   if (g_strcmp0 (element_name, "div")==0)
-    priv->html = g_string_append (priv->html, "<div>");
+    priv->html = g_string_append (priv->html, "&#xA;");
 
   if (g_strcmp0 (element_name, "b")==0)
     priv->html = g_string_append (priv->html, "<b>");
@@ -336,9 +336,6 @@ process_bijiben_end_elem (BijiLazyDeserializer *self)
   if (g_strcmp0 (element_name, "note-content")==0)
     return;
 
-  if (g_strcmp0 (element_name, "div")==0)
-    priv->html = g_string_append (priv->html, "</div>");
-
   if (g_strcmp0 (element_name, "b")==0)
     priv->html = g_string_append (priv->html, "</b>");
 
@@ -361,14 +358,21 @@ process_bijiben_end_elem (BijiLazyDeserializer *self)
 static void
 process_bijiben_text_elem (BijiLazyDeserializer *self)
 {
-  const gchar *text;
+  gchar *text;
   BijiLazyDeserializerPrivate *priv = self->priv;
 
-  text = (const gchar *) xmlTextReaderConstValue (priv->inner);
+  text = (gchar *) xmlTextReaderConstValue (priv->inner);
 
-  /* Simply append the text to both raw & html */
-  priv->raw_text = g_string_append (priv->raw_text, text);
-  priv->html = g_string_append (priv->html, text);
+  if (text)
+  {
+    /* Simply append the text to both raw & html */
+    priv->html = g_string_append (priv->html, text);
+
+    text = g_strjoinv ("    ", g_strsplit (text, "&#xA;", -1));
+    priv->raw_text = g_string_append (priv->raw_text, text);
+    
+    g_free (text);
+  }
 }
 
 static void

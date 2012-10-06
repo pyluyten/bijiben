@@ -183,13 +183,17 @@ biji_lazy_serialize_internal (BijiLazySerializer *self)
   xmlTextWriterStartElement(writer, BAD_CAST "note-content");
   html = biji_note_obj_get_html (priv->note);
 
-  // Sanitize html, just replace non Xml char with something else
-  html = g_strjoinv (" ", g_strsplit(html, "&nbsp;", -1));
-  html = g_strjoinv ("<div></div>", g_strsplit(html, "<br>", -1));
-  html = g_strjoinv ("&amp;", g_strsplit(html, "&", -1));
-
   if (html)
+  {
+    // Sanitize html, just replace non Xml char with something else
+    html = g_strjoinv (" ", g_strsplit(html, "&nbsp;", -1));
+    html = g_strjoinv ("&#xA;", g_strsplit(html, "<br>", -1));
+    html = g_strjoinv ("&#xA;", g_strsplit(html, "<div>", -1));
+    html = g_strjoinv ("", g_strsplit(html, "</div>", -1));
+    html = g_strjoinv ("&amp;", g_strsplit(html, "&", -1));
+  
     xmlTextWriterWriteRaw(writer, BAD_CAST (html));
+  }
 
   xmlTextWriterEndElement (writer);
 
