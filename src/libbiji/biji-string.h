@@ -1,4 +1,4 @@
-/* libiji.h
+/* biji-string.h
  * Copyright (C) Pierre-Yves LUYTEN 2012 <py@luyten.fr>
  * 
  * bijiben is free software: you can redistribute it and/or modify it
@@ -15,18 +15,25 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _LIB_BIJI_H
-#define _LIB_BIJI_H
 
-#define _LIBBIJI_INSIDE_H
+#ifndef _BIJI_STRING__H
+#define _BIJI_STRING__H
 
-#include "biji-date-time.h"
-#include "biji-note-book.h"
-#include "biji-note-obj.h"
-#include "biji-string.h"
-#include "biji-tracker.h"
-#include "biji-zeitgeist.h"
-#include "editor/biji-webkit-editor.h"
+#include <glib.h>
 
-#undef _LIBBIJI_INSIDE_H
-#endif /*_LIB_BIJI_H*/
+G_BEGIN_DECLS
+
+/* Replaces inside string the as_is with to_be
+ * Returns a newly allocated string */
+gchar * biji_str_replace (gchar *string, gchar *as_is, gchar *to_be);
+
+/* Calls biji_str_replace as much as there are paired gchar* args
+ * Include NULL arg or segfault
+ * Returns a newly allocated string */
+gchar * biji_str_mass_replace (gchar *string, ...);
+
+G_END_DECLS
+
+#endif /* _BIJI_STRING__H */
+
+
