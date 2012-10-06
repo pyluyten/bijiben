@@ -393,15 +393,14 @@ biji_note_obj_get_rgba(BijiNoteObj *n,
 }
 
 static void
-biji_note_obj_update_icon (BijiNoteObj *note)
+biji_note_obj_clear_icon (BijiNoteObj *note)
 {
   if (note->priv->icon)
   {
-    g_object_unref (note->priv->icon);
+    g_clear_object (&note->priv->icon);
     note->priv->icon = NULL ;
   }
 
-  biji_note_obj_get_icon (note);
   g_signal_emit (G_OBJECT (note), biji_obj_signals[NOTE_CHANGED],0);
 }
 
@@ -411,7 +410,7 @@ void biji_note_obj_set_raw_text (BijiNoteObj *note, gchar *plain_text)
     g_free (note->priv->raw_text);
 
   note->priv->raw_text = g_strdup (plain_text);
-  biji_note_obj_update_icon (note);
+  biji_note_obj_clear_icon (note);
 }
 
 gint
@@ -725,9 +724,10 @@ biji_note_obj_get_icon (BijiNoteObj *note)
   cairo_surface_destroy (surface);
 
   note->priv->icon = biji_note_icon_add_frame(ret);
+  g_clear_object (&ret);
   note->priv->icon_needs_update = FALSE;
 
-  return note->priv->icon ;
+  return note->priv->icon;
 }
 
 /* Single Note */
