@@ -44,6 +44,7 @@ struct _BijiWebkitEditorPrivate
   gulong color_changed;
 
   WebKitWebSettings *settings;
+  EEditorSelection *sel;
   GObject *spell_check;
 };
 
@@ -52,35 +53,30 @@ G_DEFINE_TYPE (BijiWebkitEditor, biji_webkit_editor, WEBKIT_TYPE_WEB_VIEW);
 gboolean
 biji_webkit_editor_has_selection (BijiWebkitEditor *self)
 {
-  WebKitWebView *view = WEBKIT_WEB_VIEW (self);
-  EEditorSelection *sel;
-  const gchar *text = NULL ;
+  BijiWebkitEditorPrivate *priv = self->priv;
+  const gchar *text = NULL;
+  gboolean retval = FALSE;
 
-  sel = e_editor_selection_new (view);
-
-  if (e_editor_selection_has_text (sel))
+  if (e_editor_selection_has_text (priv->sel))
   {
-    text = e_editor_selection_get_string (sel);
+    text = e_editor_selection_get_string (priv->sel);
 
     if ( g_strcmp0 (text, "") != 0)
-      return TRUE;
+      retval = TRUE;
   }
 
-  return FALSE;
+  return retval;
 }
 
 gchar *
 biji_webkit_editor_get_selection (BijiWebkitEditor *self)
 {
-  WebKitWebView *view = WEBKIT_WEB_VIEW (self);
-  EEditorSelection *sel;
+  gchar *retval = NULL;
 
-  sel = e_editor_selection_new (view);
+  if (e_editor_selection_has_text (self->priv->sel))
+    retval = (gchar*) e_editor_selection_get_string (self->priv->sel);
 
-  if (e_editor_selection_has_text (sel))
-    return (gchar*) e_editor_selection_get_string (sel);
-
-  return NULL;
+  return retval;
 }
 
 typedef gboolean GetFormatFunc (EEditorSelection*);
@@ -97,40 +93,35 @@ biji_toggle_format (EEditorSelection *sel,
 void
 biji_webkit_editor_apply_format (BijiWebkitEditor *self, gint format)
 {
-  EEditorSelection *sel;
-  WebKitWebView *view = WEBKIT_WEB_VIEW (self);
+  BijiWebkitEditorPrivate *priv = self->priv;
 
-  sel = e_editor_selection_new (view);
-
-  if ( e_editor_selection_has_text (sel))
+  if ( e_editor_selection_has_text (priv->sel))
   {
     switch (format)
     {
       case BIJI_BOLD:
-        biji_toggle_format (sel, e_editor_selection_get_bold,
-                                 e_editor_selection_set_bold);
+        biji_toggle_format (priv->sel, e_editor_selection_get_bold,
+                                       e_editor_selection_set_bold);
         break;
 
       case BIJI_ITALIC:
-        biji_toggle_format (sel, e_editor_selection_get_italic,
-                                 e_editor_selection_set_italic);
+        biji_toggle_format (priv->sel, e_editor_selection_get_italic,
+                                       e_editor_selection_set_italic);
         break;
 
       case BIJI_STRIKE:
-        biji_toggle_format (sel, e_editor_selection_get_strike_through,
-                                 e_editor_selection_set_strike_through);
+        biji_toggle_format (priv->sel, e_editor_selection_get_strike_through,
+                                       e_editor_selection_set_strike_through);
         break;
 
       case BIJI_BULLET_LIST:
-        e_editor_selection_set_block_format(
-                        sel,
+        e_editor_selection_set_block_format (priv->sel,
                         E_EDITOR_SELECTION_BLOCK_FORMAT_UNORDERED_LIST);
         break;
 
       case BIJI_ORDER_LIST:
-        e_editor_selection_set_block_format(
-                        sel,
-                        E_EDITOR_SELECTION_BLOCK_FORMAT_ORDERED_LIST);
+        e_editor_selection_set_block_format (priv->sel,
+                          E_EDITOR_SELECTION_BLOCK_FORMAT_ORDERED_LIST);
         break;
 
       default:
@@ -173,6 +164,8 @@ biji_webkit_editor_init (BijiWebkitEditor *self)
   priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BIJI_TYPE_WEBKIT_EDITOR, BijiWebkitEditorPrivate);
   self->priv = priv;
 
+  priv->sel = e_editor_selection_new (view);
+
   /* Settings */
   webkit_web_view_set_editable (view, TRUE);
   webkit_web_view_set_transparent (view, TRUE);
@@ -201,7 +194,7 @@ biji_webkit_editor_finalize (GObject *object)
   BijiWebkitEditorPrivate *priv = self->priv;
 
   /* priv->spell_check is ref by webkit. probably not to unref */
-
+  g_object_unref (priv->sel);
   g_signal_handler_disconnect (priv->note, priv->color_changed);
 
   G_OBJECT_CLASS (biji_webkit_editor_parent_class)->finalize (object);
@@ -284,7 +277,7 @@ on_content_changed (WebKitWebView *view)
   g_free (result);
 
   /* Then the raw text for icon tracker or whatever else */
-  body = (WebKitDOMNode *) webkit_dom_document_get_body (dom);
+  body = (WebKitDOMNode *) elem;
 
   plain_text = g_string_sized_new (1024);
   process_elements (body, plain_text);
