@@ -53,8 +53,6 @@ struct _Bijiben
 GType bijiben_get_type (void) G_GNUC_CONST;
 Bijiben *bijiben_new (void);
 
-#define BIJIBEN_MAIN_WIN_TITLE "Bijiben"
-
 // Accessors
 
 const gchar *bijiben_get_bijiben_dir (void);

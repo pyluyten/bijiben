@@ -367,8 +367,6 @@ bjb_main_view_constructed(GObject *o)
   clutter_actor_add_child (priv->bin, selection_bar);
 
   gtk_widget_show_all (priv->window);
-  gtk_window_set_title (GTK_WINDOW (priv->window),
-                        BIJIBEN_MAIN_WIN_TITLE);
 }
 
 static void
@@ -428,7 +426,6 @@ bjb_main_view_get_window(BjbMainView *view)
 void
 bjb_main_view_update_model (BjbMainView *self)
 {
-  g_warning ("bjb mainv iew update model");
   BjbMainViewPriv *priv = self->priv;
   
   bjb_controller_set_main_view (priv->controller,priv->view);

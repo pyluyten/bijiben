@@ -12,8 +12,9 @@
 
 #define BJB_WIDTH 880
 #define BJB_HEIGHT 600
-#define BJB_DEFAULT_FONT "Serif 10"
+#define BIJIBEN_MAIN_WIN_TITLE "Bijiben"
 
+#define BJB_DEFAULT_FONT "Serif 10"
 
 /* Window available views..
  * Not sure we'll use it... */
@@ -106,9 +107,9 @@ bjb_window_base_init (BjbWindowBase *self)
                                            BjbWindowBasePriv);
   priv = self->priv;
     
-  /* Title is set by frame. icon is app wide. */
-  gtk_window_set_default_size (GTK_WINDOW(self),  BJB_WIDTH, BJB_HEIGHT );
-  gtk_window_set_position(GTK_WINDOW(self),GTK_WIN_POS_CENTER);
+  gtk_window_set_default_size (GTK_WINDOW (self), BJB_WIDTH, BJB_HEIGHT);
+  gtk_window_set_position (GTK_WINDOW (self),GTK_WIN_POS_CENTER);
+  gtk_window_set_title (GTK_WINDOW (self), BIJIBEN_MAIN_WIN_TITLE);
 
   /* Icon for window. TODO - Should be BjbApp */
   icons_path = bijiben_get_bijiben_dir ();
