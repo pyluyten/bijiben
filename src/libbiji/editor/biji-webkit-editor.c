@@ -169,7 +169,7 @@ biji_webkit_editor_init (BijiWebkitEditor *self)
   /* Settings */
   webkit_web_view_set_editable (view, TRUE);
   webkit_web_view_set_transparent (view, TRUE);
-  priv->settings = webkit_web_settings_new();
+  priv->settings = webkit_web_view_get_settings (view);
 
   css_path = g_build_filename ("file://",
                                DATADIR, "bijiben",
@@ -183,7 +183,6 @@ biji_webkit_editor_init (BijiWebkitEditor *self)
 
   g_free (css_path);
 
-  webkit_web_view_set_settings (view, priv->settings);
   priv->spell_check = webkit_get_text_checker ();
 }
 
