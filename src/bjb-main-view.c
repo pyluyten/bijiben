@@ -324,7 +324,7 @@ bjb_main_view_constructed(GObject *o)
   clutter_actor_add_child(priv->embed,top);
 
   /* main Toolbar */
-  priv->main_toolbar = bjb_main_toolbar_new(priv->view,self);
+  priv->main_toolbar = bjb_main_toolbar_new(priv->view,self,priv->controller);
   priv->toolbar_actor = bjb_main_toolbar_get_actor(priv->main_toolbar);
 
   clutter_actor_add_child(top,priv->toolbar_actor);

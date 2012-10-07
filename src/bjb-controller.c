@@ -56,10 +56,18 @@ enum {
 
 static GParamSpec *properties[NUM_PROPERTIES] = { NULL, };
 
+/* The Controller wants to inform the toolbar when search starts.
+ * But other might be interested to know. */
+enum {
+  SEARCH_CHANGED,
+  BJB_CONTROLLER_SIGNALS
+};
+
+static guint bjb_controller_signals [BJB_CONTROLLER_SIGNALS] = { 0 };
+
 #define BJB_CONTROLLER_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), BJB_TYPE_CONTROLLER, BjbControllerPrivate))
 
 G_DEFINE_TYPE (BjbController, bjb_controller, G_TYPE_OBJECT);
-
 
 /* GObject */
 
@@ -74,6 +82,7 @@ bjb_controller_init (BjbController *self)
                                             BJB_TYPE_CONTROLLER, 
                                             BjbControllerPrivate);
   priv = self->priv ;
+  //priv->needle = "";
 
   /* Create the columns */
   store = gtk_list_store_new (NUMBER_COLUMNS,
@@ -304,6 +313,7 @@ static void
 on_needle_changed ( BjbController *self )
 {
   bjb_controller_apply_needle (self);
+  g_signal_emit (self, bjb_controller_signals[SEARCH_CHANGED], 0);
 }
 
 static void
@@ -347,6 +357,8 @@ bjb_controller_constructed (GObject *obj)
 
   G_OBJECT_CLASS(bjb_controller_parent_class)->constructed(obj);
 
+  /* Rather connect to notes individually
+   * and only book for new notes */
   g_signal_connect (self->priv->book, "changed",
                     G_CALLBACK(on_book_changed), self);
 }
@@ -363,6 +375,16 @@ bjb_controller_class_init (BjbControllerClass *klass)
   object_class->finalize = bjb_controller_finalize;
   object_class->constructed = bjb_controller_constructed;
 
+  bjb_controller_signals[SEARCH_CHANGED] = g_signal_new ( "search-changed" ,
+                                                  G_OBJECT_CLASS_TYPE (klass),
+                                                  G_SIGNAL_RUN_LAST,
+                                                  0, 
+                                                  NULL, 
+                                                  NULL,
+                                                  g_cclosure_marshal_VOID__VOID,
+                                                  G_TYPE_NONE,
+                                                  0);
+
   properties[PROP_BOOK] = g_param_spec_object ("book",
                                                "Book",
                                                "The BijiNoteBook",
@@ -370,11 +392,6 @@ bjb_controller_class_init (BjbControllerClass *klass)
                                                G_PARAM_READWRITE |
                                                G_PARAM_CONSTRUCT |
                                                G_PARAM_STATIC_STRINGS);
-
-  g_object_class_install_property (object_class, 
-                                   PROP_BOOK, 
-                                   properties[PROP_BOOK]); 
-
 
   properties[PROP_NEEDLE] = g_param_spec_string ("needle",
                                                  "Needle",
@@ -384,10 +401,6 @@ bjb_controller_class_init (BjbControllerClass *klass)
                                                  G_PARAM_CONSTRUCT |
                                                  G_PARAM_STATIC_STRINGS);
 
-  g_object_class_install_property (object_class, 
-                                   PROP_NEEDLE, 
-                                   properties[PROP_NEEDLE]);
-
 
   properties[PROP_MODEL] = g_param_spec_object ("model",
                                                 "Model",
@@ -396,9 +409,7 @@ bjb_controller_class_init (BjbControllerClass *klass)
                                                 G_PARAM_READABLE  |
                                                 G_PARAM_STATIC_STRINGS);
 
-  g_object_class_install_property (object_class,
-                                   PROP_MODEL, 
-                                   properties[PROP_MODEL]); 
+  g_object_class_install_properties (object_class, NUM_PROPERTIES, properties);
 
 }
 
@@ -432,7 +443,10 @@ bjb_controller_set_needle (BjbController *self, const gchar *needle )
 gchar *
 bjb_controller_get_needle (BjbController *self)
 {
-  return self->priv->needle ;
+  if (!self->priv->needle)
+    return NULL;
+
+  return self->priv->needle;
 }
 
 GtkTreeModel *

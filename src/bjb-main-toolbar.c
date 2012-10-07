@@ -39,18 +39,18 @@ struct _BjbMainToolbarPrivate
   GdMainView     *view;
   BjbToolbarType  type;
   BjbMainView    *parent;
+  BjbController  *controller;
 
-  /* Standard mode buttons */
+  /* Buttons */
   GtkWidget      *new;  
   GtkWidget      *list;
-  
   GtkWidget      *grid;
-  
   GtkWidget      *select;
 
-  /* Select mode buttons */
+  /* Signal Handlers */
   gulong         finish_sig;
   gulong         update_selection;
+  gulong         search_handler;
 };
 
 /* GObject properties */
@@ -59,6 +59,7 @@ enum {
   PROP_0,
   PROP_VIEW,
   PROP_PARENT,
+  PROP_CONTROLLER,
   NUM_PROPERTIES
 };
 
@@ -188,12 +189,31 @@ populate_bar_for_selection(BjbMainToolbar *self)
 }
 
 static void
+update_label_for_standard (BjbMainToolbar *self)
+{
+  BjbMainToolbarPrivate *priv = self->priv;
+  gchar *needle = bjb_controller_get_needle (priv->controller);
+  gchar *label ;
+  
+  if (needle && g_strcmp0 (needle, "") !=0)
+    label = g_strdup_printf ("Results for %s", needle);
+
+  else
+    label = g_strdup ("New and recent");
+
+  gd_main_toolbar_set_labels (priv->toolbar, label, NULL);
+  g_free (label);
+}
+
+static void
 populate_bar_for_standard(BjbMainToolbar *self)
 {
   BjbMainToolbarPrivate *priv = self->priv;
 
   /* Label */
-  gd_main_toolbar_set_labels(priv->toolbar,"New and recent",NULL);
+  update_label_for_standard (self);
+  priv->search_handler = g_signal_connect_swapped (priv->controller,
+         "search-changed", G_CALLBACK(update_label_for_standard), self);
 
   /* New Note */
   priv->new = gd_main_toolbar_add_button(priv->toolbar,
@@ -293,6 +313,13 @@ populate_main_toolbar(BjbMainToolbar *self)
   {
     priv->type = to_be;
     gd_main_toolbar_clear (priv->toolbar);
+
+    if (priv->search_handler != 0)
+    {
+      g_signal_handler_disconnect (priv->controller, priv->search_handler);
+      priv->search_handler = 0;
+    }
+
     populate_bar_switch (self);
   }
 }
@@ -322,8 +349,15 @@ static void
 bjb_main_toolbar_finalize (GObject *object)
 {
   BjbMainToolbar *self = BJB_MAIN_TOOLBAR(object);
+  BjbMainToolbarPrivate *priv = self->priv;
 
   gtk_widget_destroy (GTK_WIDGET (self->priv->toolbar));
+
+  if (priv->search_handler != 0)
+  {
+    g_signal_handler_disconnect (priv->controller, priv->search_handler);
+    priv->search_handler = 0;
+  }
 
   /* chain up */
   G_OBJECT_CLASS (bjb_main_toolbar_parent_class)->finalize (object);
@@ -366,6 +400,9 @@ bjb_main_toolbar_set_property (GObject      *object,
     case PROP_PARENT:
       self->priv->parent = g_value_get_object(value);
       break;
+    case PROP_CONTROLLER:
+      self->priv->controller = g_value_get_object (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
       break;
@@ -392,10 +429,6 @@ bjb_main_toolbar_class_init (BjbMainToolbarClass *klass)
                                                G_PARAM_CONSTRUCT |
                                                G_PARAM_STATIC_STRINGS);
 
-  g_object_class_install_property (object_class, 
-                                   PROP_VIEW, 
-                                   properties[PROP_VIEW]);
-
   properties[PROP_PARENT] = g_param_spec_object ("parent",
                                                  "Parent",
                                                  "Parent",
@@ -404,17 +437,27 @@ bjb_main_toolbar_class_init (BjbMainToolbarClass *klass)
                                                  G_PARAM_CONSTRUCT |
                                                  G_PARAM_STATIC_STRINGS);
 
-  g_object_class_install_property (object_class, 
-                                   PROP_PARENT, 
-                                   properties[PROP_PARENT]);
+  properties[PROP_CONTROLLER] = g_param_spec_object ("controller",
+                                "BjbController",
+                                "Controller for notes model and search",
+                                BJB_TYPE_CONTROLLER,
+                                G_PARAM_READWRITE |
+                                G_PARAM_CONSTRUCT |
+                                G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_properties (object_class, NUM_PROPERTIES, properties);
 }
 
 BjbMainToolbar *
-bjb_main_toolbar_new (GdMainView *view, BjbMainView *parent)
+bjb_main_toolbar_new (GdMainView *view,
+                      BjbMainView *parent,
+                      BjbController *controller)
 {
+  /* View is the last one since it triggers the switch to populate bar.*/
   return g_object_new (BJB_TYPE_MAIN_TOOLBAR,
-                       "parent",parent,
-                       "view",view,
+                       "controller", controller,
+                       "parent", parent,
+                       "view", view,
                        NULL);
 }
 

@@ -52,7 +52,9 @@ struct _BjbMainToolbar
 
 GType bjb_main_toolbar_get_type (void) G_GNUC_CONST;
 
-BjbMainToolbar * bjb_main_toolbar_new (GdMainView *view,BjbMainView *parent);
+BjbMainToolbar * bjb_main_toolbar_new (GdMainView    *view,
+                                       BjbMainView   *parent,
+                                       BjbController *controller);
 
 ClutterActor *bjb_main_toolbar_get_actor (BjbMainToolbar *self);
 
