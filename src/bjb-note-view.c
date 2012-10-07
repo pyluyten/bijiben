@@ -417,7 +417,6 @@ action_rename_note_callback (GtkWidget *item, gpointer user_data)
     return ;
 
   set_note_title (priv->note,title);
-  gtk_window_set_title (GTK_WINDOW(priv->window),title);
 }
 
 static void
@@ -535,6 +534,12 @@ bjb_note_menu_new (BjbNoteView *self)
 
 #define COLOR_SIZE 24
 
+static void
+on_note_renamed (BijiNoteObj *note, GdMainToolbar *bar)
+{
+  gd_main_toolbar_set_labels (bar, biji_note_get_title (note), NULL);
+}
+
 static ClutterActor *
 bjb_note_main_toolbar_new (BjbNoteView *self,
                            ClutterActor *parent,
@@ -577,6 +582,9 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
   /* Note title */
   gd_main_toolbar_set_labels (gd,biji_note_get_title(note),NULL);
 
+  self->priv->renamed = g_signal_connect(note,"renamed",
+                                        G_CALLBACK(on_note_renamed), w);
+
   /* Note Color */
   if (!biji_note_obj_get_rgba (note, &color))
     gdk_rgba_parse (&color, DEFAULT_NOTE_COLOR );
@@ -606,13 +614,6 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
                              bjb_note_menu_new (self));
 
   return result;
-}
-
-static gboolean
-on_note_renamed(BijiNoteObj *note, GtkWidget *win)
-{
-  gtk_window_set_title(GTK_WINDOW(win),biji_note_get_title(note));
-  return TRUE ;
 }
 
 static gboolean
@@ -671,10 +672,6 @@ bjb_note_view_constructed (GObject *obj)
 
   settings = bjb_app_get_settings(g_application_get_default());
   gtk_window_add_accel_group (GTK_WINDOW (priv->window), priv->accel);
-
-  priv->renamed = g_signal_connect(priv->note,"renamed",
-                                   G_CALLBACK(on_note_renamed),
-                                   priv->window);
     
   priv->deleted = g_signal_connect(priv->note,"deleted",
                                    G_CALLBACK(on_note_deleted),self);

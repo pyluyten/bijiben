@@ -82,7 +82,6 @@ bjb_controller_init (BjbController *self)
                                             BJB_TYPE_CONTROLLER, 
                                             BjbControllerPrivate);
   priv = self->priv ;
-  //priv->needle = "";
 
   /* Create the columns */
   store = gtk_list_store_new (NUMBER_COLUMNS,
