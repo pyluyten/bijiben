@@ -50,7 +50,6 @@ struct _BjbSearchToolbarPrivate
   GtkEntryBuffer    *entry_buf;
   GtkTreeModel      *completion_model;
   BjbController     *controller;
-  gboolean          *has_text;
 
   /* A pressed key shows search entry */
   gulong            key_pressed;
@@ -205,8 +204,7 @@ clear_search_entry_callback(GtkEntry *entry,GtkEntryIconPosition icon_pos,
 static void
 action_search_entry(GtkEntry *entry,BjbController *controller)
 {
-  gchar *search = g_strdup(gtk_entry_get_text(entry));
-  bjb_controller_set_needle (controller, search);
+  bjb_controller_set_needle (controller, gtk_entry_get_text(entry));
 }
 
 static void
@@ -287,16 +285,12 @@ bjb_search_toolbar_constructed (GObject *obj)
                                                         0.0); 
   clutter_actor_add_constraint (priv->actor, priv->width_constraint);
 
-/* to implement when switching view...
- * When coming back to search view *
-  if ( needle != NULL )
+  if (priv->needle && g_strcmp0 (priv->needle, "") !=0)
   { 
-    priv->has_text = TRUE ;
-    gtk_entry_set_text(priv->search_entry,needle);
-    bjb_search_toolbar_fade_in(self);
+    gtk_entry_set_text (GTK_ENTRY (priv->search_entry), priv->needle);
+    bjb_search_toolbar_fade_in (self);
     gtk_editable_set_position (GTK_EDITABLE(self->priv->search_entry),-1);
   }
-*/
 }
 
 static void
@@ -308,8 +302,6 @@ bjb_search_toolbar_init (BjbSearchToolbar *self)
 
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, BJB_TYPE_SEARCH_TOOLBAR, BjbSearchToolbarPrivate);
   priv = self->priv;
-
-  self->priv->has_text = FALSE ;
 
   priv->widget = gtk_toolbar_new ();
   gtk_toolbar_set_show_arrow (GTK_TOOLBAR (priv->widget), FALSE);
@@ -363,8 +355,6 @@ bjb_search_toolbar_class_init (BjbSearchToolbarClass *class)
                                                  G_PARAM_CONSTRUCT |
                                                  G_PARAM_STATIC_STRINGS);
 
-  g_object_class_install_property (object_class,PROP_WINDOW,properties[PROP_WINDOW]);
-
   properties[PROP_ACTOR] = g_param_spec_object ("actor",
                                                 "Actor",
                                                 "ParentActor",
@@ -372,8 +362,6 @@ bjb_search_toolbar_class_init (BjbSearchToolbarClass *class)
                                                 G_PARAM_READWRITE |
                                                 G_PARAM_CONSTRUCT |
                                                 G_PARAM_STATIC_STRINGS);
-
-  g_object_class_install_property (object_class,PROP_ACTOR,properties[PROP_ACTOR]);
 
   properties[PROP_CONTROLLER] = g_param_spec_object ("controller",
                                                      "Controller",
@@ -383,8 +371,7 @@ bjb_search_toolbar_class_init (BjbSearchToolbarClass *class)
                                                      G_PARAM_CONSTRUCT |
                                                      G_PARAM_STATIC_STRINGS);
 
-  g_object_class_install_property (object_class,PROP_CONTROLLER,properties[PROP_CONTROLLER]);
-
+  g_object_class_install_properties (object_class, NUM_PROPERTIES, properties);
   g_type_class_add_private (class, sizeof (BjbSearchToolbarPrivate));
 }
 
