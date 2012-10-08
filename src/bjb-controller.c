@@ -120,7 +120,6 @@ bjb_controller_finalize (GObject *object)
   free_notes_store (self);
 
   g_object_unref (priv->completion);
-  g_clear_object (&priv->cur);  
   g_free (priv->needle);
 
   G_OBJECT_CLASS (bjb_controller_parent_class)->finalize (object);
@@ -222,6 +221,10 @@ static void
 update_view (BjbController *self)
 {
   GList *notes ;
+
+  /* Do not update if nothing to show */
+  if (!self->priv->cur)
+    return;
 
   notes = self->priv->notes_to_show ;
 
@@ -463,9 +466,9 @@ bjb_controller_get_completion(BjbController *self)
 void
 bjb_controller_set_main_view (BjbController *self, GdMainView *current)
 {
-  self->priv->cur = current;
-  g_object_ref (current);
-
   /* Refresh the model */
+  self->priv->cur = current;
   update_view(self);
 }
+
+

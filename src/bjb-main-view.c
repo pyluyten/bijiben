@@ -91,6 +91,9 @@ bjb_main_view_finalize (GObject *object)
   g_clear_object (&priv->main_toolbar);
   g_clear_object (&priv->search_bar);
 
+  gtk_widget_destroy (GTK_WIDGET (priv->view));
+  bjb_controller_set_main_view (priv->controller, NULL);
+
   clutter_actor_destroy (priv->bin);
 
   G_OBJECT_CLASS (bjb_main_view_parent_class)->finalize (object);
@@ -296,7 +299,7 @@ bjb_main_view_constructed(GObject *o)
   filler = clutter_bin_layout_new (CLUTTER_BIN_ALIGNMENT_CENTER,
                                    CLUTTER_BIN_ALIGNMENT_CENTER);
   priv->bin = clutter_actor_new();
-  clutter_actor_set_name (priv->bin, "bin");
+  clutter_actor_set_name (priv->bin, "main_view:bin");
   clutter_actor_set_layout_manager(priv->bin,filler);
   clutter_actor_add_child(stage,priv->bin);
 

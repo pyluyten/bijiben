@@ -33,6 +33,10 @@ struct _BijibenPriv
 {
   BijiNoteBook *book;
   BjbSettings *settings ;
+
+  /* First run is not used yet,
+   * could ask tracker for notes / memo to import */
+  gboolean     first_run;
 };
 
 G_DEFINE_TYPE (Bijiben, bijiben, GTK_TYPE_APPLICATION);
@@ -89,7 +93,7 @@ bijiben_open (GApplication  *application,
 
 static void
 bijiben_init (Bijiben *object)
-{	
+{
   object->priv =
     G_TYPE_INSTANCE_GET_PRIVATE(object,BIJIBEN_TYPE_APPLICATION,BijibenPriv);
 
@@ -102,6 +106,7 @@ bijiben_startup (GApplication *application)
   Bijiben *self = BIJIBEN_APPLICATION (application);
   gchar *storage_path;
   GFile *storage;
+  GError *error = NULL;
 
   G_APPLICATION_CLASS (bijiben_parent_class)->startup (application);
 
@@ -116,13 +121,25 @@ bijiben_startup (GApplication *application)
   storage_path = g_build_filename (g_get_user_data_dir (), "bijiben", NULL);
   storage = g_file_new_for_path (storage_path);
 
+  // Create the dir to ensure. If fails it's not the first run
+  self->priv->first_run = TRUE;
+  g_file_make_directory (storage, NULL, &error);
+
+  if (error) { // to do check if error type IO::error::exist 
+    self->priv->first_run = FALSE;
+  }
+
+  else {
+    // create the demo note
+  }
+
   self->priv->book = biji_note_book_new (storage);
 
   g_free (storage_path);
   g_object_unref (storage);
 
   // create the first window
-  bijiben_new_window_internal (application, NULL, NULL);
+  bijiben_new_window_internal (application, NULL, NULL); 
 }
 
 static void
