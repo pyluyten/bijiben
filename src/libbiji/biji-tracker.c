@@ -216,7 +216,7 @@ void
 push_existing_tag_to_note(gchar *tag,BijiNoteObj *note)
 {
   gchar *query = g_strdup_printf( "INSERT { <%s> nao:hasTag ?id } \
-  WHERE {   ?id nao:prefLabel '%s' }", get_note_path(note),tag ) ;
+  WHERE {   ?id nao:prefLabel '%s' }", biji_note_obj_get_path(note),tag ) ;
     
   bjb_perform_update(query);
   g_free (query);
@@ -226,7 +226,7 @@ void
 remove_tag_from_note (gchar *tag, BijiNoteObj *note)
 {
   gchar *query = g_strdup_printf( "DELETE { <%s> nao:hasTag ?id } \
-  WHERE {   ?id nao:prefLabel '%s' }", get_note_path(note),tag ) ;
+  WHERE {   ?id nao:prefLabel '%s' }", biji_note_obj_get_path(note),tag ) ;
     
   bjb_perform_update(query); 
   g_free (query);
@@ -237,7 +237,7 @@ void
 biji_note_delete_from_tracker(BijiNoteObj *note)
 {
   gchar *query = g_strdup_printf ("DELETE { <%s> a rdfs:Resource }",
-                                  get_note_path(note) );
+                                  biji_note_obj_get_path(note));
 
   bjb_perform_update(query);
   g_free (query);
@@ -249,7 +249,7 @@ biji_note_create_into_tracker(BijiNoteObj *note)
   gchar *query,*title,*content,*file,*create_date,*last_change_date ;
     
   title = tracker_str (biji_note_get_title (note));
-  file = g_strdup_printf ("file://%s", get_note_path (note));
+  file = g_strdup_printf ("file://%s", biji_note_obj_get_path(note));
   create_date = to_8601_date (biji_note_obj_get_last_change_date (note));
   last_change_date = to_8601_date (biji_note_obj_get_last_change_date (note));
   content = tracker_str (biji_note_get_raw_text (note));
@@ -261,7 +261,7 @@ biji_note_create_into_tracker(BijiNoteObj *note)
                             nie:title '%s' ; \
                             nie:plainTextContent '%s' ; \
                             nie:generator 'Bijiben' . }",
-                           get_note_path(note),
+                           biji_note_obj_get_path(note),
                            file,
                            last_change_date,
                            create_date,
@@ -284,7 +284,7 @@ is_note_into_tracker ( BijiNoteObj *note )
 {
   gchar *query = g_strdup_printf ("SELECT ?modDate WHERE { <%s> a nfo:Note ; \
                                   nie:contentLastModified ?modDate.}",
-                                  get_note_path(note));
+                                  biji_note_obj_get_path(note));
 
   TrackerSparqlCursor *cursor = bjb_perform_query(query);
   g_free (query);

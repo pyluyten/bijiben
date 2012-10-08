@@ -82,7 +82,7 @@ gboolean note_obj_are_same(BijiNoteObj *a, BijiNoteObj* b);
 ///////////////////////////////////////////////////////////////////// Metadata 
 void _biji_note_obj_set_title(BijiNoteObj *obj,gchar *title);
 gchar * _biji_note_obj_get_title(BijiNoteObj *obj);
-gchar* get_note_path (BijiNoteObj *n);
+gchar* biji_note_obj_get_path (BijiNoteObj *n);
 BijiNoteID* note_get_id(BijiNoteObj *n);
 int set_note_last_change_date(BijiNoteObj* n,gchar* date) ;
 
@@ -122,8 +122,6 @@ void biji_note_obj_set_raw_text (BijiNoteObj *note, gchar *plain_text);
 int set_note_title(BijiNoteObj* note_obj_ptr,gchar* title) ;
 
 gboolean biji_note_obj_is_template(BijiNoteObj *note);
-
-gchar *note_obj_get_path(BijiNoteObj *note);
 
 gboolean biji_note_obj_has_tag(BijiNoteObj *note,gchar *tag);
 

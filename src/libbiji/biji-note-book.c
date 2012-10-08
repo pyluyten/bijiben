@@ -255,7 +255,7 @@ _biji_note_book_add_one_note(BijiNoteBook *book,BijiNoteObj *note)
 
   // Add it to the list and emit signal
   g_hash_table_insert (book->priv->notes,
-                       note_obj_get_path (note), note);
+                       biji_note_obj_get_path (note), note);
 
   book->priv->note_renamed = g_signal_connect(note,"renamed",
                                               G_CALLBACK(notify_changed),book);
@@ -441,13 +441,13 @@ _note_book_remove_one_note(BijiNoteBook *book,BijiNoteObj *note)
   BijiNoteObj *to_delete = NULL;
 
   to_delete = g_hash_table_lookup (book->priv->notes,
-                                  note_obj_get_path(note));
+                                  biji_note_obj_get_path(note));
 
   if (to_delete)
   {
     /* Ref note first, hash_table won't finalize it & we can delete it*/
     g_object_ref (to_delete);
-    g_hash_table_remove (book->priv->notes, note_obj_get_path (note));
+    g_hash_table_remove (book->priv->notes, biji_note_obj_get_path (note));
     biji_note_obj_delete (note);
     g_signal_emit ( G_OBJECT (book), biji_book_signals[BOOK_AMENDED],0);
     return TRUE;

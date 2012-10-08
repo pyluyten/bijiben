@@ -19,11 +19,11 @@
 #include "biji-note-id.h"
 #include "biji-note-book.h"
 #include "biji-note-obj.h"
-#include "biji-note-watcher.h"
 #include "biji-timeout.h"
+#include "biji-tracker.h"
+#include "biji-zeitgeist.h"
 #include "editor/biji-webkit-editor.h"
 #include "serializer/biji-lazy-serializer.h"
-#include "libbiji.h"
 
 #ifndef NO_NOTE_TITLE
 #define NO_NOTE_TITLE
@@ -39,32 +39,30 @@
 
 struct _BijiNoteObjPrivate
 {
-  /* Notebook might be null. Shared GtkTextTagTable */
+  /* Notebook might be null. */
   BijiNoteBook          *book;
 
   /* Metadata */
   BijiNoteID            *id;
+  GdkRGBA               *color;
+
+  /* Data */
   gchar                 *html;
   gchar                 *raw_text;
-
   BijiWebkitEditor      *editor;
 
+  /* Save */
   BijiTimeout           *timeout;
   gboolean              needs_save;
 
-  /* TAGS may be notebooks. */
-  GList                 *tags ;
-
-  /* Templates are just "system:notebook:" tags. */
-  gboolean              is_template ;
-  gint                  is_opened;
-
-  gint                  left_margin;
-  GdkRGBA               *color;
-
-  /* Might be null. triggered by get_icon */
+  /* Icon might be null untill usefull */
   GdkPixbuf             *icon;
   gboolean              icon_needs_update;
+
+  /* TAGS may be notebooks.
+   * Templates are just "system:notebook:" tags.*/
+  GList                 *tags ;
+  gboolean              is_template ;
 
   /* Signals */
   gulong note_renamed;
@@ -108,8 +106,6 @@ biji_note_obj_init (BijiNoteObj *self)
 
   priv->book = NULL ;
   priv->is_template = FALSE ;
-  priv->is_opened = 0;
-  priv->left_margin = 6 ; // defautl left margin.
 
   /* The editor is NULL so we know it's not opened
    * neither fully deserialized */
@@ -271,7 +267,7 @@ biji_note_obj_delete(BijiNoteObj *dead)
   biji_note_obj_finalize(G_OBJECT(dead));
 }
 
-gchar* get_note_path (BijiNoteObj* n)
+gchar* biji_note_obj_get_path (BijiNoteObj* n)
 {
   return biji_note_id_get_path(n->priv->id) ;
 }
@@ -413,12 +409,6 @@ void biji_note_obj_set_raw_text (BijiNoteObj *note, gchar *plain_text)
   biji_note_obj_clear_icon (note);
 }
 
-gint
-_biji_note_obj_get_left_margin(BijiNoteObj *obj)
-{
-  return obj->priv->left_margin ; 
-}
-
 GList *
 _biji_note_obj_get_tags(BijiNoteObj *n)
 {
@@ -521,18 +511,6 @@ _biji_note_template_get_tag(BijiNoteObj *template)
   }
     
   return g_list_nth_data (template->priv->tags,0);
-}
-
-void 
-_biji_note_obj_increment_opened(BijiNoteObj *note)
-{
-  note->priv->is_opened ++ ;
-}
-
-gboolean 
-_biji_note_obj_is_opened(BijiNoteObj *note)
-{
-  return note->priv->is_opened ;
 }
 
 /* TODO : see if note beeing deleted. set metadata date
@@ -763,11 +741,6 @@ gboolean
 biji_note_obj_is_template(BijiNoteObj *note)
 {
   return note_obj_is_template(note);
-}
-
-gchar *note_obj_get_path(BijiNoteObj *note)
-{
-  return get_note_path(note);
 }
 
 gboolean

@@ -38,7 +38,7 @@ insert_zeitgeist(BijiNoteObj *note, const char *action)
   ZeitgeistSubject   *subject ;
   ZeitgeistLog       *log = get_log() ;
 
-  uri = g_strdup_printf ("file://%s", note_obj_get_path (note));
+  uri = g_strdup_printf ("file://%s", biji_note_obj_get_path (note));
 
   subject = zeitgeist_subject_new_full (uri,                            //URI
                                         ZEITGEIST_NFO_DOCUMENT,         //inter

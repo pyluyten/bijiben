@@ -207,8 +207,8 @@ bjb_controller_add_note ( BijiNoteObj *note, BjbController *self )
     gtk_list_store_append (store,&iter);
     gtk_list_store_set (store, 
                         &iter,
-                        COL_URN,    note_obj_get_path(note),
-                        COL_URI,    note_obj_get_path(note),
+                        COL_URN,    biji_note_obj_get_path(note),
+                        COL_URI,    biji_note_obj_get_path(note),
                         COL_NAME,   biji_note_get_title(note),
                         COL_AUTHOR,   NULL,
                         COL_IMAGE,  pix,
