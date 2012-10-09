@@ -25,6 +25,8 @@
 #include "editor/biji-webkit-editor.h"
 #include "serializer/biji-lazy-serializer.h"
 
+#include <libgd/gd.h>
+
 /* Default color (X11 rgb.txt)  */ 
 #define DEFAULT_NOTE_COLOR "rgb(229,230,180)"
 
@@ -598,127 +600,6 @@ biji_note_obj_save_note (BijiNoteObj *self)
   biji_timeout_reset (self->priv->timeout, 3000);
 }
 
-/* Borders are just temp before libiji includes
- * some hardcoded frame svg */
-static GdkPixbuf *
-biji_note_icon_add_frame (GdkPixbuf *pixbuf)
-{
-  gint                   height, width;
-  gint                   border = 10;
-  cairo_pattern_t       *pattern;
-  cairo_t               *cr;
-  cairo_surface_t       *surface = NULL;
-  GdkPixbuf *framed;
-
-  width = gdk_pixbuf_get_width (pixbuf) + 2*border;
-  height = gdk_pixbuf_get_height (pixbuf) + 2*border;
-
-  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width, height);
-  cr = cairo_create (surface);
-
-  /* Draw the left-shadow. */
-  cairo_save(cr);
-  pattern = cairo_pattern_create_linear (border, border, 0, border);
-  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0, 0.5);
-  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
-  cairo_rectangle (cr, 0, border, border, height - 2*border);
-  cairo_clip (cr);
-  cairo_set_source (cr, pattern);
-  cairo_mask (cr, pattern);
-  cairo_pattern_destroy (pattern);
-  cairo_restore (cr);
-
-  /* Draw the up-left quarter-circle. */
-  cairo_save(cr);
-  pattern = cairo_pattern_create_radial (border, border, 0, border, border, border);
-  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0,  0.5);
-  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
-  cairo_rectangle (cr, 0, 0, border, border);
-  cairo_clip (cr);
-  cairo_set_source (cr, pattern);
-  cairo_mask (cr, pattern);
-  cairo_pattern_destroy (pattern);
-  cairo_restore(cr);
-
-  cairo_save(cr);
-  pattern = cairo_pattern_create_linear (border, border, border, 0);
-  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0, 0.5);
-  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
-  cairo_rectangle (cr, border, 0, width - 2*border, border);
-  cairo_clip (cr);
-  cairo_set_source (cr, pattern);
-  cairo_mask (cr, pattern);
-  cairo_pattern_destroy (pattern);
-  cairo_restore (cr);
-
-  cairo_save(cr);
-  pattern = cairo_pattern_create_radial (width - border, border, 0, width - border, border, border);
-  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0,  0.5);
-  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
-  cairo_rectangle (cr, width - border, 0, border, border);
-  cairo_clip (cr);
-  cairo_set_source (cr, pattern);
-  cairo_mask (cr, pattern);
-  cairo_pattern_destroy (pattern);
-  cairo_restore(cr);
-
-  cairo_save(cr);
-  pattern = cairo_pattern_create_linear (width - border, border, width, border);
-  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0, 0.5);
-  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
-  cairo_rectangle (cr, width - border, border, width, height - 2*border);
-  cairo_clip (cr);
-  cairo_set_source (cr, pattern);
-  cairo_mask (cr, pattern);
-  cairo_pattern_destroy (pattern);
-  cairo_restore (cr);
-
-  cairo_save(cr);
-  pattern = cairo_pattern_create_radial (border, height - border, 0, border, height - border, border);
-  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0,  0.5);
-  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
-  cairo_rectangle (cr, 0, height - border, border, border);
-  cairo_clip (cr);
-  cairo_set_source (cr, pattern);
-  cairo_mask (cr, pattern);
-  cairo_pattern_destroy (pattern);
-  cairo_restore(cr);
-
-  cairo_save(cr);
-  pattern = cairo_pattern_create_linear (border, height - border, border, height);
-  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0, 0.5);
-  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
-  cairo_rectangle (cr, border, height - border, width - 2*border, border);
-  cairo_clip (cr);
-  cairo_set_source (cr, pattern);
-  cairo_mask (cr, pattern);
-  cairo_pattern_destroy (pattern);
-  cairo_restore (cr);
-
-  cairo_save(cr);
-  pattern = cairo_pattern_create_radial (width - border, height - border, 0, width - border, height - border, border);
-  cairo_pattern_add_color_stop_rgba (pattern, 0, 0, 0, 0,  0.5);
-  cairo_pattern_add_color_stop_rgba (pattern, 1, 0, 0, 0, 0.0);
-  cairo_rectangle (cr, width - border, height - border, border, border);
-  cairo_clip (cr);
-  cairo_set_source (cr, pattern);
-  cairo_mask (cr, pattern);
-  cairo_pattern_destroy (pattern);
-  cairo_restore(cr);
-
-  gdk_cairo_set_source_pixbuf (cr, pixbuf, border, border);
-  cairo_rectangle (cr, border, border, width - 2*border, height - 2*border);
-  cairo_clip(cr);
-  cairo_paint (cr);
-
-  framed = gdk_pixbuf_get_from_surface (surface, 0, 0, width, height);
-
-  cairo_destroy (cr);
-  cairo_surface_destroy (surface);
-
-  return framed;
-}
-
 GdkPixbuf *
 biji_note_obj_get_icon (BijiNoteObj *note)
 {
@@ -729,6 +610,7 @@ biji_note_obj_get_icon (BijiNoteObj *note)
   PangoFontDescription  *desc;
   GdkPixbuf             *ret = NULL;
   cairo_surface_t       *surface = NULL;
+  GtkBorder              frame_slice = { 4, 3, 3, 6 };
 
   if (note->priv->icon && !note->priv->icon_needs_update)
     return note->priv->icon;
@@ -777,7 +659,8 @@ biji_note_obj_get_icon (BijiNoteObj *note)
                                      ICON_HEIGHT);
   cairo_surface_destroy (surface);
 
-  note->priv->icon = biji_note_icon_add_frame(ret);
+  note->priv->icon = gd_embed_image_in_frame (ret, "resource:///org/gnome/bijiben/thumbnail-frame.png",
+                                              &frame_slice, &frame_slice);
   g_clear_object (&ret);
   note->priv->icon_needs_update = FALSE;
 

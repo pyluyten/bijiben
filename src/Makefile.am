@@ -29,7 +29,8 @@ bijiben_LDFLAGS = \
 	-Wl,--export-dynamic
 
 resource_files = \
-	app-menu.ui
+	resources/app-menu.ui \
+	resources/thumbnail-frame.png
 
 bjb-resources.c: bjb.gresource.xml $(resource_files)
 	glib-compile-resources --target=$@ --sourcedir=$(srcdir) --generate-source --c-name bjb $(srcdir)/bjb.gresource.xml
