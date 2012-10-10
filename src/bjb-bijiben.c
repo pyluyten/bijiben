@@ -37,6 +37,7 @@ struct _BijibenPriv
   /* First run is not used yet,
    * could ask tracker for notes / memo to import */
   gboolean     first_run;
+  gchar        dest;
 };
 
 G_DEFINE_TYPE (Bijiben, bijiben, GTK_TYPE_APPLICATION);
@@ -100,6 +101,82 @@ bijiben_init (Bijiben *object)
   object->priv->settings = initialize_settings();
 }
 
+/* Currently the only purpose for this is to offer testing
+ * but these func might still be improved and integrated later on
+ * Not async to ensure files copied before book loads */
+
+#define ATTRIBUTES_FOR_NOTEBOOK "standard::content-type,standard::name"
+
+static void
+copy_note_file (GFileInfo *info,
+                GFile *dir,
+                GFile *dest)
+{
+  GFile *note, *result;
+  const gchar *name;
+  gchar *path;
+  GError *error = NULL;
+
+  name = g_file_info_get_name (info);
+  if (!g_str_has_suffix (name, ".note"))
+    return;
+
+  path = g_build_filename (g_file_get_path(dir), name, NULL);
+  note = g_file_new_for_path (path);
+  g_free (path);
+
+  path = g_build_filename (g_file_get_path(dest), name, NULL);
+  result = g_file_new_for_path (path);
+  g_free (path);
+
+  g_file_copy (note, result, G_FILE_COPY_NOFOLLOW_SYMLINKS,
+               NULL,NULL, NULL, &error);
+
+  if (error)
+  {
+     g_warning ("error:%s", error->message);
+     g_error_free (error);
+  }
+
+  g_object_unref (note);
+  g_object_unref (result);
+}
+
+static void
+list_notes_to_copy (GFileEnumerator *enumerator,
+                    GFile *dest)
+{
+  GFile *dir = g_file_enumerator_get_container (enumerator);
+  GFileInfo *info = g_file_enumerator_next_file (enumerator, NULL,NULL);
+
+  while (info)
+  {
+    copy_note_file (info, dir, dest);
+    g_object_unref (info);
+    info = g_file_enumerator_next_file (enumerator, NULL,NULL);
+  }
+
+  g_object_unref (dir);
+}
+
+static void
+import_notes_from_x (GFile *bijiben_dir, gchar *app)
+{
+  gchar *from;
+  GFile *to_import;
+  GFileEnumerator *enumerator;
+
+  from = g_build_filename (g_get_user_data_dir (), app, NULL);
+  to_import = g_file_new_for_path (from);
+  g_free (from);
+
+  enumerator = g_file_enumerate_children (to_import,ATTRIBUTES_FOR_NOTEBOOK,
+                                                G_PRIORITY_DEFAULT, NULL,NULL);
+
+  list_notes_to_copy (enumerator, bijiben_dir);
+  g_object_unref (enumerator);
+}
+
 static void
 bijiben_startup (GApplication *application)
 {
@@ -121,16 +198,29 @@ bijiben_startup (GApplication *application)
   storage_path = g_build_filename (g_get_user_data_dir (), "bijiben", NULL);
   storage = g_file_new_for_path (storage_path);
 
-  // Create the dir to ensure. If fails it's not the first run
+  // Create the bijiben dir to ensure. 
   self->priv->first_run = TRUE;
   g_file_make_directory (storage, NULL, &error);
 
-  if (error) { // to do check if error type IO::error::exist 
+  // If fails it's not the first run
+  if (error && error->code == G_IO_ERROR_EXISTS)
+  {
     self->priv->first_run = FALSE;
+    g_error_free (error);
   }
 
-  else {
-    // create the demo note
+  else if (error)
+  {
+    g_warning (error->message);
+    g_error_free (error);
+  }
+
+  /* First run, import tomboy gnote for testing */
+  else
+  {
+    self->priv->first_run = TRUE;
+    import_notes_from_x (storage, "tomboy");
+    import_notes_from_x (storage, "gnote");
   }
 
   self->priv->book = biji_note_book_new (storage);
