@@ -411,6 +411,7 @@ link_callback (GtkWidget *button, BjbEditorToolbar *self)
   gchar                   *link;
   GtkWidget               *window;
   BijiNoteObj             *result;
+  GdkRGBA                 color;
   BijiNoteBook            *book;
   BjbEditorToolbarPrivate *priv = self->priv;
 
@@ -423,6 +424,11 @@ link_callback (GtkWidget *button, BjbEditorToolbar *self)
   book = bjb_window_base_get_book(window);
 
   result = biji_note_book_get_new_note_from_string (book, link);
+
+  /* Change result color. */
+  if (biji_note_obj_get_rgba (priv->note, &color))
+    biji_note_obj_set_rgba (result, &color);
+
   bijiben_new_window_for_note(g_application_get_default(), result);
 }
 
