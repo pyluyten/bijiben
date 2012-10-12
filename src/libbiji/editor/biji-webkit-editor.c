@@ -1,4 +1,4 @@
-/* biji-webkit-editor.h
+/* biji-webkit-editor.c
  * Copyright (C) Pierre-Yves LUYTEN 2012 <py@luyten.fr>
  * 
  * bijiben is free software: you can redistribute it and/or modify it
@@ -90,6 +90,18 @@ biji_toggle_format (EEditorSelection *sel,
   set_format (sel, !get_format (sel));
 }
 
+static void
+biji_toggle_block_format (EEditorSelection *sel,
+                          EEditorSelectionBlockFormat format)
+{
+  if (e_editor_selection_get_block_format(sel) == format)
+    e_editor_selection_set_block_format (sel,
+                                  E_EDITOR_SELECTION_BLOCK_FORMAT_NONE);
+
+  else
+    e_editor_selection_set_block_format (sel, format);
+}
+
 void
 biji_webkit_editor_apply_format (BijiWebkitEditor *self, gint format)
 {
@@ -115,13 +127,13 @@ biji_webkit_editor_apply_format (BijiWebkitEditor *self, gint format)
         break;
 
       case BIJI_BULLET_LIST:
-        e_editor_selection_set_block_format (priv->sel,
+        biji_toggle_block_format (priv->sel,
                         E_EDITOR_SELECTION_BLOCK_FORMAT_UNORDERED_LIST);
         break;
 
       case BIJI_ORDER_LIST:
-        e_editor_selection_set_block_format (priv->sel,
-                          E_EDITOR_SELECTION_BLOCK_FORMAT_ORDERED_LIST);
+        biji_toggle_block_format (priv->sel,
+                        E_EDITOR_SELECTION_BLOCK_FORMAT_ORDERED_LIST);
         break;
 
       default:
