@@ -121,7 +121,9 @@ biji_note_obj_init (BijiNoteObj *self)
   priv->icon = NULL;
 
   priv->color = g_new(GdkRGBA,1) ;
-  gdk_rgba_parse ( priv->color , DEFAULT_NOTE_COLOR ) ; 
+  gdk_rgba_parse ( priv->color , DEFAULT_NOTE_COLOR ) ;
+
+  priv->tags = NULL;
 }
 
 static void
@@ -516,8 +518,7 @@ void
 _biji_note_obj_add_tag(BijiNoteObj *note, gchar *tag)
 {    
   // Add the tag
-  GList * current = _biji_note_obj_get_tags(note);
-  _biji_note_obj_set_tags(note,g_list_append(current,tag));
+  _biji_note_obj_set_tags (note,g_list_prepend (note->priv->tags, g_strdup(tag)));
 
   // Update the TagBook
   if ( BIJI_IS_NOTE_BOOK(note->priv->book) )
@@ -558,7 +559,7 @@ _biji_note_obj_set_tags(BijiNoteObj *n, GList *tags)
     g_list_free(n->priv->tags);
   }
     
-  n->priv->tags = tags ;
+  n->priv->tags = g_list_copy (tags);
   _biji_note_id_set_metadata_change_now(n->priv->id);
 }
 

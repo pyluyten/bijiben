@@ -155,6 +155,20 @@ biji_lazy_deserializer_class_init (BijiLazyDeserializerClass *klass)
   g_type_class_add_private (klass, sizeof (BijiLazyDeserializerPrivate));
 }
 
+/* Utils */
+
+typedef void BijiReaderFunc (BijiNoteObj *note, gchar *string);
+
+static void
+biji_process_string (xmlTextReaderPtr reader,
+                     BijiReaderFunc process_xml,
+                     gpointer user_data)
+{
+  xmlChar *result = xmlTextReaderReadString (reader);
+  process_xml (BIJI_NOTE_OBJ (user_data), (gchar*) result);
+  free (result);
+}
+
 /* Tomboy Inner XML */
 
 static void
@@ -436,7 +450,6 @@ process_bijiben_html_content (BijiLazyDeserializer *self)
 }
 
 /* Common XML format for both Bijiben / Tomboy */
-
 static void
 processNode (BijiLazyDeserializer *self) 
 {
@@ -446,12 +459,12 @@ processNode (BijiLazyDeserializer *self)
   GdkRGBA   *color;
   gchar     *tag;
   GString   *norm;
-  gchar *debug;
+  gchar     *debug;
 
   name = xmlTextReaderName (r);
 
   if ( g_strcmp0((gchar*)name,"title") == 0 )
-    set_note_title(n, (gchar*) xmlTextReaderReadString(r));
+    biji_process_string (r, (BijiReaderFunc*) set_note_title, n);
 
   if ( g_strcmp0((gchar*)name,"text") == 0 )
   {
@@ -471,13 +484,13 @@ processNode (BijiLazyDeserializer *self)
   }
 
   if (g_strcmp0 ((gchar*) name, "last-change-date") == 0)
-    set_note_last_change_date (n,(gchar*) xmlTextReaderReadString (r));  
+    biji_process_string (r, (BijiReaderFunc*) set_note_last_change_date, n); 
 
   if (g_strcmp0 ((gchar*) name, "last-metadata-change-date") == 0)
-    set_note_last_metadata_change_date(n,(gchar*) xmlTextReaderReadString (r));
+    biji_process_string (r, (BijiReaderFunc*) set_note_last_metadata_change_date, n); 
 
   if (g_strcmp0 ((gchar*) name, "create-date") == 0)
-    set_note_create_date (n, (gchar*) xmlTextReaderReadString (r));
+    biji_process_string (r, (BijiReaderFunc*) set_note_create_date, n); 
 
   if (g_strcmp0 ((gchar*) name, "color") == 0 )  
   {
@@ -492,6 +505,8 @@ processNode (BijiLazyDeserializer *self)
     {
       g_warning ("color invalid:%s",debug);
     }
+
+    free (debug);
 
   }
 
@@ -509,7 +524,7 @@ processNode (BijiLazyDeserializer *self)
       norm = g_string_new (tag);
       g_string_erase (norm,0,16);
       tag = g_string_free (norm,FALSE);
-      _biji_note_obj_set_tags (n,g_list_append((GList*)_biji_note_obj_get_tags(n),
+      _biji_note_obj_set_tags (n,g_list_prepend((GList*)_biji_note_obj_get_tags(n),
                                             (gpointer)tag));
     }
   }

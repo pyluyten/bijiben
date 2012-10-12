@@ -36,6 +36,7 @@ biji_note_id_init (BijiNoteID *self)
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, biji_note_id_get_type(),
                                             BijiNoteIDPrivate);
   self->priv->path = NULL;
+  self->priv->title = NULL;
   self->priv->create_date = NULL;
 }
 
@@ -43,8 +44,11 @@ static void
 biji_note_id_finalize (GObject *object)
 {
   BijiNoteID *id = BIJI_NOTE_ID (object);
+  BijiNoteIDPrivate *priv = id->priv;
 
-  g_free (id->priv->path);
+  g_free (priv->path);
+  g_free (priv->create_date);
+  g_free (priv->title);
 
   G_OBJECT_CLASS (biji_note_id_parent_class)->finalize (object);
 }
@@ -88,13 +92,15 @@ set_note_id_path(BijiNoteID* n,
 {
   g_return_if_fail (BIJI_IS_NOTE_ID (n));
 
-  g_free (n->priv->path);
+  if (n->priv->path)
+    g_free (n->priv->path);
+
   n->priv->path = g_strdup (path);
 }
 
-void _biji_note_id_set_title(BijiNoteID *n,gchar* title)
+void _biji_note_id_set_title (BijiNoteID *n,gchar* title)
 {
-  n->priv->title = title ;
+  n->priv->title = g_strdup (title);
 }
 
 gchar* _biji_note_id_get_title(BijiNoteID* n)
@@ -165,6 +171,6 @@ gchar * biji_note_id_get_create_date(BijiNoteID* n)
 int
 set_note_id_create_date(BijiNoteID* n,gchar* date)
 {
-	n->priv->create_date = date ;
-	return 0 ;
+  n->priv->create_date = g_strdup (date) ;
+  return 0 ;
 }
