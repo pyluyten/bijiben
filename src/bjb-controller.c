@@ -338,11 +338,14 @@ add_note_to_completion(BijiNoteObj *note , BjbController *self)
 static void
 refresh_completion(BjbController *self)
 {
+  GList *notes = biji_note_book_get_notes (self->priv->book);
   gtk_list_store_clear(GTK_LIST_STORE(self->priv->completion));
-  
-  g_list_foreach(biji_note_book_get_notes(self->priv->book),
-                 (GFunc)add_note_to_completion,
-                 self);
+
+  if (notes)
+  {
+    g_list_foreach (notes, (GFunc)add_note_to_completion, self);
+    g_list_free (notes);
+  }
 }
 
 static void
