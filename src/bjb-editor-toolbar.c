@@ -502,6 +502,8 @@ bjb_editor_toolbar_finalize (GObject *obj)
   g_object_unref (priv->accel);
 
   clutter_actor_destroy (priv->actor);
+
+  G_OBJECT_CLASS (bjb_editor_toolbar_parent_class)->finalize (obj);
 }
 
 static void
