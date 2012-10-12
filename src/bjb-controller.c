@@ -235,8 +235,8 @@ update_view (BjbController *self)
 static glong
 most_recent_note_first ( BijiNoteObj *a, BijiNoteObj *b)
 {
-  glong result = biji_note_id_get_last_change_date_sec(note_get_id(b));
-  return result - biji_note_id_get_last_change_date_sec(note_get_id(a));
+  glong result = biji_note_obj_get_last_change_date_sec (b);
+  return result - biji_note_obj_get_last_change_date_sec (a);
 }
 
 static void

@@ -21,8 +21,6 @@
 #include <glib-object.h>
 #include <gtk/gtk.h>
 
-#include "biji-note-id.h"
-
 G_BEGIN_DECLS
 
 /* Available formating for biji_note_obj_editor_apply_format
@@ -73,6 +71,8 @@ typedef struct
   gint length ;
 } TagBook ;
 
+BijiNoteObj * biji_note_obj_new_from_path (const gchar *path);
+
 /////////////////////////////////////////////////// Relationships other notes
 gpointer biji_note_obj_get_note_book(BijiNoteObj *note);
 void _biji_note_obj_set_book(BijiNoteObj *note, gpointer biji_note_book);
@@ -83,11 +83,13 @@ gboolean note_obj_are_same(BijiNoteObj *a, BijiNoteObj* b);
 void _biji_note_obj_set_title(BijiNoteObj *obj,gchar *title);
 gchar * _biji_note_obj_get_title(BijiNoteObj *obj);
 gchar* biji_note_obj_get_path (BijiNoteObj *n);
-BijiNoteID* note_get_id(BijiNoteObj *n);
+
 int set_note_last_change_date(BijiNoteObj* n,gchar* date) ;
 
 glong biji_note_obj_get_last_change_date_sec ( BijiNoteObj *n );
 gchar * biji_note_obj_get_last_change_date_string (BijiNoteObj *self);
+
+gchar * biji_note_obj_get_last_metadata_change_date (BijiNoteObj *note);
 
 int set_note_last_metadata_change_date(BijiNoteObj* n,gchar* date) ;
 int set_note_create_date(BijiNoteObj* n,gchar* date);

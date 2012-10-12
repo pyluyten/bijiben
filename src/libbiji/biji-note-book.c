@@ -636,15 +636,10 @@ biji_note_book_new (GFile *location)
                       NULL);
 }
 
-/* Todo : check file type */
-BijiNoteObj*
+BijiNoteObj *
 biji_note_get_new_from_file (const gchar* path)
 {
-  BijiNoteObj* ret ;
-
-  /* TODO biji_note_obj_new (path) should handle this */
-  ret = g_object_new(BIJI_TYPE_NOTE_OBJ,NULL);
-  set_note_id_path(note_get_id(ret),path);
+  BijiNoteObj* ret = biji_note_obj_new_from_path (path);
 
   /* The deserializer will handle note type */
   biji_lazy_deserialize (ret);
@@ -667,31 +662,24 @@ BijiNoteObj*
 biji_note_book_get_new_note_from_string (BijiNoteBook *book,
                                          gchar *title)
 {
-  BijiNoteObj *ret;
-  BijiNoteID *id;
+  BijiNoteObj *ret = NULL;
   gchar *folder, *name, *path;
-  gboolean unique = FALSE;
-
-  ret = g_object_new(BIJI_TYPE_NOTE_OBJ,NULL);
-  id = note_get_id(ret);
-  _biji_note_obj_set_title(ret,title);
 
   folder = g_file_get_path (book->priv->location);
 
-  /* Untested */
-  while (!unique)
+  while (!ret)
   {
     name = biji_note_book_get_uuid ();
     path = g_build_filename (folder, name, NULL);
     g_free (name);
-    set_note_id_path (id, path);
 
     if (!g_hash_table_lookup (book->priv->notes, path))
-      unique = TRUE;
+      ret = biji_note_obj_new_from_path (path);
 
     g_free (path);
   }
 
+  _biji_note_obj_set_title (ret, title);
   biji_note_obj_save_note (ret);
   note_book_append_new_note (book,ret);
 

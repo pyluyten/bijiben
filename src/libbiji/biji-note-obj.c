@@ -25,10 +25,6 @@
 #include "editor/biji-webkit-editor.h"
 #include "serializer/biji-lazy-serializer.h"
 
-#ifndef NO_NOTE_TITLE
-#define NO_NOTE_TITLE
-#endif
-
 /* Default color (X11 rgb.txt)  */ 
 #define DEFAULT_NOTE_COLOR "rgb(229,230,180)"
 
@@ -68,6 +64,15 @@ struct _BijiNoteObjPrivate
   gulong note_renamed;
 };
 
+/* Properties */
+enum {
+  PROP_0,
+  PROP_PATH,
+  BIJI_OBJ_PROPERTIES
+};
+
+static GParamSpec *properties[BIJI_OBJ_PROPERTIES] = { NULL, };
+
 #define BIJI_NOTE_OBJ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), BIJI_TYPE_NOTE_OBJ, BijiNoteObjPrivate))
 
 G_DEFINE_TYPE (BijiNoteObj, biji_note_obj, G_TYPE_OBJECT);
@@ -97,7 +102,7 @@ biji_note_obj_init (BijiNoteObj *self)
 
   self->priv = priv ;
 
-  priv->id = g_object_new(biji_note_id_get_type(),NULL);
+  priv->id = g_object_new (BIJI_TYPE_NOTE_ID, NULL);
 
   priv->needs_save = FALSE;
   priv->timeout = biji_timeout_new ();
@@ -156,12 +161,70 @@ enum {
 
 static guint biji_obj_signals [BIJI_OBJ_SIGNALS] = { 0 };
 
+/* we do NOT deserialize here. it might be a brand new note
+ * it's up the book to ask .note to be read*/
+static void
+biji_note_obj_constructed (GObject *obj)
+{
+}
+
+static void
+biji_note_obj_set_property (GObject      *object,
+                            guint         property_id,
+                            const GValue *value,
+                            GParamSpec   *pspec)
+{
+  BijiNoteObj *self = BIJI_NOTE_OBJ (object);
+
+
+  switch (property_id)
+    {
+    case PROP_PATH:
+      set_note_id_path (self->priv->id, g_value_get_string (value));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
+static void
+biji_note_obj_get_property (GObject    *object,
+                            guint       property_id,
+                            GValue     *value,
+                            GParamSpec *pspec)
+{
+  BijiNoteObj *self = BIJI_NOTE_OBJ (object);
+
+  switch (property_id)
+    {
+    case PROP_PATH:
+      g_value_set_object (value, biji_note_id_get_path (self->priv->id));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
 static void
 biji_note_obj_class_init (BijiNoteObjClass *klass)
 {
   GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
+  object_class->constructed = biji_note_obj_constructed;
   object_class->finalize = biji_note_obj_finalize;
+  object_class->get_property = biji_note_obj_get_property;
+  object_class->set_property = biji_note_obj_set_property;
+
+  properties[PROP_PATH] =
+    g_param_spec_string("path",
+                        "The note file",
+                        "The location where the note is stored and saved",
+                        NULL,
+                        G_PARAM_READWRITE);
+
+  g_object_class_install_properties (object_class, BIJI_OBJ_PROPERTIES, properties);
 
   biji_obj_signals[NOTE_RENAMED] = g_signal_new ( "renamed" ,
                                                   G_OBJECT_CLASS_TYPE (klass),
@@ -204,6 +267,14 @@ biji_note_obj_class_init (BijiNoteObjClass *klass)
                                                   0);
 
   g_type_class_add_private (klass, sizeof (BijiNoteObjPrivate));
+}
+
+BijiNoteObj *
+biji_note_obj_new_from_path (const gchar *path)
+{
+  return g_object_new (BIJI_TYPE_NOTE_OBJ,
+                       "path", path,
+                       NULL); 
 }
 
 void 
@@ -328,6 +399,14 @@ biji_note_obj_get_last_change_date_string (BijiNoteObj *self)
 {
   return biji_get_time_diff_with_time (
              biji_note_id_get_last_change_date_sec(note_get_id(self)));
+}
+
+gchar *
+biji_note_obj_get_last_metadata_change_date (BijiNoteObj *note)
+{
+  g_return_val_if_fail (BIJI_IS_NOTE_OBJ (note), NULL);
+
+  return biji_note_id_get_last_metadata_change_date (note->priv->id);
 }
 
 int
@@ -800,6 +879,8 @@ gchar *biji_note_obj_get_last_change_date(BijiNoteObj *note)
 
 gchar *biji_note_obj_get_create_date(BijiNoteObj *note)
 {
+  g_return_val_if_fail (BIJI_IS_NOTE_OBJ (note), NULL);
+
   return biji_note_id_get_create_date(note_get_id(note));
 }
 

@@ -19,7 +19,8 @@
 #include <libxml/xmlwriter.h>
 
 #include "biji-lazy-serializer.h"
-#include "../libbiji.h"
+#include "../biji-note-obj.h"
+#include "../biji-string.h"
 
 enum
 {
@@ -145,13 +146,11 @@ gboolean
 biji_lazy_serialize_internal (BijiLazySerializer *self)
 {
   BijiLazySerializerPrivate *priv = self->priv;
-  BijiNoteID                *id;
   gchar                     *html;
   GList                     *tags;
   GdkRGBA                   color;
   xmlTextWriterPtr          writer;
 
-  id = note_get_id (priv->note);
   writer = xmlNewTextWriterMemory(priv->buf, 0);
 
   // Header
@@ -203,13 +202,13 @@ biji_lazy_serialize_internal (BijiLazySerializer *self)
 
   // <last-change-date>
   serialize_node (writer, "last-change-date",
-                  biji_note_id_get_last_change_date(id));
+                  biji_note_obj_get_last_change_date (priv->note));
 
   serialize_node (writer, "last-metadata-change-date",
-                  biji_note_id_get_last_metadata_change_date(id));
+                  biji_note_obj_get_last_metadata_change_date(priv->note));
 
   serialize_node (writer, "create-date",
-                  biji_note_id_get_create_date(id));
+                  biji_note_obj_get_create_date (priv->note));
 
   serialize_node (writer, "cursor-position", "0");
   serialize_node (writer, "selection-bound-position", "0");
@@ -238,7 +237,7 @@ biji_lazy_serialize_internal (BijiLazySerializer *self)
 
   xmlFreeTextWriter(writer);
 
-  return g_file_set_contents (biji_note_id_get_path(id),
+  return g_file_set_contents (biji_note_obj_get_path (priv->note),
                               (gchar*) priv->buf->content,
                               -1,
                               NULL);
