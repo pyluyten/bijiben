@@ -7,6 +7,8 @@
 
 G_BEGIN_DECLS
 
+#define DEFAULT_NOTE_TITLE "New Note"
+
 #define BIJI_TYPE_NOTE_BOOK             (biji_note_book_get_type ())
 #define BIJI_NOTE_BOOK(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), BIJI_TYPE_NOTE_BOOK, BijiNoteBook))
 #define BIJI_NOTE_BOOK_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), BIJI_TYPE_NOTE_BOOK, BijiNoteBookClass))
@@ -86,6 +88,9 @@ BijiNoteObj* biji_note_get_new_from_file (const gchar* path);
 
 /* Get a blanck new note FIXME set dates */
 BijiNoteObj * biji_note_book_get_new_note_from_string (BijiNoteBook *book, gchar *title);
+
+BijiNoteObj * biji_note_book_new_note_with_text (BijiNoteBook *book,
+                                                 gchar *plain_text);
 
 G_END_DECLS
 

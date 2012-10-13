@@ -658,12 +658,13 @@ biji_note_book_get_uuid (void)
   return g_strdup_printf ("%s.note", out);
 }
 
-BijiNoteObj*
-biji_note_book_get_new_note_from_string (BijiNoteBook *book,
-                                         gchar *title)
+/* Common UUID skeleton for new notes.
+ * Maybe the right place to set up dates = now */
+static BijiNoteObj *
+get_note_skeleton (BijiNoteBook *book)
 {
   BijiNoteObj *ret = NULL;
-  gchar *folder, *name, *path;
+  gchar * folder, *name, *path;
 
   folder = g_file_get_path (book->priv->location);
 
@@ -679,10 +680,41 @@ biji_note_book_get_new_note_from_string (BijiNoteBook *book,
     g_free (path);
   }
 
+  return ret;
+}
+
+/* TODO : different New notes shall call a common
+ * biji_note_obj_new with different properties : path mandatory,
+ * optional title, raw_text, html, ... */
+
+BijiNoteObj*
+biji_note_book_get_new_note_from_string (BijiNoteBook *book,
+                                         gchar *title)
+{
+  BijiNoteObj *ret = get_note_skeleton (book);
+
+  /* Note will copy title */
   _biji_note_obj_set_title (ret, title);
+
   biji_note_obj_save_note (ret);
   note_book_append_new_note (book,ret);
 
   return ret ;
 }
 
+BijiNoteObj *
+biji_note_book_new_note_with_text (BijiNoteBook *book,
+                                   gchar *plain_text)
+{
+  BijiNoteObj *ret = get_note_skeleton (book);
+
+  /* Note will copy title, raw_text and html strings */
+  _biji_note_obj_set_title (ret, DEFAULT_NOTE_TITLE);
+  biji_note_obj_set_raw_text (ret, g_strdup (plain_text));
+  biji_note_obj_set_html_content (ret, plain_text);
+
+  biji_note_obj_save_note (ret);
+  note_book_append_new_note (book,ret);
+
+  return ret;
+}

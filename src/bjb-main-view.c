@@ -276,6 +276,46 @@ on_item_activated(GdMainView        * gd,
   return FALSE ;
 }
 
+static GtkTargetEntry target_list[] = {
+  { "text/plain", 0, 2}
+};
+
+static void
+on_drag_data_received (GtkWidget        *widget,
+                       GdkDragContext   *context,
+                       gint              x,
+                       gint              y,
+                       GtkSelectionData *data,
+                       guint             info,
+                       guint             time,
+                       gpointer          user_data)
+{
+  gint length = gtk_selection_data_get_length (data) ;
+
+  if (length >= 0)
+  {
+    guchar *text = gtk_selection_data_get_text(data);
+
+    if (text)
+    {
+      BijiNoteBook *book;
+      BijiNoteObj *ret;
+      BjbMainView *self = BJB_MAIN_VIEW (user_data);
+
+      /* FIXME Text is guchar utf 8, conversion to perform */
+      book =  bjb_window_base_get_book (self->priv->window); 
+      ret = biji_note_book_new_note_with_text (book, (gchar*) text);
+      switch_to_note_view (self, ret); // maybe AFTER drag finish?
+
+      g_free (text);
+    }
+  }
+
+  /* Return false to ensure text is not removed from source
+   * We just want to create a note. */
+  gtk_drag_finish (context, FALSE, FALSE, time);
+}
+
 static void
 bjb_main_view_constructed(GObject *o)
 {
@@ -368,6 +408,13 @@ bjb_main_view_constructed(GObject *o)
   panel = bjb_selection_toolbar_new (priv->content,priv->view,self);
   selection_bar = bjb_selection_toolbar_get_actor (panel);
   clutter_actor_add_child (priv->bin, selection_bar);
+
+  /* Drag n drop */
+  gtk_drag_dest_set (GTK_WIDGET (priv->view), GTK_DEST_DEFAULT_ALL,
+                     target_list, 1, GDK_ACTION_COPY);
+
+  g_signal_connect (GTK_WIDGET (priv->view), "drag-data-received",
+                    G_CALLBACK (on_drag_data_received), self);
 
   gtk_widget_show_all (priv->window);
 }
