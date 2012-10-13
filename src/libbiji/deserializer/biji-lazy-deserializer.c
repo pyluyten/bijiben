@@ -523,11 +523,14 @@ processNode (BijiLazyDeserializer *self)
     {
       norm = g_string_new (tag);
       g_string_erase (norm,0,16);
-      tag = g_string_free (norm,FALSE);
-      _biji_note_obj_set_tags (n,g_list_prepend((GList*)_biji_note_obj_get_tags(n),
-                                            (gpointer)tag));
+      _biji_note_obj_set_tags (n, g_list_prepend((GList*)_biji_note_obj_get_tags(n),
+                               g_string_free (norm,FALSE)));
     }
+
+    free (tag);
   }
+
+  xmlFree(name);
 }
 
 static void
