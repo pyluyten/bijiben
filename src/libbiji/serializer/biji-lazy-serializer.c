@@ -17,6 +17,8 @@
  */
 
 #include <libxml/xmlwriter.h>
+#include <libxml/xmlreader.h>
+#include <string.h>
 
 #include "biji-lazy-serializer.h"
 #include "../biji-note-obj.h"
@@ -37,7 +39,11 @@ struct _BijiLazySerializerPrivate
 {
   BijiNoteObj *note;
 
-  xmlBufferPtr buf;
+  xmlBufferPtr     buf;
+  xmlTextWriterPtr writer;
+
+  /* To get accross the html tree */
+  xmlTextReaderPtr inner;
 };
 
 static void
@@ -96,6 +102,7 @@ biji_lazy_serializer_finalize (GObject *object)
   BijiLazySerializerPrivate *priv = self->priv;
 
   xmlBufferFree (priv->buf);
+  xmlFreeTextReader (priv->inner);
 
   G_OBJECT_CLASS (biji_lazy_serializer_parent_class)->finalize (object);
 }
@@ -142,100 +149,209 @@ serialize_tags (gchar *tag, xmlTextWriterPtr writer)
   g_free (string);
 }
 
+static void
+process_text_elem (BijiLazySerializer *self)
+{
+  BijiLazySerializerPrivate *priv = self->priv;
+
+  xmlTextWriterWriteRaw (priv->writer, xmlTextReaderConstValue (priv->inner));
+}
+
+// TODO & check : ul li ol image
+static void
+process_start_elem (BijiLazySerializer *self)
+{
+  BijiLazySerializerPrivate *priv = self->priv;
+  const gchar *name;
+
+  name = (const gchar *) xmlTextReaderConstName(priv->inner);
+
+  if (g_strcmp0 (name, "b")==0)
+    xmlTextWriterStartElement (priv->writer, BAD_CAST "b");
+
+  if (g_strcmp0 (name, "i")==0)
+    xmlTextWriterStartElement (priv->writer, BAD_CAST "i");
+
+  if (g_strcmp0 (name, "strike")==0)
+    xmlTextWriterStartElement (priv->writer, BAD_CAST "strike");
+
+  /* Do not serialize div. Close br. Everything is <br/>. Simpler. */
+  if (g_strcmp0 (name, "div")== 0 || g_strcmp0 (name, "br") == 0)
+  {
+    xmlTextWriterStartElement (priv->writer, BAD_CAST "br");
+    xmlTextWriterEndElement (priv->writer);
+  }
+
+  if (g_strcmp0 (name, "ul")==0)
+    xmlTextWriterStartElement (priv->writer, BAD_CAST "ul");
+
+  if (g_strcmp0 (name, "ol")==0)
+    xmlTextWriterStartElement (priv->writer, BAD_CAST "ol");
+
+  if (g_strcmp0 (name, "li")==0)
+    xmlTextWriterStartElement (priv->writer, BAD_CAST "li");
+}
+
+static void
+process_end_elem (BijiLazySerializer *self)
+{
+  BijiLazySerializerPrivate *priv = self->priv;
+  const gchar *element_name;
+
+  element_name = (const gchar *) xmlTextReaderConstName(priv->inner);
+
+  if (g_strcmp0 (element_name, "b")==0)
+    xmlTextWriterEndElement (priv->writer);
+
+  if (g_strcmp0 (element_name, "i")==0)
+    xmlTextWriterEndElement (priv->writer);
+
+  if (g_strcmp0 (element_name, "strike")==0)
+    xmlTextWriterEndElement (priv->writer);
+
+  if (g_strcmp0 (element_name, "ul")==0)
+    xmlTextWriterEndElement (priv->writer);
+
+  if (g_strcmp0 (element_name, "ol")==0)
+    xmlTextWriterEndElement (priv->writer);
+
+  if (g_strcmp0 (element_name, "li")==0)
+    xmlTextWriterEndElement (priv->writer);
+}
+
+/* Webkit html is _not_ xhtml, but we need valid xml here.
+ * Thus some start elem are to be manually close.
+ * until XHTML rules the world. or until we use .html note format... */
+static void
+serialize_html (BijiLazySerializer *self)
+{
+  BijiLazySerializerPrivate *priv = self->priv;
+  gchar *html = biji_note_obj_get_html (priv->note);
+
+  if (!html)
+    return;
+
+  /* We need a start & end node to obtain a Xml reader
+   * and we need to suffer html = recover from errors */
+  GString * noded_html = g_string_new ("<bijihtml>");
+  noded_html = g_string_append (noded_html, html);
+  noded_html = g_string_append (noded_html, "</bijihtml>");
+
+  priv->inner = xmlReaderForMemory (noded_html->str,
+                                    strlen(noded_html->str),
+                                    "", "UTF-8", XML_PARSE_RECOVER);
+
+  while (xmlTextReaderRead (priv->inner) ==1)
+  {
+    gint type = xmlTextReaderNodeType (priv->inner);
+    const xmlChar *name = xmlTextReaderConstName (priv->inner);
+
+    if (!name)
+      continue;
+
+    switch (type)
+    {
+      case XML_ELEMENT_NODE:
+        process_start_elem (self);
+        break;
+
+      case XML_ELEMENT_DECL:
+        process_end_elem (self);
+        break;
+
+      case XML_TEXT_NODE:
+        process_text_elem (self);
+        break;
+
+      case XML_DTD_NODE:
+        process_text_elem (self);
+        break;
+    }
+  }
+
+  g_string_free (noded_html, TRUE);
+}
+
 gboolean
 biji_lazy_serialize_internal (BijiLazySerializer *self)
 {
   BijiLazySerializerPrivate *priv = self->priv;
-  gchar                     *html;
   GList                     *tags;
   GdkRGBA                   color;
-  xmlTextWriterPtr          writer;
 
-  writer = xmlNewTextWriterMemory(priv->buf, 0);
+  priv->writer = xmlNewTextWriterMemory(priv->buf, 0);
 
   // Header
-  xmlTextWriterStartDocument (writer,"1.0","utf-8",NULL);
+  xmlTextWriterStartDocument (priv->writer,"1.0","utf-8",NULL);
 
-  xmlTextWriterStartElement (writer, BAD_CAST "note");
-  xmlTextWriterWriteAttributeNS (writer, NULL, 
+  xmlTextWriterStartElement (priv->writer, BAD_CAST "note");
+  xmlTextWriterWriteAttributeNS (priv->writer, NULL, 
                                  BAD_CAST "version",NULL, 
                                  BAD_CAST "1");
-  xmlTextWriterWriteAttributeNS (writer, BAD_CAST "xmlns",
+  xmlTextWriterWriteAttributeNS (priv->writer, BAD_CAST "xmlns",
                                  BAD_CAST "link", NULL, 
                                  BAD_CAST "http://projects.gnome.org/bijiben/link");
-  xmlTextWriterWriteAttributeNS (writer, BAD_CAST "xmlns", BAD_CAST "size", NULL,
+  xmlTextWriterWriteAttributeNS (priv->writer, BAD_CAST "xmlns", BAD_CAST "size", NULL,
                                  BAD_CAST "http://projects.gnome.org/bijiben/size");
-  xmlTextWriterWriteAttributeNS (writer, NULL, BAD_CAST "xmlns", NULL, 
+  xmlTextWriterWriteAttributeNS (priv->writer, NULL, BAD_CAST "xmlns", NULL, 
                                  BAD_CAST "http://projects.gnome.org/bijiben");
 
   // <Title>
-  serialize_node (writer, "title", biji_note_get_title (priv->note));
+  serialize_node (priv->writer, "title", biji_note_get_title (priv->note));
 
   // <text> 
-  xmlTextWriterWriteRaw(writer, BAD_CAST "\n  ");
-  xmlTextWriterStartElement(writer, BAD_CAST "text");
-  xmlTextWriterWriteAttributeNS(writer, BAD_CAST "xml",
+  xmlTextWriterWriteRaw(priv->writer, BAD_CAST "\n  ");
+  xmlTextWriterStartElement(priv->writer, BAD_CAST "text");
+  xmlTextWriterWriteAttributeNS(priv->writer, BAD_CAST "xml",
                                 BAD_CAST "space", NULL, 
                                 BAD_CAST "preserve");
 
   // <note-content>
-  xmlTextWriterStartElement(writer, BAD_CAST "note-content");
-  html = biji_note_obj_get_html (priv->note);
-
-  if (html)
-  {
-    // Sanitize html, just replace non Xml char with something else
-    html = biji_str_mass_replace (html, "&nbsp;", " ",
-                                        "<br>", "&#xA;",
-                                        "<div>", "&#xA;",
-                                        "</div>", "",
-                                        "&", "&amp;", NULL);
-
-    xmlTextWriterWriteRaw(writer, BAD_CAST (html));
-    g_free (html);
-  }
-
-  xmlTextWriterEndElement (writer);
+  xmlTextWriterStartElement(priv->writer, BAD_CAST "note-content");
+  serialize_html (self);
+  xmlTextWriterEndElement (priv->writer);
 
   // </text>  
-  xmlTextWriterEndElement(writer);
+  xmlTextWriterEndElement(priv->writer);
 
   // <last-change-date>
-  serialize_node (writer, "last-change-date",
+  serialize_node (priv->writer, "last-change-date",
                   biji_note_obj_get_last_change_date (priv->note));
 
-  serialize_node (writer, "last-metadata-change-date",
+  serialize_node (priv->writer, "last-metadata-change-date",
                   biji_note_obj_get_last_metadata_change_date(priv->note));
 
-  serialize_node (writer, "create-date",
+  serialize_node (priv->writer, "create-date",
                   biji_note_obj_get_create_date (priv->note));
 
-  serialize_node (writer, "cursor-position", "0");
-  serialize_node (writer, "selection-bound-position", "0");
-  serialize_node (writer, "width", "0");
-  serialize_node (writer, "height", "0");
-  serialize_node (writer, "x", "0");
-  serialize_node (writer, "y", "0");
+  serialize_node (priv->writer, "cursor-position", "0");
+  serialize_node (priv->writer, "selection-bound-position", "0");
+  serialize_node (priv->writer, "width", "0");
+  serialize_node (priv->writer, "height", "0");
+  serialize_node (priv->writer, "x", "0");
+  serialize_node (priv->writer, "y", "0");
   
   if (biji_note_obj_get_rgba (priv->note, &color))
-    serialize_node (writer, "color", gdk_rgba_to_string (&color));
+    serialize_node (priv->writer, "color", gdk_rgba_to_string (&color));
 
   //<tags>
-  xmlTextWriterWriteRaw(writer, BAD_CAST "\n ");
-  xmlTextWriterStartElement (writer, BAD_CAST "tags");
+  xmlTextWriterWriteRaw(priv->writer, BAD_CAST "\n ");
+  xmlTextWriterStartElement (priv->writer, BAD_CAST "tags");
   tags = _biji_note_obj_get_tags (priv->note);
-  g_list_foreach (tags, (GFunc) serialize_tags, writer);
-  xmlTextWriterEndElement (writer);
+  g_list_foreach (tags, (GFunc) serialize_tags, priv->writer);
+  xmlTextWriterEndElement (priv->writer);
   g_list_free (tags);
 
   // <open-on-startup>
-  serialize_node (writer, "open-on-startup", "False");
+  serialize_node (priv->writer, "open-on-startup", "False");
 
   // <note>
-  xmlTextWriterWriteRaw(writer, BAD_CAST "\n ");
-  xmlTextWriterEndElement(writer);
+  xmlTextWriterWriteRaw(priv->writer, BAD_CAST "\n ");
+  xmlTextWriterEndElement(priv->writer);
 
-  xmlFreeTextWriter(writer);
+  xmlFreeTextWriter(priv->writer);
+
+  g_warning ("content:%s", (gchar*) priv->buf->content);
 
   return g_file_set_contents (biji_note_obj_get_path (priv->note),
                               (gchar*) priv->buf->content,
