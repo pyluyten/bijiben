@@ -332,6 +332,8 @@ process_bijiben_start_elem (BijiLazyDeserializer *self)
   if (g_strcmp0 (element_name, "strike")==0)
     priv->html = g_string_append (priv->html, "<strike>");
 
+  /* Lists */
+
   if (g_strcmp0 (element_name, "ul")==0)
     priv->html = g_string_append (priv->html, "<ul>");
 
@@ -340,6 +342,67 @@ process_bijiben_start_elem (BijiLazyDeserializer *self)
 
   if (g_strcmp0 (element_name, "li")==0)
     priv->html = g_string_append (priv->html, "<li>");
+
+  /* Links: Images */
+
+  if (g_strcmp0 (element_name, "img")==0)
+  {
+    priv->html = g_string_append (priv->html, "<img ");
+
+    xmlChar *attribute;
+
+    attribute = xmlTextReaderGetAttribute (priv->inner, BAD_CAST "id");
+    if (attribute)
+    {
+      priv->html = g_string_append (priv->html, "id=\"");
+      priv->html = g_string_append (priv->html, (gchar*) attribute);
+      priv->html = g_string_append (priv->html, "\"");
+      xmlFree (attribute);
+      attribute = NULL;
+    }
+
+    attribute = xmlTextReaderGetAttribute (priv->inner, BAD_CAST "width");
+    if (attribute)
+    {
+      priv->html = g_string_append (priv->html, "width=\"");
+      priv->html = g_string_append (priv->html, (gchar*) attribute);
+      priv->html = g_string_append (priv->html, "\"");
+      xmlFree (attribute);
+      attribute = NULL;
+    }
+
+    attribute = xmlTextReaderGetAttribute (priv->inner, BAD_CAST "height");
+    if (attribute)
+    {
+      priv->html = g_string_append (priv->html, "height=\"");
+      priv->html = g_string_append (priv->html, (gchar*) attribute);
+      priv->html = g_string_append (priv->html, "\"");
+      xmlFree (attribute);
+      attribute = NULL;
+    }
+
+    attribute = xmlTextReaderGetAttribute (priv->inner, BAD_CAST "src");
+    if (attribute)
+    {
+      priv->html = g_string_append (priv->html, "src=\"");
+      priv->html = g_string_append (priv->html, (gchar*) attribute);
+      priv->html = g_string_append (priv->html, "\"");
+      xmlFree (attribute);
+      attribute = NULL;
+    }
+
+    attribute = xmlTextReaderGetAttribute (priv->inner, BAD_CAST "alt");
+    if (attribute)
+    {
+      priv->html = g_string_append (priv->html, "alt=\"");
+      priv->html = g_string_append (priv->html, (gchar*) attribute);
+      priv->html = g_string_append (priv->html, "\"");
+      xmlFree (attribute);
+      attribute = NULL;
+    }
+
+    priv->html = g_string_append (priv->html, ">");
+  }
 }
 
 static void

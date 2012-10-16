@@ -157,7 +157,6 @@ process_text_elem (BijiLazySerializer *self)
   xmlTextWriterWriteRaw (priv->writer, xmlTextReaderConstValue (priv->inner));
 }
 
-// TODO & check : ul li ol image
 static void
 process_start_elem (BijiLazySerializer *self)
 {
@@ -169,27 +168,80 @@ process_start_elem (BijiLazySerializer *self)
   if (g_strcmp0 (name, "b")==0)
     xmlTextWriterStartElement (priv->writer, BAD_CAST "b");
 
-  if (g_strcmp0 (name, "i")==0)
+  else if (g_strcmp0 (name, "i")==0)
     xmlTextWriterStartElement (priv->writer, BAD_CAST "i");
 
-  if (g_strcmp0 (name, "strike")==0)
+  else if (g_strcmp0 (name, "strike")==0)
     xmlTextWriterStartElement (priv->writer, BAD_CAST "strike");
 
   /* Do not serialize div. Close br. Everything is <br/>. Simpler. */
-  if (g_strcmp0 (name, "div")== 0 || g_strcmp0 (name, "br") == 0)
+  else if (g_strcmp0 (name, "div")== 0 || g_strcmp0 (name, "br") == 0)
   {
     xmlTextWriterStartElement (priv->writer, BAD_CAST "br");
     xmlTextWriterEndElement (priv->writer);
   }
 
-  if (g_strcmp0 (name, "ul")==0)
+  /* Lists */
+
+  else if (g_strcmp0 (name, "ul")==0)
     xmlTextWriterStartElement (priv->writer, BAD_CAST "ul");
 
-  if (g_strcmp0 (name, "ol")==0)
+  else if (g_strcmp0 (name, "ol")==0)
     xmlTextWriterStartElement (priv->writer, BAD_CAST "ol");
 
-  if (g_strcmp0 (name, "li")==0)
+  else if (g_strcmp0 (name, "li")==0)
     xmlTextWriterStartElement (priv->writer, BAD_CAST "li");
+
+  /* Links : Images
+   * width heigth src alt */
+  if (g_strcmp0 (name, "img")==0)
+  {
+    xmlTextWriterStartElement (priv->writer, BAD_CAST "img");
+
+    xmlChar *attribute = NULL;
+
+    attribute = xmlTextReaderGetAttribute (priv->inner, BAD_CAST "id");
+    if (attribute)
+    {
+      xmlTextWriterWriteAttribute (priv->writer, BAD_CAST "id", attribute);
+      xmlFree (attribute);
+      attribute = NULL;
+    }
+
+    attribute = xmlTextReaderGetAttribute (priv->inner, BAD_CAST "width");
+    if (attribute)
+    {
+      xmlTextWriterWriteAttribute (priv->writer, BAD_CAST "width", attribute);
+      xmlFree (attribute);
+      attribute = NULL;
+    }
+
+    attribute = xmlTextReaderGetAttribute (priv->inner, BAD_CAST "height");
+    if (attribute)
+    {
+      xmlTextWriterWriteAttribute (priv->writer, BAD_CAST "height", attribute);
+      xmlFree (attribute);
+      attribute = NULL;
+    }
+
+    attribute = xmlTextReaderGetAttribute (priv->inner, BAD_CAST "src");
+    if (attribute)
+    {
+      xmlTextWriterWriteAttribute (priv->writer, BAD_CAST "src", attribute);
+      xmlFree (attribute);
+      attribute = NULL;
+    }
+
+    attribute = xmlTextReaderGetAttribute (priv->inner, BAD_CAST "alt");
+    if (attribute)
+    {
+      xmlTextWriterWriteAttribute (priv->writer, BAD_CAST "alt", attribute);
+      xmlFree (attribute);
+      attribute = NULL;
+    }
+
+    xmlTextWriterEndElement (priv->writer);
+  }
 }
 
 static void
@@ -208,6 +260,8 @@ process_end_elem (BijiLazySerializer *self)
 
   if (g_strcmp0 (element_name, "strike")==0)
     xmlTextWriterEndElement (priv->writer);
+
+  /* Lists */
 
   if (g_strcmp0 (element_name, "ul")==0)
     xmlTextWriterEndElement (priv->writer);
@@ -350,8 +404,6 @@ biji_lazy_serialize_internal (BijiLazySerializer *self)
   xmlTextWriterEndElement(priv->writer);
 
   xmlFreeTextWriter(priv->writer);
-
-  g_warning ("content:%s", (gchar*) priv->buf->content);
 
   return g_file_set_contents (biji_note_obj_get_path (priv->note),
                               (gchar*) priv->buf->content,

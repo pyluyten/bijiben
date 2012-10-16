@@ -262,6 +262,10 @@ biji_webkit_editor_constructed (GObject *obj)
 
   webkit_web_view_load_string (view, body, NULL, NULL, NULL);
 
+  /* Drag n drop */
+  GtkTargetList *targets = webkit_web_view_get_copy_target_list (view);
+  gtk_target_list_add_image_targets (targets, 0, TRUE);
+
   /* Apply color */
   if (biji_note_obj_get_rgba (priv->note,&color))
     set_editor_color (GTK_WIDGET (self), &color);
