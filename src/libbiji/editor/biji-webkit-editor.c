@@ -211,91 +211,25 @@ biji_webkit_editor_finalize (GObject *object)
   G_OBJECT_CLASS (biji_webkit_editor_parent_class)->finalize (object);
 }
 
-/* Borrowed from evolution webkit composer
- * rather untested */
-static void
-process_elements (WebKitDOMNode *node, GString *buffer)
-{
-  WebKitDOMDocument *document;
-  WebKitDOMDOMWindow *window;
-  WebKitDOMNodeList *nodes;
-  WebKitDOMCSSStyleDeclaration *style;
-  gchar *display;
-  gulong ii, length;
-  GRegex *regex;
-
-  document = webkit_dom_node_get_owner_document (node);
-  window = webkit_dom_document_get_default_view (document);
-
-  /* Is this a block element? */
-  style = webkit_dom_dom_window_get_computed_style (
-                                 window, WEBKIT_DOM_ELEMENT (node), "");
-  display = webkit_dom_css_style_declaration_get_property_value (
-                                                      style, "display");
-
-  nodes = webkit_dom_node_get_child_nodes (node);
-  length = webkit_dom_node_list_get_length (nodes);
-  regex = g_regex_new ("\x9", 0, 0, NULL);
-
-  for (ii = 0; ii < length; ii++)
-  {
-    WebKitDOMNode *child;
-
-    child = webkit_dom_node_list_item (nodes, ii);
-    if (webkit_dom_node_get_node_type (child) == 3)
-    {
-      gchar *content, *tmp;
-
-      tmp = webkit_dom_node_get_text_content (child);
-
-      /* Replace tabs with 4 whitespaces, otherwise they got
-         replaced by single whitespace */
-      content = g_regex_replace (regex, tmp, -1, 0, "    ", 0, NULL);
-
-      g_string_append (buffer, content);
-      g_free (tmp);
-      g_free (content);
-    }
-
-    if (webkit_dom_node_has_child_nodes (child))
-      process_elements (child, buffer);
-
-  }
-
-  if (g_strcmp0 (display, "block") == 0)
-    g_string_append (buffer, "\n");
-
-  g_free (display);
-  g_regex_unref (regex);
-}
-
 static void
 on_content_changed (WebKitWebView *view)
 {
   BijiWebkitEditor     *self = BIJI_WEBKIT_EDITOR (view);
   WebKitDOMDocument    *dom;
   WebKitDOMHTMLElement *elem;
-  WebKitDOMNode        *body;
-  gchar                *result;
-  GString              *plain_text;
+  gchar                *html, *text;
 
   /* First html serializing */
   dom = webkit_web_view_get_dom_document (view);
   elem = webkit_dom_document_get_body (dom);
-  result = webkit_dom_html_element_get_inner_html (elem);
+  html = webkit_dom_html_element_get_inner_html (elem);
+  text = webkit_dom_html_element_get_inner_text (elem);
 
-  biji_note_obj_set_html_content (self->priv->note, result);
-  g_free (result);
+  biji_note_obj_set_html_content (self->priv->note, html);
+  biji_note_obj_set_raw_text (self->priv->note, text);
 
-  /* Then the raw text for icon tracker or whatever else */
-  body = (WebKitDOMNode *) elem;
-
-  plain_text = g_string_sized_new (1024);
-  process_elements (body, plain_text);
-
-  /* Return text content between <body> and </body> */
-  biji_note_obj_set_raw_text (self->priv->note, plain_text->str);
-  g_string_free (plain_text, TRUE);
+  g_free (html);
+  g_free (text);
 
   biji_note_obj_save_note (self->priv->note);
 }
