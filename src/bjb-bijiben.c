@@ -60,7 +60,7 @@ bijiben_new_window_internal (GApplication *app,
       bjb_window_base_set_frame(BJB_WINDOW_BASE(win),
                                 CLUTTER_ACTOR(bjb_note_view_new(GTK_WIDGET(win), note)));
 
-      gtk_window_set_title(win,biji_note_get_title (note));
+      gtk_window_set_title(win,biji_note_obj_get_title (note));
     }
 }
 

@@ -45,7 +45,7 @@ insert_zeitgeist(BijiNoteObj *note, const char *action)
                                         ZEITGEIST_NFO_FILE_DATA_OBJECT, //mani
                                         "application/x-note",           //mime
                                         "",                             //origin
-                                        biji_note_get_title (note),     //text
+                                        biji_note_obj_get_title (note),     //text
                                         "") ;                           //storage
 
   g_free (uri);

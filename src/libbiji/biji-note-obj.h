@@ -80,8 +80,9 @@ void biji_note_obj_delete(BijiNoteObj *dead);
 gboolean note_obj_are_same(BijiNoteObj *a, BijiNoteObj* b);
 
 ///////////////////////////////////////////////////////////////////// Metadata 
-void _biji_note_obj_set_title(BijiNoteObj *obj,gchar *title);
-gchar * _biji_note_obj_get_title(BijiNoteObj *obj);
+
+gchar * biji_note_obj_get_title(BijiNoteObj *obj);
+
 gchar* biji_note_obj_get_path (BijiNoteObj *n);
 
 int set_note_last_change_date(BijiNoteObj* n,gchar* date) ;
@@ -115,7 +116,7 @@ void biji_note_obj_save_note (BijiNoteObj *self);
 
 GdkPixbuf * biji_note_obj_get_icon (BijiNoteObj *note);
 
-gchar *biji_note_get_title(BijiNoteObj* note_obj_ptr);
+
 
 gchar *biji_note_get_raw_text(BijiNoteObj *note);
 

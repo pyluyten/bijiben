@@ -176,7 +176,7 @@ static void
 show_window_if_title_same(GtkWindow *window, BijiNoteObj *to_open)
 {
   if ( g_strcmp0 (gtk_window_get_title (window),
-                  biji_note_get_title(to_open)) == 0 )
+                  biji_note_obj_get_title(to_open)) == 0 )
   {
     gtk_window_present(window);
   }

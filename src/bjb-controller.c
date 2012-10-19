@@ -208,7 +208,7 @@ bjb_controller_add_note ( BijiNoteObj *note, BjbController *self )
                         &iter,
                         COL_URN,    biji_note_obj_get_path(note),
                         COL_URI,    biji_note_obj_get_path(note),
-                        COL_NAME,   biji_note_get_title(note),
+                        COL_NAME,   biji_note_obj_get_title(note),
                         COL_AUTHOR,   NULL,
                         COL_IMAGE,  pix,
                         COL_MTIME,  biji_note_obj_get_last_change_date_sec(note),
@@ -258,7 +258,7 @@ add_note_if_searched ( BijiNoteObj *obj , BjbController *self )
   add_note = FALSE ;
 
   /* Title match ? */
-  if (g_strrstr(g_utf8_casefold(biji_note_get_title(obj),-1),
+  if (g_strrstr(g_utf8_casefold(biji_note_obj_get_title(obj),-1),
                             g_utf8_casefold(priv->needle,-1)))
     add_note = TRUE ;
 
@@ -331,7 +331,7 @@ add_note_to_completion(BijiNoteObj *note , BjbController *self)
   gtk_list_store_set (store, 
                       &iter, 
                       0, 
-                      biji_note_get_title(note),
+                      biji_note_obj_get_title(note),
                       -1);
 }
 

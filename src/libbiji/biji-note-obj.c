@@ -351,8 +351,10 @@ BijiNoteID* note_get_id(BijiNoteObj* n)
 }
 
 gchar *
-_biji_note_obj_get_title(BijiNoteObj *obj)
+biji_note_obj_get_title(BijiNoteObj *obj)
 {
+  g_return_val_if_fail (BIJI_IS_NOTE_OBJ(obj), NULL);
+
   return biji_note_id_get_title (obj->priv->id);
 }
 
@@ -789,15 +791,6 @@ biji_note_obj_get_icon (BijiNoteObj *note)
 }
 
 /* Single Note */
-
-gchar*
-biji_note_get_title(BijiNoteObj *note_obj_ptr)
-{
-  if (BIJI_IS_NOTE_OBJ(note_obj_ptr))
-    return _biji_note_obj_get_title(note_obj_ptr);
-
-  return NULL;
-}
 
 gchar *
 biji_note_get_raw_text(BijiNoteObj *note)

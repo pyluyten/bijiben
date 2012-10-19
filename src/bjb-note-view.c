@@ -197,7 +197,7 @@ action_rename_note_callback (GtkWidget *item, gpointer user_data)
   priv = view->priv;
 
   title = note_title_dialog(GTK_WINDOW(priv->window),"Rename Note",
-                            biji_note_get_title(priv->note));
+                            biji_note_obj_get_title(priv->note));
 
   if (!title)
     return ;
@@ -323,7 +323,7 @@ bjb_note_menu_new (BjbNoteView *self)
 static void
 on_note_renamed (BijiNoteObj *note, GdMainToolbar *bar)
 {
-  gd_main_toolbar_set_labels (bar, biji_note_get_title (note), NULL);
+  gd_main_toolbar_set_labels (bar, biji_note_obj_get_title (note), NULL);
 }
 
 static ClutterActor *
@@ -366,7 +366,7 @@ bjb_note_main_toolbar_new (BjbNoteView *self,
                               GDK_KEY_w, GDK_CONTROL_MASK, GTK_ACCEL_MASK);
 
   /* Note title */
-  gd_main_toolbar_set_labels (gd,biji_note_get_title(note),NULL);
+  gd_main_toolbar_set_labels (gd,biji_note_obj_get_title(note),NULL);
 
   self->priv->renamed = g_signal_connect(note,"renamed",
                                         G_CALLBACK(on_note_renamed), w);

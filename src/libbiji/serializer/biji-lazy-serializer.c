@@ -351,7 +351,7 @@ biji_lazy_serialize_internal (BijiLazySerializer *self)
                                  BAD_CAST "http://projects.gnome.org/bijiben");
 
   // <Title>
-  serialize_node (priv->writer, "title", biji_note_get_title (priv->note));
+  serialize_node (priv->writer, "title", biji_note_obj_get_title (priv->note));
 
   // <text> 
   xmlTextWriterWriteRaw(priv->writer, BAD_CAST "\n  ");

@@ -185,7 +185,7 @@ _biji_note_book_sanitize_title(BijiNoteBook *book,BijiNoteObj *note)
   /* Find a proper title
    * We start with adding 2 to non unique titles */
   suffix = 2 ;
-  title = biji_note_get_title(note);
+  title = biji_note_obj_get_title(note);
   new_title = g_strdup(title);
 
   /* Test title untill we find something unique.
@@ -208,7 +208,7 @@ _biji_note_book_sanitize_title(BijiNoteBook *book,BijiNoteObj *note)
 
   else 
   {
-   _biji_note_obj_set_title(note,new_title);
+   biji_note_obj_set_title(note,new_title);
     g_free(title);
     return ;
   }
@@ -417,7 +417,7 @@ _biji_note_book_is_title_unique(BijiNoteBook *book,gchar *title)
   {
     iter = BIJI_NOTE_OBJ (g_list_nth_data (notes, i));
 
-    if (g_strcmp0 (biji_note_get_title (iter), title) == 0)
+    if (g_strcmp0 (biji_note_obj_get_title (iter), title) == 0)
      result = FALSE;
   }
 
@@ -571,7 +571,7 @@ note_book_get_note(BijiNoteBook *book,gchar *title)
   for (i=0 ; i < g_hash_table_size (book->priv->notes); i++)
   {
     BijiNoteObj *o = _biji_book_get_nth(book,i);
-    gchar *current = biji_note_get_title (o);
+    gchar *current = biji_note_obj_get_title (o);
     
     if ( g_strcmp0 (current,title) == 0 )
      return o ;
@@ -694,7 +694,7 @@ biji_note_book_get_new_note_from_string (BijiNoteBook *book,
   BijiNoteObj *ret = get_note_skeleton (book);
 
   /* Note will copy title */
-  _biji_note_obj_set_title (ret, title);
+  biji_note_obj_set_title (ret, title);
 
   biji_note_obj_save_note (ret);
   note_book_append_new_note (book,ret);
@@ -709,7 +709,7 @@ biji_note_book_new_note_with_text (BijiNoteBook *book,
   BijiNoteObj *ret = get_note_skeleton (book);
 
   /* Note will copy title, raw_text and html strings */
-  _biji_note_obj_set_title (ret, DEFAULT_NOTE_TITLE);
+  biji_note_obj_set_title (ret, DEFAULT_NOTE_TITLE);
   biji_note_obj_set_raw_text (ret, g_strdup (plain_text));
   biji_note_obj_set_html_content (ret, plain_text);
 
