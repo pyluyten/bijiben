@@ -55,20 +55,20 @@ void print_note_id(BijiNoteID* n);
 gboolean _biji_note_id_are_same(BijiNoteID *a, BijiNoteID *b);
 
 gchar* biji_note_id_get_path(BijiNoteID* n);
-void set_note_id_path(BijiNoteID* n, const gchar* path);
-void _biji_note_id_set_title(BijiNoteID* n,gchar* title);
-gchar* _biji_note_id_get_title(BijiNoteID* n);
+void biji_note_id_set_path (BijiNoteID* n, const gchar* path);
+void biji_note_id_set_title (BijiNoteID* n,gchar* title);
+gchar* biji_note_id_get_title (BijiNoteID* n);
 
 /* Dates */ 
 gchar * biji_note_id_get_last_change_date(BijiNoteID* n);
 glong biji_note_id_get_last_change_date_sec(BijiNoteID *n);
-int set_note_id_last_change_date(BijiNoteID* n,gchar* date);
-void _biji_note_id_set_change_date_now(BijiNoteID *n);
+int biji_note_id_set_last_change_date (BijiNoteID* n,gchar* date);
+void biji_note_id_set_change_date_now (BijiNoteID *n);
 gchar * biji_note_id_get_last_metadata_change_date(BijiNoteID* n);
-int set_note_id_last_metadata_change_date(BijiNoteID* n,gchar* date);
-void _biji_note_id_set_metadata_change_now(BijiNoteID *n);
+int biji_note_id_set_last_metadata_change_date (BijiNoteID* n,gchar* date);
+void biji_note_id_set_metadata_change_now (BijiNoteID *n);
 gchar * biji_note_id_get_create_date(BijiNoteID* n);
-int set_note_id_create_date(BijiNoteID* n,gchar* date);
+int biji_note_id_set_create_date(BijiNoteID* n,gchar* date);
 
 
 G_END_DECLS

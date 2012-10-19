@@ -86,7 +86,7 @@ on_save_timeout (BijiNoteObj *self)
     return;
 
   // Change the last change date propery
-  _biji_note_id_set_change_date_now (priv->id);
+  biji_note_id_set_change_date_now  (priv->id);
 
   biji_lazy_serialize (self);
   bijiben_push_note_to_tracker(self);
@@ -182,7 +182,7 @@ biji_note_obj_set_property (GObject      *object,
   switch (property_id)
     {
     case PROP_PATH:
-      set_note_id_path (self->priv->id, g_value_get_string (value));
+      biji_note_id_set_path  (self->priv->id, g_value_get_string (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -353,7 +353,7 @@ BijiNoteID* note_get_id(BijiNoteObj* n)
 gchar *
 _biji_note_obj_get_title(BijiNoteObj *obj)
 {
-  return _biji_note_id_get_title(obj->priv->id);
+  return biji_note_id_get_title (obj->priv->id);
 }
 
 void
@@ -363,20 +363,20 @@ _biji_note_obj_set_title(BijiNoteObj *note,gchar *title)
    * for some reason it does not work.
    * but it's 02:55 AM and i'm sleeping 
   if ( g_strcmp0 (title,
-                  _biji_note_id_get_title(note->priv->id)) == 0 )
+                  biji_note_id_get_title (note->priv->id)) == 0 )
   {
     g_message("same title:oldtitle:%s:newtitle:%s",
               title,
-              _biji_note_id_get_title(note->priv->id));
+              biji_note_id_get_title (note->priv->id));
     
     return ;
   } */
 
   // Set title
-  _biji_note_id_set_title(note->priv->id,title);
+  biji_note_id_set_title (note->priv->id,title);
 
   // Change last metadata change date
-  _biji_note_id_set_metadata_change_now(note->priv->id);
+  biji_note_id_set_metadata_change_now(note->priv->id);
 
   // Emit one signal, notebook might also want to? 
   g_signal_emit ( G_OBJECT (note), 
@@ -386,7 +386,7 @@ _biji_note_obj_set_title(BijiNoteObj *note,gchar *title)
 int
 set_note_last_change_date(BijiNoteObj* n,gchar* date)
 {
-  set_note_id_last_change_date(note_get_id(n),date);
+  biji_note_id_set_last_change_date (note_get_id(n),date);
   return 0 ;
 }
 
@@ -414,14 +414,14 @@ biji_note_obj_get_last_metadata_change_date (BijiNoteObj *note)
 int
 set_note_last_metadata_change_date(BijiNoteObj* n,gchar* date)
 {
-  set_note_id_last_metadata_change_date(note_get_id(n),date);
+  biji_note_id_set_last_metadata_change_date (note_get_id(n),date);
   return 0 ;
 }
 
 int
 set_note_create_date(BijiNoteObj* n,gchar *date)
 {
-  set_note_id_create_date(note_get_id(n),date);
+  biji_note_id_set_create_date(note_get_id(n),date);
   return 0 ;
 }
 
@@ -431,7 +431,7 @@ biji_note_obj_set_rgba_internal (BijiNoteObj *n, GdkRGBA *rgba)
   n->priv->color = gdk_rgba_copy(rgba);
   n->priv->icon_needs_update = TRUE;
 
-  _biji_note_id_set_metadata_change_now (n->priv->id);
+  biji_note_id_set_metadata_change_now (n->priv->id);
   biji_note_obj_save_note (n);
 
   /* Make editor & notebook know about this change */
@@ -560,7 +560,7 @@ _biji_note_obj_set_tags(BijiNoteObj *n, GList *tags)
   }
     
   n->priv->tags = g_list_copy (tags);
-  _biji_note_id_set_metadata_change_now(n->priv->id);
+  biji_note_id_set_metadata_change_now(n->priv->id);
 }
 
 gboolean

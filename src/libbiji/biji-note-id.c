@@ -87,7 +87,7 @@ biji_note_id_get_path(BijiNoteID* n)
 }
 
 void
-set_note_id_path(BijiNoteID* n,
+biji_note_id_set_path (BijiNoteID* n,
                  const gchar* path)
 {
   g_return_if_fail (BIJI_IS_NOTE_ID (n));
@@ -98,12 +98,12 @@ set_note_id_path(BijiNoteID* n,
   n->priv->path = g_strdup (path);
 }
 
-void _biji_note_id_set_title (BijiNoteID *n,gchar* title)
+void biji_note_id_set_title  (BijiNoteID *n,gchar* title)
 {
   n->priv->title = g_strdup (title);
 }
 
-gchar* _biji_note_id_get_title(BijiNoteID* n)
+gchar* biji_note_id_get_title (BijiNoteID* n)
 {
   return n->priv->title ;
 }
@@ -114,7 +114,7 @@ gchar * biji_note_id_get_last_change_date(BijiNoteID* n)
 }
 
 void
-_biji_note_id_set_change_date_now(BijiNoteID *n)
+biji_note_id_set_change_date_now (BijiNoteID *n)
 {
   g_get_current_time(&(n->priv->last_change_date));
 }
@@ -139,7 +139,7 @@ set_date_from_string(gchar *iso8601,GTimeVal *date)
 }
 
 int
-set_note_id_last_change_date(BijiNoteID* n,gchar* date)
+biji_note_id_set_last_change_date (BijiNoteID* n,gchar* date)
 {
 	set_date_from_string(date,&(n->priv->last_change_date));
 	return 0 ;
@@ -151,14 +151,14 @@ gchar * biji_note_id_get_last_metadata_change_date(BijiNoteID* n)
 }
 
 int
-set_note_id_last_metadata_change_date(BijiNoteID* n,gchar* date)
+biji_note_id_set_last_metadata_change_date (BijiNoteID* n,gchar* date)
 {
 	set_date_from_string(date,&(n->priv->last_metadata_change_date));
 	return 0 ;
 }
 
 void
-_biji_note_id_set_metadata_change_now(BijiNoteID *n)
+biji_note_id_set_metadata_change_now(BijiNoteID *n)
 {
   g_get_current_time(&(n->priv->last_metadata_change_date));
 }
@@ -169,7 +169,7 @@ gchar * biji_note_id_get_create_date(BijiNoteID* n)
 }
 
 int
-set_note_id_create_date(BijiNoteID* n,gchar* date)
+biji_note_id_set_create_date (BijiNoteID* n,gchar* date)
 {
   n->priv->create_date = g_strdup (date) ;
   return 0 ;
