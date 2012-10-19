@@ -220,13 +220,13 @@ get_note_url_from_tree_path(GtkTreePath *path, BjbMainView *self)
 }
 
 void
-action_delete_selected_notes(GtkWidget *w,BjbMainView *view)
+action_color_selected_notes (GtkWidget *w, BjbMainView *view)
 {
   GList *notes = NULL ;
   gint i ;
 
-  g_return_if_fail(GTK_IS_WIDGET(w));
-  g_return_if_fail(BJB_IS_MAIN_VIEW(view));
+  GdkRGBA color;
+  gtk_color_chooser_get_rgba (GTK_COLOR_CHOOSER (w), &color);
 
   /*  GtkTreePath */
   GList *paths = get_selected_paths(view);
@@ -240,7 +240,41 @@ action_delete_selected_notes(GtkWidget *w,BjbMainView *view)
                           note_book_get_note_at_path
                           (bjb_window_base_get_book(view->priv->window),url));
     
-  } 
+  }
+
+  g_list_free (paths);
+
+  for (i=0 ; i<g_list_length(notes) ;i++ )
+  {
+    BijiNoteObj *note = g_list_nth_data(notes,i) ;
+      
+    biji_note_obj_set_rgba (note, &color);
+  }
+
+  g_list_free (notes);
+}
+
+void
+action_delete_selected_notes(GtkWidget *w,BjbMainView *view)
+{
+  GList *notes = NULL ;
+  gint i ;
+
+  /*  GtkTreePath */
+  GList *paths = get_selected_paths(view);
+
+  for ( i=0 ;  i < g_list_length (paths) ; i++ )
+  {
+    gchar *url = get_note_url_from_tree_path(g_list_nth_data(paths,i),
+                                             view) ;
+
+    notes = g_list_append(notes,
+                          note_book_get_note_at_path
+                          (bjb_window_base_get_book(view->priv->window),url));
+    
+  }
+
+  g_list_free (paths);
 
   for (i=0 ; i<g_list_length(notes) ;i++ )
   {
@@ -249,6 +283,8 @@ action_delete_selected_notes(GtkWidget *w,BjbMainView *view)
     biji_note_delete_from_tracker(note);
     biji_note_book_remove_note(bjb_window_base_get_book(view->priv->window),note);
   }
+
+  g_list_free (notes);
 }
 
 static gboolean

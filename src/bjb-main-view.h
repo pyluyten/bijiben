@@ -43,6 +43,8 @@ GtkWidget *bjb_main_view_get_window(BjbMainView *view);
 
 void action_new_window_callback(GtkAction *action, gpointer bjb_main_view);
 
+void action_color_selected_notes (GtkWidget *w,BjbMainView *view);
+
 void action_delete_selected_notes(GtkWidget *w,BjbMainView *view);
 
 void update_notes_with_tag_search(BjbMainView *view, gchar *tag);

@@ -43,6 +43,7 @@ static GParamSpec *properties[NUM_PROPERTIES] = { NULL, };
 struct _BjbSelectionToolbarPrivate
 {
   GtkWidget          *toolbar_trash;
+  GtkWidget          *toolbar_color;
 
   /* sure */
   BjbMainView        *view ;
@@ -161,6 +162,10 @@ bjb_selection_toolbar_init (BjbSelectionToolbar *self)
   gtk_toolbar_insert (GTK_TOOLBAR (priv->widget), priv->left_group, -1);
   gtk_widget_show_all (GTK_WIDGET (priv->left_group));
 
+  /* Notes color */
+  priv->toolbar_color = gtk_color_button_new ();
+  gtk_container_add (GTK_CONTAINER (priv->left_box), priv->toolbar_color);
+
   priv->separator = gtk_separator_tool_item_new ();
   gtk_separator_tool_item_set_draw (GTK_SEPARATOR_TOOL_ITEM (priv->separator), FALSE);
   gtk_widget_set_visible (GTK_WIDGET (priv->separator), TRUE);
@@ -173,6 +178,7 @@ bjb_selection_toolbar_init (BjbSelectionToolbar *self)
   gtk_toolbar_insert (GTK_TOOLBAR (priv->widget), priv->right_group, -1);
   gtk_widget_show_all (GTK_WIDGET (priv->right_group));
 
+  /* Trash notes */
   priv->toolbar_trash = gtk_button_new ();
   image = gtk_image_new_from_icon_name ("user-trash-symbolic", GTK_ICON_SIZE_INVALID);
   gtk_image_set_pixel_size (GTK_IMAGE (image), 32);
@@ -265,6 +271,9 @@ bjb_selection_toolbar_constructed(GObject *obj)
                     "view-selection-changed", 
                     G_CALLBACK(bjb_selection_toolbar_selection_changed),
                     self);
+
+  g_signal_connect(priv->toolbar_color,"color-set",
+                   G_CALLBACK(action_color_selected_notes),priv->view);
 
   g_signal_connect(priv->toolbar_trash,"clicked",
                    G_CALLBACK(action_delete_selected_notes),priv->view);
