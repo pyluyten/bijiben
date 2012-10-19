@@ -809,7 +809,7 @@ biji_note_get_raw_text(BijiNoteObj *note)
 }
 
 int
-set_note_title(BijiNoteObj *note_obj_ptr,gchar *title)
+biji_note_obj_set_title(BijiNoteObj *note_obj_ptr,gchar *title)
 {
   BijiNoteObj* n = BIJI_NOTE_OBJ(note_obj_ptr) ;
   _biji_note_obj_set_title(n,title);

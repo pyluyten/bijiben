@@ -530,7 +530,7 @@ processNode (BijiLazyDeserializer *self)
   name = xmlTextReaderName (r);
 
   if ( g_strcmp0((gchar*)name,"title") == 0 )
-    biji_process_string (r, (BijiReaderFunc*) set_note_title, n);
+    biji_process_string (r, (BijiReaderFunc*) biji_note_obj_set_title, n);
 
   if ( g_strcmp0((gchar*)name,"text") == 0 )
   {

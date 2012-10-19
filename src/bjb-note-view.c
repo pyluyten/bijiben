@@ -202,7 +202,7 @@ action_rename_note_callback (GtkWidget *item, gpointer user_data)
   if (!title)
     return ;
 
-  set_note_title (priv->note,title);
+  biji_note_obj_set_title (priv->note,title);
 }
 
 static void
