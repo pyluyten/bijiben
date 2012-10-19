@@ -26,6 +26,7 @@
 #include "bjb-rename-note.h"
 #include "bjb-share.h"
 #include "bjb-main-view.h"
+#include "bjb-note-tag-dialog.h"
 #include "bjb-note-view.h"
 #include "bjb-window-base.h"
 
@@ -62,11 +63,6 @@ struct _BjbNoteViewPrivate {
   ClutterActor      *edit_bar_actor;
   gboolean           edit_bar_is_sticky ;
   ClutterActor      *last_update;
-
-  /* Manage tags dialog */
-  GtkWidget         *tags_dialog;
-  GtkWidget         *entry ;             // text entry to input new tags
-  GtkTreeModel      *model;              //                    tag model
 
   // Convenience
   GdkRGBA *color ;
@@ -152,223 +148,6 @@ bjb_note_view_init (BjbNoteView *self)
   self->priv->accel = gtk_accel_group_new ();
 }
 
-// Handlers for GtkTreeView of tags
-enum 
-{
-  TAG_NAME_COLUMN ,
-  TAG_CHECK_COLUMN ,
-
-  VISIBLE_COLUMN,
-  SELECT_COLUMN,
-  NUM_COLUMNS
-} ;
-
-static GtkTreeModel *
-create_tags_model (BjbNoteView *view)
-{
-  GtkTreeStore *model;
-  GtkTreeIter iter;
-  GList *all_tags ;
-
-  model = gtk_tree_store_new (NUM_COLUMNS,
-                              G_TYPE_STRING,
-                              G_TYPE_BOOLEAN,
-                              G_TYPE_BOOLEAN,
-                              G_TYPE_BOOLEAN);
-
-  // Fill in the tree with ALL tags including no note tags.
-  // But we might first retrieve all tags,
-  // then display active tags for this note,
-  // then display other notes tags
-  // then display tags active for files
-  // then display tags not active at all
-  gint i ;
-  all_tags = bjb_window_base_get_tags(view->priv->window);
-  for ( i=0 ; i<g_list_length (all_tags) ; i++ )
-  {
-    gchar *tag = g_list_nth_data(all_tags,i);
-    gtk_tree_store_append (model, &iter, NULL);
-    gtk_tree_store_set (model, &iter,
-                        TAG_NAME_COLUMN,tag,
-                        TAG_CHECK_COLUMN,
-                        biji_note_obj_has_tag(view->priv->note,tag),
-                        VISIBLE_COLUMN,TRUE,
-                        SELECT_COLUMN,TRUE,
-                        -1);
-  }
-  
-  return GTK_TREE_MODEL (model);       
-}
-
-// TODO
-static void
-tag_toggled (GtkCellRendererToggle *cell,gchar *path_str,BjbNoteView *view)
-{
-  GtkTreeModel *model = (GtkTreeModel *)view->priv->model;
-  GtkTreePath *path = gtk_tree_path_new_from_string (path_str);
-  GtkTreeIter iter;
-  gboolean toggle_item;
-  gint *column;
-  gchar *tag ;
-
-  column = g_object_get_data (G_OBJECT (cell), "column");
-  gtk_tree_model_get_iter (model, &iter, path);
-  gtk_tree_model_get (model, &iter, column, &toggle_item, -1);
-  gtk_tree_model_get (model, &iter,TAG_NAME_COLUMN, &tag,-1);
-    
-  if ( toggle_item == FALSE )
-  {
-    // add into libbiji then tracker.
-    biji_note_obj_add_tag(view->priv->note,tag);
-    biji_note_obj_save_note (view->priv->note);
-    push_existing_tag_to_note(tag,view->priv->note);
-                          
-    // and update the cell
-    toggle_item = TRUE ;
-  }
-  else
-  {
-    // Remove the tag as in libiji, also remove tracker tag
-    biji_note_obj_remove_tag (view->priv->note,tag);
-    biji_note_obj_save_note (view->priv->note);
-    remove_tag_from_note (tag,view->priv->note);
-
-    // and update the cell
-    toggle_item = FALSE ;
-  }
-  gtk_tree_store_set (GTK_TREE_STORE (model), &iter, column,
-                      toggle_item, -1);
-    
-  gtk_tree_path_free (path);
-}
-
-
-static void
-add_columns (GtkTreeView *treeview,BjbNoteView *view)
-{
-  gint col_offset;
-  GtkCellRenderer *renderer;
-  GtkTreeViewColumn *column;
-
-  // TAG NAME
-  renderer = gtk_cell_renderer_text_new ();
-  g_object_set (renderer, "xalign", 0.0, NULL);
-
-  col_offset = gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeview),
-                                                            -1, "Tag",
-                                                            renderer, "text",
-                                                            TAG_NAME_COLUMN,
-                                                            NULL);
-  column = gtk_tree_view_get_column (GTK_TREE_VIEW (treeview), col_offset - 1);
-  gtk_tree_view_column_set_clickable (GTK_TREE_VIEW_COLUMN (column), TRUE);
-  gtk_tree_view_column_set_expand (GTK_TREE_VIEW_COLUMN (column), TRUE);
-
-  // TAG ACTIVE
-  renderer = gtk_cell_renderer_toggle_new ();
-  g_object_set (renderer, "xalign", 0.0, NULL);
-  g_object_set_data (G_OBJECT (renderer), "column", (gint *)TAG_CHECK_COLUMN);
-
-  
-  g_signal_connect (renderer, "toggled", G_CALLBACK (tag_toggled), view);
-
-  col_offset = gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeview),
-                                                            -1, "Select",
-                                                            renderer,
-                                                            "active",
-                                                            TAG_CHECK_COLUMN,
-                                                            "visible",
-                                                            VISIBLE_COLUMN,
-                                                            "activatable",
-                                                            SELECT_COLUMN, NULL);
-
-  column = gtk_tree_view_get_column (GTK_TREE_VIEW (treeview), col_offset - 1);
-  gtk_tree_view_column_set_sizing (GTK_TREE_VIEW_COLUMN (column),
-                                   GTK_TREE_VIEW_COLUMN_FIXED);
-  gtk_tree_view_column_set_fixed_width (GTK_TREE_VIEW_COLUMN (column), 50);
-  gtk_tree_view_column_set_clickable (GTK_TREE_VIEW_COLUMN (column), TRUE);
-
-}
-
-static void 
-show_tags_dialog(BjbNoteView *view);
-
-static void
-add_new_tag(GtkButton *new, BjbNoteView *view)
-{
-  /* Push the tag to tracker */
-  push_tag_to_tracker((gchar*)gtk_entry_get_text(GTK_ENTRY(view->priv->entry)));
-  bjb_window_base_set_tags(view->priv->window,get_all_tracker_tags());
-
-  /* Update the view */
-  gtk_widget_destroy (view->priv->tags_dialog);
-  view->priv->tags_dialog = NULL ;
-  show_tags_dialog(view);
-}
-
-static void
-show_tags_dialog(BjbNoteView *view)
-{
-  GtkWidget *area, *treeview, *sw ;
-  GtkWindow *win;
-
-  // First, push the note to tracker if it's new.
-  bijiben_push_note_to_tracker(view->priv->note);
-    
-  win = GTK_WINDOW(view->priv->window);
-    
-  view->priv->tags_dialog = gtk_dialog_new_with_buttons("Notes tag",
-                                       win,
-                                       GTK_DIALOG_MODAL| GTK_DIALOG_DESTROY_WITH_PARENT,
-                                       GTK_STOCK_OK,
-                                       GTK_RESPONSE_OK,
-                                       NULL);
-
-  area = gtk_dialog_get_content_area (GTK_DIALOG (view->priv->tags_dialog));
-  gtk_container_set_border_width (GTK_CONTAINER (area), 8);
-
-  // Create a new tag-button
-  GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,0);
-  view->priv->entry = gtk_entry_new();
-  gtk_box_pack_start(GTK_BOX(hbox),view->priv->entry,TRUE,TRUE,0);
-  GtkWidget *new = gtk_button_new_with_label("New tag");
-  g_signal_connect(new,"clicked",G_CALLBACK(add_new_tag),view);
-  gtk_box_pack_start (GTK_BOX(hbox),new,FALSE,FALSE,0);
-  gtk_box_pack_start (GTK_BOX (area),hbox, FALSE, FALSE,0);
-
-  // List of tags
-  sw = gtk_scrolled_window_new (NULL, NULL);
-  gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (sw),
-                                       GTK_SHADOW_ETCHED_IN);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
-                                  GTK_POLICY_AUTOMATIC,
-                                  GTK_POLICY_AUTOMATIC);
-
-  view->priv->model = create_tags_model (view);
-  treeview = gtk_tree_view_new_with_model (view->priv->model);
-  g_object_unref (view->priv->model);
-
-  
-  gtk_tree_view_set_rules_hint (GTK_TREE_VIEW (treeview), TRUE);
-  gtk_tree_selection_set_mode (gtk_tree_view_get_selection (GTK_TREE_VIEW (treeview)),
-                                   GTK_SELECTION_MULTIPLE);
-  
-  add_columns (GTK_TREE_VIEW (treeview),view);
-  gtk_container_add (GTK_CONTAINER (sw), treeview);
-    
-  gtk_box_pack_start (GTK_BOX (area), sw, TRUE, TRUE,2);
-  gtk_widget_show_all(area);
-
-  // deal with the result ?? no sense.
-  gtk_window_set_default_size (GTK_WINDOW(view->priv->tags_dialog), 320, 380 );
-  /*result =*/ gtk_dialog_run (GTK_DIALOG (view->priv->tags_dialog));
-
-  if ( GTK_IS_WIDGET(view->priv->tags_dialog))
-  {
-    gtk_widget_destroy(view->priv->tags_dialog);
-    view->priv->tags_dialog = NULL ;
-  }
-}
-
 static void
 on_window_closed(GtkWidget *window,gpointer note)
 {
@@ -397,7 +176,14 @@ just_switch_to_main_view(BjbNoteView *self)
 static void
 action_view_tags_callback (GtkWidget *item, gpointer user_data)
 {
-  show_tags_dialog(BJB_NOTE_VIEW(user_data));
+  BjbNoteView *self = BJB_NOTE_VIEW (user_data);
+  GtkWindow *window = GTK_WINDOW (self->priv->window);
+
+  GList *note = NULL;
+  note = g_list_append (note, self->priv->note);
+
+  bjb_note_tag_dialog_new (window, note);
+  g_list_free (note);
 }
 
 static void

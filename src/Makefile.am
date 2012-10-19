@@ -35,6 +35,8 @@ bijiben_SOURCES = \
 	bjb-main-toolbar.h \
 	bjb-main-view.c \
 	bjb-main-view.h \
+	bjb-note-tag-dialog.c \
+	bjb-note-tag-dialog.h \
 	bjb-note-view.c \
 	bjb-note-view.h \
 	bjb-rename-note.c \
