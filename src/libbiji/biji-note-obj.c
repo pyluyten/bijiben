@@ -516,22 +516,19 @@ _biji_note_obj_has_tag(BijiNoteObj *note,gchar *tag)
   return FALSE ;
 }
 
-void
-_biji_note_obj_add_tag(BijiNoteObj *note, gchar *tag)
-{    
-  // Add the tag
-  _biji_note_obj_set_tags (note,g_list_prepend (note->priv->tags, g_strdup(tag)));
+gboolean
+biji_note_obj_add_tag(BijiNoteObj *note, gchar *tag)
+{
+  g_return_val_if_fail (BIJI_IS_NOTE_OBJ (note), FALSE);
+  g_return_val_if_fail (tag != NULL, FALSE);
+  g_return_val_if_fail (! _biji_note_obj_has_tag (note, tag), FALSE);
 
-  // Update the TagBook
-  if ( BIJI_IS_NOTE_BOOK(note->priv->book) )
-  {
-    _biji_note_book_add_note_to_tag_book(note->priv->book,note,tag);
-  }
+  note->priv->tags = g_list_prepend (note->priv->tags, g_strdup (tag));
 
-  else
-  {
-    g_message("Note has no Book");
-  }
+  if (BIJI_IS_NOTE_BOOK (note->priv->book))
+    _biji_note_book_add_note_to_tag_book (note->priv->book, note, tag);
+
+  return TRUE;
 }
 
 gboolean
@@ -825,19 +822,6 @@ biji_note_obj_has_tag(BijiNoteObj *note,gchar *tag)
 GList *biji_note_obj_get_tags(BijiNoteObj *note)
 {
   return _biji_note_obj_get_tags(note);
-}
-
-gboolean
-biji_note_obj_add_tag(BijiNoteObj *note, gchar *tag)
-{
-  // If the note has already the tag, return FALSE
-  if  ( _biji_note_obj_has_tag(note,tag) )
-  {
-    return FALSE ;
-  }
-
-  _biji_note_obj_add_tag(note,tag);
-  return TRUE ;
 }
 
 gboolean
