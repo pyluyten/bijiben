@@ -27,6 +27,7 @@
 #include "bjb-controller.h"
 #include "bjb-main-toolbar.h"
 #include "bjb-main-view.h"
+#include "bjb-note-tag-dialog.h"
 #include "bjb-note-view.h"
 #include "bjb-rename-note.h"
 #include "bjb-search-toolbar.h"
@@ -217,6 +218,31 @@ get_note_url_from_tree_path(GtkTreePath *path, BjbMainView *self)
   gtk_tree_model_get (model, &iter,GD_MAIN_COLUMN_URI, &note_path,-1);
 
   return note_path ;
+}
+
+void
+action_tag_selected_notes (GtkWidget *w, BjbMainView *view)
+{
+  GList *notes = NULL;
+  gint i;
+
+  /*  GtkTreePath */
+  GList *paths = get_selected_paths(view);
+
+  for ( i=0 ;  i < g_list_length (paths) ; i++ )
+  {
+    gchar *url = get_note_url_from_tree_path(g_list_nth_data(paths,i),
+                                             view) ;
+
+    notes = g_list_append(notes,
+                          note_book_get_note_at_path
+                          (bjb_window_base_get_book(view->priv->window),url));
+    
+  }
+
+  g_list_free (paths);
+  bjb_note_tag_dialog_new (GTK_WINDOW (view->priv->window), notes);
+  g_list_free (notes);
 }
 
 void
