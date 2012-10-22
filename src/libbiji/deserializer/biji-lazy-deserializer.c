@@ -23,7 +23,8 @@
 #include <string.h>
 
 #include "biji-lazy-deserializer.h"
-#include "../libbiji.h"
+#include "../biji-note-obj.h"
+#include "../biji-string.h"
 
 enum
 {
@@ -550,13 +551,13 @@ processNode (BijiLazyDeserializer *self)
   }
 
   if (g_strcmp0 ((gchar*) name, "last-change-date") == 0)
-    biji_process_string (r, (BijiReaderFunc*) set_note_last_change_date, n); 
+    biji_process_string (r, (BijiReaderFunc*) biji_note_obj_set_last_change_date, n); 
 
   if (g_strcmp0 ((gchar*) name, "last-metadata-change-date") == 0)
-    biji_process_string (r, (BijiReaderFunc*) set_note_last_metadata_change_date, n); 
+    biji_process_string (r, (BijiReaderFunc*) biji_note_obj_set_last_metadata_change_date, n); 
 
   if (g_strcmp0 ((gchar*) name, "create-date") == 0)
-    biji_process_string (r, (BijiReaderFunc*) set_note_create_date, n); 
+    biji_process_string (r, (BijiReaderFunc*) biji_note_obj_set_create_date, n); 
 
   if (g_strcmp0 ((gchar*) name, "color") == 0 )  
   {

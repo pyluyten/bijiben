@@ -81,22 +81,34 @@ gboolean note_obj_are_same(BijiNoteObj *a, BijiNoteObj* b);
 
 ///////////////////////////////////////////////////////////////////// Metadata 
 
-gchar * biji_note_obj_get_title(BijiNoteObj *obj);
+gchar * biji_note_obj_get_title (BijiNoteObj *obj);
 
 gchar* biji_note_obj_get_path (BijiNoteObj *n);
 
-int set_note_last_change_date(BijiNoteObj* n,gchar* date) ;
+gboolean biji_note_obj_set_last_change_date (BijiNoteObj* n,gchar* date);
+
+void biji_note_obj_set_last_change_date_now (BijiNoteObj* n) ;
 
 glong biji_note_obj_get_last_change_date_sec ( BijiNoteObj *n );
+
 gchar * biji_note_obj_get_last_change_date_string (BijiNoteObj *self);
 
 gchar * biji_note_obj_get_last_metadata_change_date (BijiNoteObj *note);
 
-int set_note_last_metadata_change_date(BijiNoteObj* n,gchar* date) ;
-int set_note_create_date(BijiNoteObj* n,gchar* date);
+gboolean biji_note_obj_set_last_metadata_change_date (BijiNoteObj* n,gchar* date) ;
+
+gboolean biji_note_obj_set_create_date (BijiNoteObj* n ,gchar* date);
+
+void biji_note_obj_set_create_date_now (BijiNoteObj *note);
+
+void biji_note_obj_set_all_dates_now (BijiNoteObj *note);
+
 int get_note_status(BijiNoteObj* n);
+
 void set_note_status(BijiNoteObj* n, int status) ;
+
 gboolean biji_note_obj_get_rgba(BijiNoteObj *n, GdkRGBA *rgba) ;
+
 void biji_note_obj_set_rgba(BijiNoteObj *n, GdkRGBA *rgba) ;
 
 //////////////////////////////////////////////////////  Tags (as in tag clouds)

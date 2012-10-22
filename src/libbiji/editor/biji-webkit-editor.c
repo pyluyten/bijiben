@@ -215,6 +215,7 @@ static void
 on_content_changed (WebKitWebView *view)
 {
   BijiWebkitEditor     *self = BIJI_WEBKIT_EDITOR (view);
+  BijiNoteObj *note = self->priv->note;
   WebKitDOMDocument    *dom;
   WebKitDOMHTMLElement *elem;
   gchar                *html, *text;
@@ -225,13 +226,14 @@ on_content_changed (WebKitWebView *view)
   html = webkit_dom_html_element_get_inner_html (elem);
   text = webkit_dom_html_element_get_inner_text (elem);
 
-  biji_note_obj_set_html_content (self->priv->note, html);
-  biji_note_obj_set_raw_text (self->priv->note, text);
+  biji_note_obj_set_html_content (note, html);
+  biji_note_obj_set_raw_text (note, text);
 
   g_free (html);
   g_free (text);
 
-  biji_note_obj_save_note (self->priv->note);
+  biji_note_obj_set_last_change_date_now (note);
+  biji_note_obj_save_note (note);
 }
 
 static void

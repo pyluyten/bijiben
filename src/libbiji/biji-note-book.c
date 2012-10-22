@@ -658,8 +658,7 @@ biji_note_book_get_uuid (void)
   return g_strdup_printf ("%s.note", out);
 }
 
-/* Common UUID skeleton for new notes.
- * Maybe the right place to set up dates = now */
+/* Common UUID skeleton for new notes. */
 static BijiNoteObj *
 get_note_skeleton (BijiNoteBook *book)
 {
@@ -680,6 +679,7 @@ get_note_skeleton (BijiNoteBook *book)
     g_free (path);
   }
 
+  biji_note_obj_set_all_dates_now (ret);
   return ret;
 }
 

@@ -85,9 +85,6 @@ on_save_timeout (BijiNoteObj *self)
   if (!priv->needs_save)
     return;
 
-  // Change the last change date propery
-  biji_note_id_set_change_date_now  (priv->id);
-
   biji_lazy_serialize (self);
   bijiben_push_note_to_tracker(self);
   priv->needs_save = FALSE;
@@ -306,7 +303,7 @@ biji_note_obj_get_note_book(BijiNoteObj *note)
 gboolean 
 note_obj_are_same(BijiNoteObj *a, BijiNoteObj* b)
 { 
-  if ( _biji_note_id_are_same(a->priv->id,b->priv->id) )
+  if ( biji_note_id_equal (a->priv->id,b->priv->id) )
   {
     if ( g_strcmp0 (a->priv->raw_text ,b->priv->raw_text) == 0 )
       return TRUE ;
@@ -374,28 +371,22 @@ _biji_note_obj_set_title(BijiNoteObj *note,gchar *title)
     return ;
   } */
 
-  // Set title
   biji_note_id_set_title (note->priv->id,title);
-
-  // Change last metadata change date
-  biji_note_id_set_metadata_change_now(note->priv->id);
-
-  // Emit one signal, notebook might also want to? 
-  g_signal_emit ( G_OBJECT (note), 
-                     biji_obj_signals[NOTE_RENAMED],0);
+  biji_note_id_set_last_metadata_change_date_now (note->priv->id);
+  g_signal_emit (G_OBJECT (note), biji_obj_signals[NOTE_RENAMED],0);
 }
 
-int
-set_note_last_change_date(BijiNoteObj* n,gchar* date)
+gboolean
+biji_note_obj_set_last_change_date (BijiNoteObj* n,gchar* date)
 {
-  biji_note_id_set_last_change_date (note_get_id(n),date);
-  return 0 ;
+  g_return_val_if_fail (BIJI_IS_NOTE_OBJ(n), FALSE);
+  return biji_note_id_set_last_change_date (n->priv->id,date);
 }
 
 glong 
 biji_note_obj_get_last_change_date_sec ( BijiNoteObj *n )
 {
-    return biji_note_id_get_last_change_date_sec(note_get_id(n)); 
+  return biji_note_id_get_last_change_date_sec(note_get_id(n)); 
 }
 
 gchar *
@@ -413,18 +404,20 @@ biji_note_obj_get_last_metadata_change_date (BijiNoteObj *note)
   return biji_note_id_get_last_metadata_change_date (note->priv->id);
 }
 
-int
-set_note_last_metadata_change_date(BijiNoteObj* n,gchar* date)
+gboolean
+biji_note_obj_set_last_metadata_change_date (BijiNoteObj* n,gchar* date)
 {
-  biji_note_id_set_last_metadata_change_date (note_get_id(n),date);
-  return 0 ;
+  g_return_val_if_fail (BIJI_IS_NOTE_OBJ(n), FALSE);
+
+  return biji_note_id_set_last_metadata_change_date (n->priv->id,date);
 }
 
-int
-set_note_create_date(BijiNoteObj* n,gchar *date)
+gboolean
+biji_note_obj_set_note_create_date (BijiNoteObj* n,gchar *date)
 {
-  biji_note_id_set_create_date(note_get_id(n),date);
-  return 0 ;
+  g_return_val_if_fail (BIJI_IS_NOTE_OBJ(n), FALSE);
+
+  return biji_note_id_set_create_date (n->priv->id, date);
 }
 
 static void
@@ -433,7 +426,7 @@ biji_note_obj_set_rgba_internal (BijiNoteObj *n, GdkRGBA *rgba)
   n->priv->color = gdk_rgba_copy(rgba);
   n->priv->icon_needs_update = TRUE;
 
-  biji_note_id_set_metadata_change_now (n->priv->id);
+  biji_note_id_set_last_metadata_change_date_now (n->priv->id);
   biji_note_obj_save_note (n);
 
   /* Make editor & notebook know about this change */
@@ -517,7 +510,7 @@ _biji_note_obj_has_tag(BijiNoteObj *note,gchar *tag)
 }
 
 gboolean
-biji_note_obj_add_tag(BijiNoteObj *note, gchar *tag)
+biji_note_obj_add_tag (BijiNoteObj *note, gchar *tag)
 {
   g_return_val_if_fail (BIJI_IS_NOTE_OBJ (note), FALSE);
   g_return_val_if_fail (tag != NULL, FALSE);
@@ -528,6 +521,7 @@ biji_note_obj_add_tag(BijiNoteObj *note, gchar *tag)
   if (BIJI_IS_NOTE_BOOK (note->priv->book))
     _biji_note_book_add_note_to_tag_book (note->priv->book, note, tag);
 
+  biji_note_id_set_last_metadata_change_date_now (note->priv->id);
   return TRUE;
 }
 
@@ -559,7 +553,6 @@ _biji_note_obj_set_tags(BijiNoteObj *n, GList *tags)
   }
     
   n->priv->tags = g_list_copy (tags);
-  biji_note_id_set_metadata_change_now(n->priv->id);
 }
 
 gboolean
@@ -850,16 +843,53 @@ biji_note_obj_remove_tag(BijiNoteObj *note,gchar *tag)
   return FALSE ;
 }
 
-gchar *biji_note_obj_get_last_change_date(BijiNoteObj *note)
+gchar *
+biji_note_obj_get_last_change_date(BijiNoteObj *note)
 {
-  return biji_note_id_get_last_change_date(note_get_id(note));
+  return biji_note_id_get_last_change_date (note->priv->id);
 }
 
-gchar *biji_note_obj_get_create_date(BijiNoteObj *note)
+gchar *
+biji_note_obj_get_create_date(BijiNoteObj *note)
 {
   g_return_val_if_fail (BIJI_IS_NOTE_OBJ (note), NULL);
 
-  return biji_note_id_get_create_date(note_get_id(note));
+  return biji_note_id_get_create_date (note->priv->id);
+}
+
+gboolean
+biji_note_obj_set_create_date (BijiNoteObj *note, gchar *date)
+{
+  g_return_val_if_fail (BIJI_IS_NOTE_OBJ (note), FALSE);
+
+  return biji_note_id_set_create_date (note->priv->id, date);
+}
+
+void
+biji_note_obj_set_create_date_now (BijiNoteObj *note)
+{
+  g_return_if_fail (BIJI_IS_NOTE_OBJ (note));
+
+  biji_note_id_set_create_date_now (note->priv->id);
+}
+
+void
+biji_note_obj_set_last_change_date_now (BijiNoteObj *note)
+{
+  g_return_if_fail (BIJI_IS_NOTE_OBJ (note));
+
+  biji_note_id_set_last_change_date_now (note->priv->id);
+}
+
+void
+biji_note_obj_set_all_dates_now (BijiNoteObj *note)
+{
+  g_return_if_fail (BIJI_IS_NOTE_OBJ (note));
+  BijiNoteID *id = note->priv->id;
+
+  biji_note_id_set_create_date_now (id);
+  biji_note_id_set_last_change_date_now (id);
+  biji_note_id_set_last_metadata_change_date_now (id);
 }
 
 /* Webkit */
