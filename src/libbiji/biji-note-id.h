@@ -50,9 +50,9 @@ GType biji_note_id_get_type (void) G_GNUC_CONST;
 
 gboolean biji_note_id_equal (BijiNoteID *a, BijiNoteID *b);
 
-gchar* biji_note_id_get_path(BijiNoteID* n);
+gchar * biji_note_id_get_path (BijiNoteID *note);
 
-void biji_note_id_set_path (BijiNoteID* n, const gchar* path);
+gchar * biji_note_id_get_uuid (BijiNoteID *note);
 
 void biji_note_id_set_title (BijiNoteID* n,gchar* title);
 

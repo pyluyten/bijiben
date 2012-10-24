@@ -64,7 +64,8 @@ struct _BijiNoteObjPrivate
   gulong note_renamed;
 };
 
-/* Properties */
+/* Properties
+ * Actually path is just sent to note id */
 enum {
   PROP_0,
   PROP_PATH,
@@ -179,7 +180,7 @@ biji_note_obj_set_property (GObject      *object,
   switch (property_id)
     {
     case PROP_PATH:
-      biji_note_id_set_path  (self->priv->id, g_value_get_string (value));
+      g_object_set_property (G_OBJECT (self->priv->id), "path", value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);

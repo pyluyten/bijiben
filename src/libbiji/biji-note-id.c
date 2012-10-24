@@ -15,12 +15,24 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <gtk/gtk.h>
+
 #include "biji-note-id.h"
+
+/* Properties */
+enum {
+  PROP_0,
+  PROP_PATH,
+  BIJI_ID_PROPERTIES
+};
+
+static GParamSpec *properties[BIJI_ID_PROPERTIES] = { NULL, };
 
 struct _BijiNoteIDPrivate
 {
-  gchar * path ;
+  GFile * location;
   gchar * title ;
+
   GTimeVal last_change_date;
   GTimeVal last_metadata_change_date;
   GTimeVal create_date ;
@@ -35,7 +47,8 @@ biji_note_id_init (BijiNoteID *self)
 {
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, biji_note_id_get_type(),
                                             BijiNoteIDPrivate);
-  self->priv->path = NULL;
+
+  self->priv->location = NULL;
   self->priv->title = NULL;
 }
 
@@ -45,10 +58,56 @@ biji_note_id_finalize (GObject *object)
   BijiNoteID *id = BIJI_NOTE_ID (object);
   BijiNoteIDPrivate *priv = id->priv;
 
-  g_free (priv->path);
+  g_object_unref (priv->location);
   g_free (priv->title);
 
   G_OBJECT_CLASS (biji_note_id_parent_class)->finalize (object);
+}
+
+static void
+biji_note_id_set_path (BijiNoteID *self, const gchar *path)
+{
+  g_warn_if_fail (!self->priv->location);
+  self->priv->location = g_file_new_for_path (path);
+}
+
+static void
+biji_note_id_set_property (GObject      *object,
+                            guint         property_id,
+                            const GValue *value,
+                            GParamSpec   *pspec)
+{
+  BijiNoteID *self = BIJI_NOTE_ID (object);
+
+
+  switch (property_id)
+    {
+    case PROP_PATH:
+      biji_note_id_set_path (self,g_value_get_string (value));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
+static void
+biji_note_id_get_property (GObject    *object,
+                            guint       property_id,
+                            GValue     *value,
+                            GParamSpec *pspec)
+{
+  BijiNoteID *self = BIJI_NOTE_ID (object);
+
+  switch (property_id)
+    {
+    case PROP_PATH:
+      g_value_set_object (value, g_file_get_basename (self->priv->location));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
 }
 
 static void
@@ -57,40 +116,37 @@ biji_note_id_class_init (BijiNoteIDClass *klass)
   GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = biji_note_id_finalize;
+  object_class->get_property = biji_note_id_get_property;
+  object_class->set_property = biji_note_id_set_property;
+
+  properties[PROP_PATH] =
+    g_param_spec_string("path",
+                        "The note file",
+                        "The location where the note is stored and saved",
+                        NULL,
+                        G_PARAM_READWRITE);
+
+  g_object_class_install_properties (object_class, BIJI_ID_PROPERTIES, properties);
+
   g_type_class_add_private (klass, sizeof (BijiNoteIDPrivate));
 }
 
-gboolean 
+gboolean
 biji_note_id_equal (BijiNoteID *a, BijiNoteID *b)
 {
-  gint result = g_strcmp0 (a->priv->title, b->priv->title) ;
-
-  if ( result != 0 )
-    return FALSE ;
-
-  result = g_strcmp0 (a->priv->path, b->priv->path) ;
-
-  if ( result != 0 )
-    return FALSE ;
-
-  return TRUE ;
+  return g_file_equal (a->priv->location, b->priv->location);
 }
 
 gchar * 
-biji_note_id_get_path(BijiNoteID* n)
+biji_note_id_get_path (BijiNoteID* n)
 {
-  return n->priv->path ;
+  return g_file_get_path (n->priv->location);
 }
 
-void
-biji_note_id_set_path (BijiNoteID* n, const gchar* path)
+gchar *
+biji_note_id_get_uuid (BijiNoteID *n)
 {
-  g_return_if_fail (BIJI_IS_NOTE_ID (n));
-
-  if (n->priv->path)
-    g_free (n->priv->path);
-
-  n->priv->path = g_strdup (path);
+  return g_file_get_basename (n->priv->location);
 }
 
 void
