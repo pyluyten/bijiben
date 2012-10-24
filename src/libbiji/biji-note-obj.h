@@ -134,7 +134,7 @@ gchar *biji_note_get_raw_text(BijiNoteObj *note);
 
 void biji_note_obj_set_raw_text (BijiNoteObj *note, gchar *plain_text);
 
-int biji_note_obj_set_title (BijiNoteObj* note_obj_ptr,gchar* title) ;
+gboolean biji_note_obj_set_title (BijiNoteObj* note_obj_ptr,gchar* title);
 
 gboolean biji_note_obj_is_template(BijiNoteObj *note);
 

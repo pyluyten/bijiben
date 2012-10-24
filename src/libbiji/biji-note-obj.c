@@ -356,8 +356,8 @@ biji_note_obj_get_title(BijiNoteObj *obj)
 }
 
 /* If already a title, then note is renamed */
-void
-_biji_note_obj_set_title(BijiNoteObj *note,gchar *title)
+gboolean
+biji_note_obj_set_title(BijiNoteObj *note,gchar *title)
 {
   gboolean initial = FALSE;
 
@@ -365,7 +365,7 @@ _biji_note_obj_set_title(BijiNoteObj *note,gchar *title)
     initial = TRUE;
 
   if (g_strcmp0 (title, biji_note_id_get_title (note->priv->id))==0)
-    return;
+    return FALSE;
 
   biji_note_id_set_title (note->priv->id,title);
 
@@ -374,6 +374,8 @@ _biji_note_obj_set_title(BijiNoteObj *note,gchar *title)
     biji_note_id_set_last_metadata_change_date_now (note->priv->id);
     g_signal_emit (G_OBJECT (note), biji_obj_signals[NOTE_RENAMED],0);
   }
+
+  return TRUE;
 }
 
 gboolean
@@ -789,15 +791,6 @@ biji_note_get_raw_text(BijiNoteObj *note)
     return note->priv->raw_text;
 
   return "";
-}
-
-int
-biji_note_obj_set_title(BijiNoteObj *note_obj_ptr,gchar *title)
-{
-  BijiNoteObj* n = BIJI_NOTE_OBJ(note_obj_ptr) ;
-  _biji_note_obj_set_title(n,title);
-
-  return 0 ;
 }
 
 gboolean
