@@ -176,42 +176,25 @@ biji_book_get_or_create_tag_book(BijiNoteBook *book, gchar *tag)
   return result ;
 }
 
+/* If title not unique, add sufffix "n", starting with 2, until ok */
 static void
-_biji_note_book_sanitize_title(BijiNoteBook *book,BijiNoteObj *note)
+_biji_note_book_sanitize_title (BijiNoteBook *book, BijiNoteObj *note)
 {   
-  gchar *title, *new_title ;
-  gint suffix ;
-    
-  /* Find a proper title
-   * We start with adding 2 to non unique titles */
-  suffix = 2 ;
-  title = biji_note_obj_get_title(note);
-  new_title = g_strdup(title);
+  gchar *title = biji_note_obj_get_title (note);
+  gchar *new_title = g_strdup (title);
+  gint suffix = 2;
 
-  /* Test title untill we find something unique.
-   * Block signal because there is loop */
-  while (_biji_note_book_is_title_unique(book,new_title) == FALSE )
+  while (!_biji_note_book_is_title_unique (book, new_title))
   {
-    
-    g_free(new_title);
+    g_free (new_title);
     new_title = g_strdup_printf("%s (%i)", title, suffix);
     suffix++;
   }
 
-  /* We also have to know if note has been renamed 
-   * So we rename only if necessary */
-  if ( new_title == title )
-  {
-    g_free(new_title) ;
-    return ;
-  }
+  if ( g_strcmp0 (new_title, title) != 0)
+    biji_note_obj_set_title (note, new_title);
 
-  else 
-  {
-   biji_note_obj_set_title(note,new_title);
-    g_free(title);
-    return ;
-  }
+  g_free(new_title);
 }
 
 static gboolean

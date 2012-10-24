@@ -355,25 +355,25 @@ biji_note_obj_get_title(BijiNoteObj *obj)
   return biji_note_id_get_title (obj->priv->id);
 }
 
+/* If already a title, then note is renamed */
 void
 _biji_note_obj_set_title(BijiNoteObj *note,gchar *title)
 {
-  /* FIXME if we change title only when different,
-   * for some reason it does not work.
-   * but it's 02:55 AM and i'm sleeping 
-  if ( g_strcmp0 (title,
-                  biji_note_id_get_title (note->priv->id)) == 0 )
-  {
-    g_message("same title:oldtitle:%s:newtitle:%s",
-              title,
-              biji_note_id_get_title (note->priv->id));
-    
-    return ;
-  } */
+  gboolean initial = FALSE;
+
+  if (!biji_note_id_get_title(note->priv->id))
+    initial = TRUE;
+
+  if (g_strcmp0 (title, biji_note_id_get_title (note->priv->id))==0)
+    return;
 
   biji_note_id_set_title (note->priv->id,title);
-  biji_note_id_set_last_metadata_change_date_now (note->priv->id);
-  g_signal_emit (G_OBJECT (note), biji_obj_signals[NOTE_RENAMED],0);
+
+  if (!initial)
+  {
+    biji_note_id_set_last_metadata_change_date_now (note->priv->id);
+    g_signal_emit (G_OBJECT (note), biji_obj_signals[NOTE_RENAMED],0);
+  }
 }
 
 gboolean
