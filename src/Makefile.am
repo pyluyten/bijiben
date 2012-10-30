@@ -17,6 +17,28 @@ AM_CFLAGS =\
 
 bin_PROGRAMS = bijiben
 
+libexec_PROGRAMS=				\
+	bijiben-shell-search-provider		\
+	$(NULL)
+
+dbus_shell_search_provider_built_sources =		\
+	bijiben-shell-search-provider-generated.c	\
+	bijiben-shell-search-provider-generated.h
+
+$(dbus_shell_search_provider_built_sources) : Makefile.am $(top_srcdir)/data/shell-search-provider-dbus-interfaces.xml
+	gdbus-codegen									\
+		--interface-prefix org.gnome.						\
+		--c-namespace Bijiben							\
+		--generate-c-code bijiben-shell-search-provider-generated		\
+		$(top_srcdir)/data/shell-search-provider-dbus-interfaces.xml		\
+		$(NULL)
+
+bijiben_shell_search_provider_SOURCES = 	\
+	bijiben-shell-search-provider.c		\
+	$(NULL)
+
+bijiben_shell_search_provider_LDADD = $(BIJIBEN_LIBS)
+
 INCLUDES = -DDATADIR=\""$(datadir)"\"
 
 bijiben_SOURCES = \
@@ -69,6 +91,10 @@ BUILT_SOURCES = \
 
 nodist_bijiben_SOURCES = \
 	$(BUILT_SOURCES)
+
+nodist_bijiben_shell_search_provider_SOURCES =		\
+	$(dbus_shell_search_provider_built_sources)	\
+	$(NULL)
 
 bijiben_LDFLAGS = \
 	-Wl,--export-dynamic

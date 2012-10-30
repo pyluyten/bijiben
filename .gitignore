@@ -45,3 +45,7 @@ po/*.pot
 src/bijiben
 src/libbiji.a
 src/bjb-resources*
+src/bijiben-shell-search-provider-generated*
+data/org.gnome.Bijiben.SearchProvider.service
+src/bijiben-shell-search-provider
+
