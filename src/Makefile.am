@@ -35,6 +35,8 @@ $(dbus_shell_search_provider_built_sources) : Makefile.am $(top_srcdir)/data/she
 
 bijiben_shell_search_provider_SOURCES = 	\
 	bijiben-shell-search-provider.c		\
+	bjb-bijiben.c				\
+	bjb-bijiben.h				\
 	$(NULL)
 
 bijiben_shell_search_provider_LDADD = $(BIJIBEN_LIBS)
