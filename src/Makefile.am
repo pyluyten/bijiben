@@ -1,8 +1,11 @@
-## Process this file with automake to produce Makefile.in
-
 SUBDIRS = \
 	libbiji
 
+bin_PROGRAMS = bijiben
+
+libexec_PROGRAMS=				\
+	bijiben-shell-search-provider		\
+	$(NULL)
 
 AM_CPPFLAGS = \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
@@ -15,31 +18,24 @@ AM_CFLAGS =\
 	 -Wall\
 	 -g
 
-bin_PROGRAMS = bijiben
-
-libexec_PROGRAMS=				\
-	bijiben-shell-search-provider		\
-	$(NULL)
-
-dbus_shell_search_provider_built_sources =		\
-	bijiben-shell-search-provider-generated.c	\
-	bijiben-shell-search-provider-generated.h
-
-$(dbus_shell_search_provider_built_sources) : Makefile.am $(top_srcdir)/data/shell-search-provider-dbus-interfaces.xml
-	gdbus-codegen									\
-		--interface-prefix org.gnome.						\
-		--c-namespace Bijiben							\
-		--generate-c-code bijiben-shell-search-provider-generated		\
-		$(top_srcdir)/data/shell-search-provider-dbus-interfaces.xml		\
-		$(NULL)
-
-bijiben_shell_search_provider_SOURCES = 	\
-	bijiben-shell-search-provider.c		\
-	$(NULL)
-
-bijiben_shell_search_provider_LDADD = $(BIJIBEN_LIBS)
-
 INCLUDES = -DDATADIR=\""$(datadir)"\"
+
+LDADD = libbiji.a \
+	-lm \
+	$(top_builddir)/libgd/libgd.la \
+	$(BIJIBEN_LIBS)
+
+bijiben_LDFLAGS = \
+	-Wl,--export-dynamic
+
+resource_files = \
+	app-menu.ui
+
+bjb-resources.c: bjb.gresource.xml $(resource_files)
+	glib-compile-resources --target=$@ --sourcedir=$(srcdir) --generate-source --c-name bjb $(srcdir)/bjb.gresource.xml
+
+bjb-resources.h: bjb.gresource.xml
+	glib-compile-resources --target=$@ --sourcedir=$(srcdir) --generate-header --c-name bjb $(srcdir)/bjb.gresource.xml
 
 bijiben_SOURCES = \
 	bjb-app-menu.c \
@@ -76,33 +72,34 @@ bijiben_SOURCES = \
 	utils/bjb-icons-colors.c \
 	utils/bjb-icons-colors.h
 
-resource_files = \
-	app-menu.ui
+dbus_shell_search_provider_built_sources =		\
+	bijiben-shell-search-provider-generated.c	\
+	bijiben-shell-search-provider-generated.h
 
-bjb-resources.c: bjb.gresource.xml $(resource_files)
-	glib-compile-resources --target=$@ --sourcedir=$(srcdir) --generate-source --c-name bjb $(srcdir)/bjb.gresource.xml
+$(dbus_shell_search_provider_built_sources) : Makefile.am $(top_srcdir)/data/shell-search-provider-dbus-interfaces.xml
+	gdbus-codegen									\
+		--interface-prefix org.gnome.						\
+		--c-namespace Bijiben							\
+		--generate-c-code bijiben-shell-search-provider-generated		\
+		$(top_srcdir)/data/shell-search-provider-dbus-interfaces.xml		\
+		$(NULL)
 
-bjb-resources.h: bjb.gresource.xml
-	glib-compile-resources --target=$@ --sourcedir=$(srcdir) --generate-header --c-name bjb $(srcdir)/bjb.gresource.xml
-
-BUILT_SOURCES = \
-	bjb-resources.c \
-	bjb-resources.h
-
-nodist_bijiben_SOURCES = \
-	$(BUILT_SOURCES)
+bijiben_shell_search_provider_SOURCES = 	\
+	bijiben-shell-search-provider.c		\
+	$(NULL)
 
 nodist_bijiben_shell_search_provider_SOURCES =		\
 	$(dbus_shell_search_provider_built_sources)	\
 	$(NULL)
 
-bijiben_LDFLAGS = \
-	-Wl,--export-dynamic
+bijiben_built_sources = \
+	bjb-resources.c \
+	bjb-resources.h
 
-bijiben_LDADD = libbiji.a \
-	-lm \
-	$(top_builddir)/libgd/libgd.la \
-	$(BIJIBEN_LIBS)
+BUILT_SOURCES = \
+	$(bijiben_built_sources) \
+	$(dbus_shell_search_provider_built_sources) 	\
+	$(NULL)
 
 lib_LIBRARIES =  \
 	libbiji.a
@@ -135,4 +132,11 @@ libbiji_a_SOURCES =  \
 	libbiji/editor/biji-webkit-editor.h \
 	libbiji/serializer/biji-lazy-serializer.c \
 	libbiji/serializer/biji-lazy-serializer.h
+
+CLEANFILES = \
+	$(BUILT_SOURCES)			\
+	$(NULL)
+
+dist-hook:
+	cd $(distdir); rm -f $(CLEANFILES)
 
