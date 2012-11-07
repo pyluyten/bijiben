@@ -253,7 +253,8 @@ biji_note_create_into_tracker(BijiNoteObj *note)
   create_date = to_8601_date (biji_note_obj_get_last_change_date (note));
   last_change_date = to_8601_date (biji_note_obj_get_last_change_date (note));
   content = tracker_str (biji_note_get_raw_text (note));
-                          
+
+  /* TODO : nie:mimeType Note ; \ */
   query = g_strdup_printf ("INSERT { <%s> a nfo:Note , nie:DataObject ; \
                             nie:url '%s' ; \
                             nie:contentLastModified '%s' ; \
