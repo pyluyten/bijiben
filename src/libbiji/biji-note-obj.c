@@ -334,6 +334,7 @@ biji_note_obj_delete(BijiNoteObj *dead)
     }
   }
 
+  biji_note_delete_from_tracker (dead);
   g_signal_emit ( G_OBJECT (dead), biji_obj_signals[NOTE_DELETED],0);
   biji_note_obj_finalize(G_OBJECT(dead));
 }
