@@ -261,6 +261,7 @@ bijiben_class_init (BijibenClass *klass)
 Bijiben *
 bijiben_new (void)
 {
+  g_type_init ();
   return g_object_new (BIJIBEN_TYPE_APPLICATION,
                        "application-id", "org.gnome.bijiben",
                        "flags", G_APPLICATION_HANDLES_OPEN,
