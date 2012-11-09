@@ -261,6 +261,9 @@ bijiben_class_init (BijibenClass *klass)
 Bijiben *
 bijiben_new (void)
 {
+  #if !GLIB_CHECK_VERSION(2,35,0) /* return true if glib < 2.35.0 */
+    g_type_init ();
+  #endif
   return g_object_new (BIJIBEN_TYPE_APPLICATION,
                        "application-id", "org.gnome.bijiben",
                        "flags", G_APPLICATION_HANDLES_OPEN,
