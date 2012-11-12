@@ -37,7 +37,12 @@ bjb-resources.c: bjb.gresource.xml $(resource_files)
 bjb-resources.h: bjb.gresource.xml
 	glib-compile-resources --target=$@ --sourcedir=$(srcdir) --generate-header --c-name bjb $(srcdir)/bjb.gresource.xml
 
+bijiben_built_sources = \
+	bjb-resources.c \
+	bjb-resources.h
+
 bijiben_SOURCES = \
+	$(bijiben_built_sources) \
 	bjb-app-menu.c \
 	bjb-app-menu.h \
 	bjb-bijiben.c \
@@ -91,10 +96,6 @@ bijiben_shell_search_provider_SOURCES = 	\
 nodist_bijiben_shell_search_provider_SOURCES =		\
 	$(dbus_shell_search_provider_built_sources)	\
 	$(NULL)
-
-bijiben_built_sources = \
-	bjb-resources.c \
-	bjb-resources.h
 
 BUILT_SOURCES = \
 	$(bijiben_built_sources) \
