@@ -20,6 +20,7 @@
 #define _BIJI_NOTE_ID_H_
 
 #include <glib-object.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
@@ -53,6 +54,8 @@ gboolean biji_note_id_equal (BijiNoteID *a, BijiNoteID *b);
 gchar * biji_note_id_get_path (BijiNoteID *note);
 
 gchar * biji_note_id_get_uuid (BijiNoteID *note);
+
+GFile * biji_note_id_get_file (BijiNoteID *note);
 
 void biji_note_id_set_title (BijiNoteID* n,gchar* title);
 

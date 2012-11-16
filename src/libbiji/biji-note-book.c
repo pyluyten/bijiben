@@ -431,7 +431,7 @@ _note_book_remove_one_note(BijiNoteBook *book,BijiNoteObj *note)
     /* Ref note first, hash_table won't finalize it & we can delete it*/
     g_object_ref (to_delete);
     g_hash_table_remove (book->priv->notes, biji_note_obj_get_path (note));
-    biji_note_obj_delete (note);
+    biji_note_obj_trash (note);
     g_signal_emit ( G_OBJECT (book), biji_book_signals[BOOK_AMENDED],0);
     return TRUE;
   }

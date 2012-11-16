@@ -15,8 +15,6 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <gtk/gtk.h>
-
 #include "biji-note-id.h"
 
 /* Properties */
@@ -147,6 +145,12 @@ gchar *
 biji_note_id_get_uuid (BijiNoteID *n)
 {
   return g_file_get_basename (n->priv->location);
+}
+
+GFile *
+biji_note_id_get_file (BijiNoteID *note)
+{
+  return note->priv->location;
 }
 
 void

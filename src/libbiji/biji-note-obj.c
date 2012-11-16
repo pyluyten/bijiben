@@ -315,30 +315,60 @@ note_obj_are_same(BijiNoteObj *a, BijiNoteObj* b)
   return FALSE ;
 }
 
-/* First cancel timeout */
-void
-biji_note_obj_delete(BijiNoteObj *dead)
+/* First cancel timeout
+ * this func is most probably stupid it might exists (move file) */
+gboolean
+biji_note_obj_trash (BijiNoteObj *note_to_kill)
 {
-  GFile *file ;
-//  GError *error = NULL ;
+  GFile *to_trash, *parent, *trash, *backup_file;
+  gchar *note_name, *parent_path, *trash_path, *backup_path;
+  GError *error = NULL;
+  gboolean result;
 
-  biji_timeout_cancel (dead->priv->timeout);
-  file = g_file_new_for_path(biji_note_id_get_path(dead->priv->id));
+  biji_timeout_cancel (note_to_kill->priv->timeout);
+  to_trash = biji_note_id_get_file (note_to_kill->priv->id);
+  note_name = g_file_get_basename (to_trash);
+  parent = g_file_get_parent (to_trash);
 
-  // TODO get the note book GCancellable and set it,
-  // or create one and append it to BijiNoteBook
-  if ( g_file_trash(file,NULL,NULL) == FALSE )
+  /* Create the trash directory
+   * No matter if already exists */
+  parent_path = g_file_get_path (parent);
+  trash_path = g_build_filename (parent_path, ".Trash", NULL);
+  g_free (parent_path);
+  g_object_unref (parent);
+  trash = g_file_new_for_path (trash_path);
+  g_file_make_directory (trash, NULL, NULL);
+
+  /* Move the note to trash */
+  backup_path = g_build_filename (trash_path, note_name, NULL);
+  g_free (trash_path);
+  backup_file = g_file_new_for_path (backup_path);
+  g_free (note_name);
+  g_free (backup_path);
+  result = g_file_move (to_trash,
+                        backup_file,
+                        G_FILE_COPY_NONE,
+                        NULL, // cancellable
+                        NULL, // progress callback
+                        NULL, // progress_callback_data,
+                        &error);
+
+  if (error)
   {
-    if ( g_file_delete(file,NULL,NULL) == FALSE )
-    {
-      g_message("Critical, file not deleted:%s",
-      biji_note_id_get_path(dead->priv->id));
-    }
+    g_message (error->message);
+    g_error_free (error);
+    error = NULL;
   }
 
-  biji_note_delete_from_tracker (dead);
-  g_signal_emit ( G_OBJECT (dead), biji_obj_signals[NOTE_DELETED],0);
-  biji_note_obj_finalize(G_OBJECT(dead));
+  /* Say goodbye however */
+  g_object_unref (trash);
+  g_object_unref (backup_file);
+
+  biji_note_delete_from_tracker (note_to_kill);
+  g_signal_emit (G_OBJECT (note_to_kill), biji_obj_signals[NOTE_DELETED], 0);
+  g_clear_object (&note_to_kill);
+
+  return result;
 }
 
 gchar* biji_note_obj_get_path (BijiNoteObj* n)

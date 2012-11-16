@@ -75,8 +75,11 @@ BijiNoteObj * biji_note_obj_new_from_path (const gchar *path);
 
 /////////////////////////////////////////////////// Relationships other notes
 gpointer biji_note_obj_get_note_book(BijiNoteObj *note);
+
 void _biji_note_obj_set_book(BijiNoteObj *note, gpointer biji_note_book);
-void biji_note_obj_delete(BijiNoteObj *dead);
+
+gboolean biji_note_obj_trash (BijiNoteObj *dead);
+
 gboolean note_obj_are_same(BijiNoteObj *a, BijiNoteObj* b);
 
 ///////////////////////////////////////////////////////////////////// Metadata 
