@@ -39,7 +39,7 @@ biji_get_time_diff_with_time (glong sec_since_epoch)
     return "This month";
 
   if (diff < 365)
-    return "This month";
+    return "This year";
 
-  return "Unknown";
+  return "A long time ago in a galaxy far, far away...";
 }
